@@ -33,10 +33,7 @@ ui <- navbarPage(
                textInput("other_titles", "Please Specify Titles:", "")
              ),
              textInput("name", "Name", ""),
-             dateInput('dob',
-                       label = 'Date input: dd-mm-yyyy',
-                       value = Sys.Date()
-             ),
+             textInput("dob", label = "Date of Birth", placeholder = "dd-mm-yyyy"),
              tags$label("Your Age:"),
              textOutput("age_text")  # Styled as a textInput-style box
              ,
@@ -48,7 +45,7 @@ ui <- navbarPage(
       
       # Middle column (width = 4 out of 12)
       column(4,
-             textAreaInput("address", "Address:", "", rows = 3, 
+             textAreaInput("address", "Address:", "", rows = 10, 
                            placeholder = "Enter your full address here"),
              selectInput("province", "Province",
                          choices = unique(thailand$ADM1_TH),
@@ -107,7 +104,7 @@ ui <- navbarPage(
       ),
       column(4,
              selectInput("medcon", "Medical condition",
-                         choices = c("DM", "HTY", "Gout",
+                         choices = c("DM", "HT", "Gout",
                                      "CKD", "Thyroid", "DLD",
                                      "DM HT", "DM DLD", "DM HT DLD",
                                      "HT Gout", "None", "Other")),
@@ -118,7 +115,7 @@ ui <- navbarPage(
              textInput("ekg", "Latest EKG", ""),
              textInput("echo", "Latest Echo", ""),
              textInput("eye", "Latest eye examination", ""),
-             textAreaInput("drugallergy", "Drug allergy", "", rows = 10, 
+             textAreaInput("drugallergy", "Drug allergy", "", rows = 3, 
                            placeholder = "Enter your drug allergy here"),
              selectInput("caregiver", "Caregiver",
                          choices = c("Self", "Child", "Parent", "Spouse (Husband/Wife)",
@@ -130,7 +127,12 @@ ui <- navbarPage(
              selectInput("hbpm", "Home Blood Pressure Mornitor",
                          choices = c("Yes", "No")),
              selectInput("medexpenditure", "Medical expenditure",
-                         choices = c("Yes", "No")),
+                         choices = c("เบิกได้", 
+                                     "จ่ายตรง", 
+                                     "ประกันสังคม",
+                                     "บัตรทอง",
+                                     "จ่ายเอง",
+                                     "ประกันชีวิต")),
              selectInput("pateintstatus", "Patient status",
                          choices = c("Yes", "No")),
              selectInput("complication", "Complication",
@@ -143,6 +145,17 @@ ui <- navbarPage(
              textAreaInput("precriptionadjust", "Prescription adjusted", "", rows = 10),
              actionButton("save", "Save Data"), # Save button
              verbatimTextOutput("save_status")  # Save status
+      )
+    )
+  ),
+  tabPanel(
+    "Doctor form",
+    fluidRow(
+      column(4,
+             textInput("hn", "Patient Code (HN):", ""),  # User-provided HN
+             actionButton("check_hn", "Check HN"),        # Button to check HN
+             textOutput("pateintname")
+        
       )
     )
   )
@@ -159,6 +172,35 @@ server <- function(input, output, session) {
     } else {
       paste("No.:", 1)
     }
+  })
+  
+  # Automatically calculate and display age when Date of Birth is selected
+  output$age_text <- renderText({
+    if (is.null(input$dob) || input$dob == "") {
+      return("")
+    }
+    
+    tryCatch({
+      # Attempt to parse the input as a date in either dd-mm-yyyy or dd/mm/yyyy format
+      dob_input <- as.Date(input$dob, tryFormats = c("%d-%m-%Y", "%d/%m/%Y"))
+      
+      if (is.na(dob_input)) {
+        return("Invalid date format. Please use dd-mm-yyyy or dd/mm/yyyy.")
+      }
+      
+      # Convert Buddhist Era (พ.ศ.) to Gregorian calendar
+      gregorian_dob <- dob_input - years(543)
+      
+      # Current date
+      today <- Sys.Date()
+      
+      # Calculate age
+      age <- as.numeric(floor(difftime(today, gregorian_dob, units = "days") / 365.25))
+      
+      paste(age, "years")
+    }, error = function(e) {
+      return("Invalid date format. Please use dd-mm-yyyy or dd/mm/yyyy.")
+    })
   })
   
   # Automatically convert HN to uppercase while typing
@@ -249,11 +291,13 @@ server <- function(input, output, session) {
       user_data <- data.frame(
         No = nrow(all_data) + 1,  # Maintain sequential No.
         HN = hn_to_save,         # Save HN in uppercase
+        Titles = input$titles,
         Name = input$name,
         Email = input$email,
         DateOfBirth = input$dob,
         Phone = input$phone,
         Gender = input$gender,
+        Age = age_text,
         Ethnicity = input$ethnicity,
         Nationality = input$nationality,
         Address = input$address,
@@ -286,11 +330,13 @@ server <- function(input, output, session) {
       user_data <- data.frame(
         No = 1,
         HN = toupper(input$hn),  # Convert HN to uppercase for saving
+        Titles = input$titles,
         Name = input$name,
         Email = input$email,
         DateOfBirth = input$dob,
         Phone = input$phone,
         Gender = input$gender,
+        Age = age_text,
         Ethnicity = input$ethnicity,
         Nationality = input$nationality,
         Address = input$address,
