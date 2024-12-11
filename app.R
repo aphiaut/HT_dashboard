@@ -219,6 +219,8 @@ server <- function(input, output, session) {
                       selected = NULL)
   })
   
+  
+  
   # Check if HN exists in the file and populate the fields
   observeEvent(input$check_hn, {
     file_path <- "patient_data.csv"
@@ -263,6 +265,25 @@ server <- function(input, output, session) {
   # Save or replace data in the file when the "Save Data" button is clicked
   observeEvent(input$save, {
     file_path <- "patient_data.csv"
+    
+    # Calculate Age for saving
+    calculated_age <- if (!is.null(input$dob) && input$dob != "") {
+      tryCatch({
+        dob_input <- as.Date(input$dob, tryFormats = c("%d-%m-%Y", "%d/%m/%Y"))
+        if (!is.na(dob_input)) {
+          gregorian_dob <- dob_input - years(543)  # Adjust for Buddhist Era
+          today <- Sys.Date()
+          as.numeric(floor(difftime(today, gregorian_dob, units = "days") / 365.25))
+        } else {
+          NA  # Invalid date
+        }
+      }, error = function(e) {
+        NA  # Handle errors in date parsing
+      })
+    } else {
+      NA  # Empty DOB
+    }
+    
     if (file.exists(file_path)) {
       # Load existing data
       all_data <- read.csv(file_path)
@@ -297,7 +318,7 @@ server <- function(input, output, session) {
         DateOfBirth = input$dob,
         Phone = input$phone,
         Gender = input$gender,
-        Age = age_text,
+        Age = calculated_age,
         Ethnicity = input$ethnicity,
         Nationality = input$nationality,
         Address = input$address,
@@ -336,7 +357,7 @@ server <- function(input, output, session) {
         DateOfBirth = input$dob,
         Phone = input$phone,
         Gender = input$gender,
-        Age = age_text,
+        Age = calculated_age,
         Ethnicity = input$ethnicity,
         Nationality = input$nationality,
         Address = input$address,
@@ -361,6 +382,8 @@ server <- function(input, output, session) {
       output$save_status <- renderText("Data saved successfully!")
     }
   })
+  
+
 }
 
 
