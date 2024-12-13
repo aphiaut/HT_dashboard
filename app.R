@@ -22,8 +22,8 @@ ui <- navbarPage(
       column(4,
              h3("Patient Registration"),
              textOutput("no"),  # Display patient number
-             textInput("hn", "Patient Code (HN):", ""),  # User-provided HN
-             actionButton("check_hn", "Check HN"),        # Button to check HN
+             textInput("hn_register", "Patient Code (HN):", ""),  # User-provided HN
+             actionButton("check_hn_register", "Check HN"),        # Button to check HN
              verbatimTextOutput("hn_status"),  # Display HN status
              h3("Personal Infomation"),
              selectInput("titles", "Titles",
@@ -148,19 +148,24 @@ ui <- navbarPage(
       )
     )
   ),
+#--------------------------- Doctor Form UI -------------------
   tabPanel(
-    "Doctor form",
+    "Doctor Form",
     fluidRow(
       column(4,
-             textInput("hn", "Patient Code (HN):", ""),  # User-provided HN
-             actionButton("check_hn", "Check HN"),        # Button to check HN
-             textOutput("pateintname")
+             textInput("hn_doc", "Patient Code (HN):", ""),  # User-provided HN
+             actionButton("check_hn_doc", "Check HN"),   # Button to check HN
+             tags$hr(),
+             h4("Patient Name:"),
+             textOutput("patient_name")                 # Display patient name
         
       )
     )
   )
 )
 
+
+#--------------- Server --------------------
 
 server <- function(input, output, session) {
   # Auto-incrementing No.
@@ -204,8 +209,8 @@ server <- function(input, output, session) {
   })
   
   # Automatically convert HN to uppercase while typing
-  observeEvent(input$hn, {
-    updateTextInput(session, "hn", value = toupper(input$hn))  # Convert to uppercase
+  observeEvent(input$hn_register, {
+    updateTextInput(session, "hn_register", value = toupper(input$hn_register))  # Convert to uppercase
   })
   
   # Update amphoe (suburb) dropdown based on selected province
@@ -222,11 +227,11 @@ server <- function(input, output, session) {
   
   
   # Check if HN exists in the file and populate the fields
-  observeEvent(input$check_hn, {
+  observeEvent(input$check_hn_register, {
     file_path <- "patient_data.csv"
     if (file.exists(file_path)) {
       all_data <- read.csv(file_path)
-      hn_to_search <- toupper(input$hn)  # Convert input HN to uppercase for search
+      hn_to_search <- toupper(input$hn_register)  # Convert input HN to uppercase for search
       
       result <- all_data %>% filter(HN == hn_to_search)
       
@@ -289,7 +294,7 @@ server <- function(input, output, session) {
       all_data <- read.csv(file_path)
       
       # Check if HN exists
-      hn_to_save <- toupper(input$hn)  # Convert HN to uppercase for saving
+      hn_to_save <- toupper(input$hn_register)  # Convert HN to uppercase for saving
       if (hn_to_save %in% all_data$HN) {
         # Replace the existing data for this HN
         all_data <- all_data %>%
@@ -350,7 +355,7 @@ server <- function(input, output, session) {
       # If no file exists, save the data as a new file
       user_data <- data.frame(
         No = 1,
-        HN = toupper(input$hn),  # Convert HN to uppercase for saving
+        HN = toupper(input$hn_register),  # Convert HN to uppercase for saving
         Titles = input$titles,
         Name = input$name,
         Email = input$email,
@@ -382,7 +387,34 @@ server <- function(input, output, session) {
       output$save_status <- renderText("Data saved successfully!")
     }
   })
-  
+
+#-------------------  Doctor Form ----------------------------------
+  observeEvent(input$check_hn_doc, {  # Use 'check_hn_doc' as the button ID
+    # Path to the CSV file
+    file_path <- "patient_data.csv"
+    
+    if (file.exists(file_path)) {
+      # Read the data
+      all_data <- read.csv(file_path, stringsAsFactors = FALSE)
+      
+      # Convert input HN to uppercase for consistent comparison
+      hn_to_search <- toupper(input$hn_doc)
+      
+      # Search for the HN in the dataset
+      result <- all_data[all_data$HN == hn_to_search, ]
+      
+      # Display the patient's name if found
+      if (nrow(result) > 0) {
+        output$patient_name <- renderText({
+          paste(result$Name[1]) # Assuming the column storing the name is 'Name'
+        })
+      } else {
+        output$patient_name <- renderText("Patient not found.")
+      }
+    } else {
+      output$patient_name <- renderText("No data file exists.")
+    }
+  })
 
 }
 
