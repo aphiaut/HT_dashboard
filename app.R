@@ -143,6 +143,7 @@ ui <- navbarPage(
                textInput("other_complication", "Please Specify Complication:", "")
              ),
              textAreaInput("precriptionadjust", "Prescription adjusted", "", rows = 10),
+             hr(),
              actionButton("save", "Save Data"), # Save button
              verbatimTextOutput("save_status")  # Save status
       )
@@ -163,8 +164,99 @@ ui <- navbarPage(
              tags$hr(),
              textInput("num_visit", "Number of Visits:"), # User-provided Number of visits
              textInput("visit_date", label = "Date", placeholder = "dd-mm-yyyy"), # Provided date
+             textAreaInput("patient_note", "Patient Notes:", "", rows = 10, 
+                           placeholder = "Are there any specific questions or concerns you want to discuss with the doctor?"),
         
+      ),
+      column(4,
+             h3("Patient Symptom Checklist:"),
+             h4("Please answer the following questions"),
+             # Question 1
+             checkboxGroupInput(
+               inputId = "chest_tightness",
+               label = "1. Chest Tightness",
+               choices = c("No" = "no", "Yes" = "yes"),
+               inline = TRUE
+             ),
+             # Question 2
+             checkboxGroupInput(
+               inputId = "nervous_system",
+               label = "2. Abnormal Nervous System (e.g., facial drooping, weakness in limbs, numbness on one side, or slurred speech)",
+               choices = c("No" = "no", "Yes" = "yes"),
+               inline = TRUE
+             ),
+             # Question 3
+             checkboxGroupInput(
+               inputId = "urinal_abnormal",
+               label = "3. Abnormal Urination (e.g., frequent urination, pain during urination, urine retention, or inability to urinate)",
+               choices = c("No" = "no", "Yes" = "yes"),
+               inline = TRUE
+             ),
+             # Question 4
+             radioButtons(
+               inputId = "headache",
+               label = "4. Headache",
+               choices = c("No" = "no", "Occasionally" = "sometimes", "Often" = "often"),
+               inline = TRUE
+             ),
+             
+             # Question 5
+             radioButtons(
+               inputId = "dizziness",
+               label = "5. Dizziness",
+               choices = c("No" = "no", "Occasionally" = "sometimes", "Often" = "often"),
+               inline = TRUE
+             ),
+             
+             # Question 6
+             radioButtons(
+               inputId = "breath_shortness",
+               label = "6. Shortness of Breath",
+               choices = c("No" = "no", "Occasionally" = "sometimes", "Often" = "often"),
+               inline = TRUE
+             ),
+             # Question 7
+             radioButtons(
+               inputId = "leg_swelling",
+               label = "7. Leg Swelling",
+               choices = c("No" = "no", "Occasionally" = "sometimes", "Often" = "often"),
+               inline = TRUE
+             ),
+             
+             # Question 8
+             radioButtons(
+               inputId = "face_swelling",
+               label = "8. Face Swelling",
+               choices = c("No" = "no", "Occasionally" = "sometimes", "Often" = "often"),
+               inline = TRUE
+             )
+             
+             # hr(),
+             # actionButton("submit", "Submit Responses"),
+             # verbatimTextOutput("response")
+      ),
+      column(4,
+             h3("Lab Results:"),
+             textInput("cr", "Cr:", ""),
+             textInput("na", "Na:", ""),
+             textInput("fbs", "FBS:", ""),
+             textInput("hba1c", "HBA1C:", ""),
+             textInput("cho", "CHO:", ""),
+             textInput("ldl", "LDL:", ""),
+             textInput("tg", "TG:", ""),
+             textInput("hdl", "HDL:", ""),
+             textInput("ast", "AST:", ""),
+             textInput("alt", "ALT:", ""),
       )
+    ),
+    hr(),
+    fluidRow(
+    column(4,
+           #CC and PI Section
+           h4("CC and PI"),
+           checkboxGroupInput("cc", "CC:", choices = c("Follow-up Visit" = "follow_up", "Early Visit" = "early_visit", "New Visit" = "new_visit"), inline = TRUE),
+           checkboxGroupInput("pi", "PI: General Symptoms:", choices = c("Normal" = "normal", "Abnormal" = "abnormal"), inline = TRUE)
+           )
     )
   )
 )
