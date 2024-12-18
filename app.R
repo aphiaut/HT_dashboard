@@ -155,9 +155,14 @@ ui <- navbarPage(
       column(4,
              textInput("hn_doc", "Patient Code (HN):", ""),  # User-provided HN
              actionButton("check_hn_doc", "Check HN"),   # Button to check HN
+             tags$div(
+               tags$h4("Patient Name:",
+                       style = "display: inline-block; margin-right: 10px;"), # Inline label
+               textOutput("patient_name", inline = TRUE)                     # Inline output
+             ),
              tags$hr(),
-             h4("Patient Name:"),
-             textOutput("patient_name")                 # Display patient name
+             textInput("num_visit", "Number of Visits:"), # User-provided Number of visits
+             textInput("visit_date", label = "Date", placeholder = "dd-mm-yyyy"), # Provided date
         
       )
     )
