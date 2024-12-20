@@ -1,5 +1,6 @@
 
 library(shiny)
+library(shinyTime)
 library(tidyverse)
 library(kableExtra)
 library(ggplot2)
@@ -35,8 +36,7 @@ ui <- navbarPage(
              textInput("name", "Name", ""),
              textInput("dob", label = "Date of Birth", placeholder = "dd-mm-yyyy"),
              tags$label("Your Age:"),
-             textOutput("age_text")  # Styled as a textInput-style box
-             ,
+             textOutput("age_text"),
              textInput("phone", "Phone", ""),
              textInput("email", "Email", ""),
              selectInput("gender", "Gender",
@@ -172,21 +172,21 @@ ui <- navbarPage(
              h3("Patient Symptom Checklist:"),
              h4("Please answer the following questions"),
              # Question 1
-             checkboxGroupInput(
+             radioButtons(
                inputId = "chest_tightness",
                label = "1. Chest Tightness",
                choices = c("No" = "no", "Yes" = "yes"),
                inline = TRUE
              ),
              # Question 2
-             checkboxGroupInput(
+             radioButtons(
                inputId = "nervous_system",
                label = "2. Abnormal Nervous System (e.g., facial drooping, weakness in limbs, numbness on one side, or slurred speech)",
                choices = c("No" = "no", "Yes" = "yes"),
                inline = TRUE
              ),
              # Question 3
-             checkboxGroupInput(
+             radioButtons(
                inputId = "urinal_abnormal",
                label = "3. Abnormal Urination (e.g., frequent urination, pain during urination, urine retention, or inability to urinate)",
                choices = c("No" = "no", "Yes" = "yes"),
@@ -254,8 +254,91 @@ ui <- navbarPage(
     column(4,
            #CC and PI Section
            h4("CC and PI"),
-           checkboxGroupInput("cc", "CC:", choices = c("Follow-up Visit" = "follow_up", "Early Visit" = "early_visit", "New Visit" = "new_visit"), inline = TRUE),
-           checkboxGroupInput("pi", "PI: General Symptoms:", choices = c("Normal" = "normal", "Abnormal" = "abnormal"), inline = TRUE)
+           radioButtons("cc", "CC:", 
+                        choices = c("Follow-up Visit" = "follow_up", 
+                                    "Early Visit" = "early_visit", 
+                                    "New Visit" = "new_visit"), 
+                        inline = TRUE),
+           radioButtons("pi", "PI: General Symptoms:", 
+                        choices = c("Normal" = "normal", 
+                                    "Abnormal" = "abnormal"), 
+                        inline = TRUE),
+           checkboxGroupInput("additional_activities", "Pateint Additional Activities:", 
+                              choices = c("Always take medicines" = "alway_take_medicine", 
+                                          "Control salty taste" = "salty_control",
+                                          "Exercise" = "excercise"), 
+                              inline = TRUE),
+           textAreaInput("allergic_history", "Drug Allergic History:", "", rows = 3),
+           fluidRow(
+              h4("Blood Pressure"),
+              column(6, textInput("bp_sys", "Blood Pressure (Sys):", "")),
+              column(6, textInput("bp_dia", "Blood Pressure (Dia):", "")),
+              h6("BP Target: Less than 140/90 mmHg")
+                   ),
+           fluidRow(
+              column(6,textInput("pulse", "Pulse Rate:", ""),
+                     h6("Normal value: 60-100 beats per min")),
+              column(6,textInput("resp", "Respiration Rate:", ""),
+                     h6("Normal value 12-20 breaths per minute")),
+                   ),
+           fluidRow(
+              column(6,textInput("height", "Height (cm):", "")),
+              column(6,textInput("weight", "Weight (kg):", "")),
+              tags$label("Your BMI:"),
+              textOutput("bmi_text"),
+              h6("BMI Target: 18.5-23.0 kg/m2")
+                   )
+           ),
+    column(4,
+           h4("Physical Examination:"),
+           fluidRow(
+             column(6, checkboxGroupInput("heent", "HEENT:", choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), inline = TRUE)),
+             column(6, checkboxGroupInput("heart", "Heart:", choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), inline = TRUE))
+                   ),
+           fluidRow(
+             column(6, checkboxGroupInput("lungs", "Lungs:", choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), inline = TRUE)),
+             column(6, checkboxGroupInput("abd", "Abdomen:", choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), inline = TRUE))
+           ),
+           fluidRow(
+             column(6, checkboxGroupInput("ext", "Extremities:", choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), inline = TRUE)),
+             column(6, checkboxGroupInput("ns", "N/S:", choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), inline = TRUE))
+           ),
+           # Diagnosis
+           textAreaInput("diagnosis", "Diagnosis:", "", rows = 6)
+           ),
+    column(4,
+           h4("Follow-up Schedule"),
+           radioButtons("follow_up", "Follow-up:", 
+                        choices = c("1 week" = "1_week", 
+                                    "2 weeks" = "2_weeks", 
+                                    "4 weeks" = "4_weeks", 
+                                    "8 weeks" = "8_weeks", 
+                                    "12 weeks" = "12_weeks", 
+                                    "24 weeks" = "24_weeks"),
+                        inline = TRUE
+           ),
+           # Date and Time Input
+           textInput("follow_up_date", label = "Date:", placeholder = "dd-mm-yyyy"),
+           textInput("follow_up_time", label = "Time:", value = format(Sys.time(), "%H:%M")),
+           textInput("follow_up_location", label = "Location:", ""),
+           #Lab Tests Section
+           h4("Laboratory Tests:"),
+           checkboxGroupInput(
+             inputId = "lab_tests",
+             label = NULL,
+             choices = c(
+               "UA (Urinalysis)" = "ua",
+               "BUN, Cr (Blood Urea Nitrogen, Creatinine)" = "bun_cr",
+               "HbA1C" = "hba1c",
+               "FBS (Fasting Blood Sugar)" = "fbs",
+               "Lipid Profiles" = "lipid_profiles",
+               "CXR (Chest X-ray)" = "cxr",
+               "ECG (Electrocardiogram)" = "ecg",
+               "Other" = "other"
+             ),
+             inline = FALSE
+           ),
+           textInput("other_lab_test", "Specify Other Tests:", ""),
            )
     )
   )

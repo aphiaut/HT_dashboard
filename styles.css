@@ -1,5 +1,5 @@
 
-span#age_text {
+#age_text {
       display: block;
       width: 20%;
       padding: 6px 12px;
@@ -14,3 +14,9 @@ span#age_text {
       margin-top: 5px;
     }
   
+  #follow_up_schedule label {
+  display: inline-block;
+  width: 33%; /* Ensures three options per row */
+  text-align: center; /* Centers the text */
+  margin-bottom: 10px; /* Adds some spacing between rows */
+}
