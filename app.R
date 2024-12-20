@@ -74,8 +74,14 @@ ui <- navbarPage(
              ),
              # Education selection
              selectInput("education", "Education Level",
-                         choices = c("Primary", "Secondary", "Bachelor's Degree",
-                                     "Master's Degree", "PhD", "Other")),
+                         choices = c("Primary",
+                                     "Secondary", 
+                                     "ปวส.",
+                                     "ปวช.",
+                                     "Bachelor's Degree",
+                                     "Master's Degree", 
+                                     "PhD", 
+                                     "Other")),
              # Conditional input for "Other" Education
              conditionalPanel(
                condition = "input.education == 'Other'",
@@ -259,10 +265,19 @@ ui <- navbarPage(
                                     "Early Visit" = "early_visit", 
                                     "New Visit" = "new_visit"), 
                         inline = TRUE),
-           radioButtons("pi", "PI: General Symptoms:", 
-                        choices = c("Normal" = "normal", 
-                                    "Abnormal" = "abnormal"), 
-                        inline = TRUE),
+           radioButtons(
+             inputId = "pi",
+             label = "PI:",
+             choices = c(
+               "Normal" = "normal", 
+               "Abnormal" = "abnormal"
+             ),
+             inline = TRUE
+           ),
+           conditionalPanel(
+             condition = "input.pi == 'abnormal'",
+             textAreaInput("pi_abnormal", "Please Specify Symptoms:", "", rows = 3)
+           ),
            checkboxGroupInput("additional_activities", "Pateint Additional Activities:", 
                               choices = c("Always take medicines" = "alway_take_medicine", 
                                           "Control salty taste" = "salty_control",
@@ -270,11 +285,15 @@ ui <- navbarPage(
                               inline = TRUE),
            textAreaInput("allergic_history", "Drug Allergic History:", "", rows = 3),
            fluidRow(
-              h4("Blood Pressure"),
+              column(6, h4("Blood Pressure")),
+                   ),
+           fluidRow(
               column(6, textInput("bp_sys", "Blood Pressure (Sys):", "")),
               column(6, textInput("bp_dia", "Blood Pressure (Dia):", "")),
-              h6("BP Target: Less than 140/90 mmHg")
-                   ),
+           ),
+           fluidRow(
+              column(6, h6("BP Target: Less than 140/90 mmHg"))
+           ),
            fluidRow(
               column(6,textInput("pulse", "Pulse Rate:", ""),
                      h6("Normal value: 60-100 beats per min")),
@@ -292,19 +311,67 @@ ui <- navbarPage(
     column(4,
            h4("Physical Examination:"),
            fluidRow(
-             column(6, checkboxGroupInput("heent", "HEENT:", choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), inline = TRUE)),
-             column(6, checkboxGroupInput("heart", "Heart:", choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), inline = TRUE))
+             column(6, 
+                    radioButtons(inputId = "heent", 
+                                    label = "HEENT:", 
+                                    choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
+                                    inline = TRUE),
+                    conditionalPanel(
+                      condition = "input.heent == 'abnormal'",
+                      textAreaInput("heent_abnormal", "Please Specify Symptoms:", "", rows = 3)
+                    )),
+             column(6, 
+                    radioButtons(inputId = "heart", 
+                                    label = "Heart:", 
+                                    choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
+                                    inline = TRUE),
+                    conditionalPanel(
+                      condition = "input.heart == 'abnormal'",
+                      textAreaInput("heart_abnormal", "Please Specify Symptoms:", "", rows = 3)
+                    ))
                    ),
            fluidRow(
-             column(6, checkboxGroupInput("lungs", "Lungs:", choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), inline = TRUE)),
-             column(6, checkboxGroupInput("abd", "Abdomen:", choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), inline = TRUE))
+             column(6, 
+                    radioButtons(inputId = "lungs", 
+                                    label = "Lungs:", 
+                                    choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
+                                    inline = TRUE),
+                    conditionalPanel(
+                      condition = "input.lungs == 'abnormal'",
+                      textAreaInput("lungs_abnormal", "Please Specify Symptoms:", "", rows = 3)
+                    )),
+             column(6, 
+                    radioButtons(inputId = "abd", 
+                                    label = "Abdomen:", 
+                                    choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
+                                    inline = TRUE),
+                    conditionalPanel(
+                      condition = "input.abd == 'abnormal'",
+                      textAreaInput("abd_abnormal", "Please Specify Symptoms:", "", rows = 3)
+                    ))
            ),
            fluidRow(
-             column(6, checkboxGroupInput("ext", "Extremities:", choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), inline = TRUE)),
-             column(6, checkboxGroupInput("ns", "N/S:", choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), inline = TRUE))
+             column(6, 
+                    radioButtons(inputId = "ext", 
+                                    label = "Extremities:", 
+                                    choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
+                                    inline = TRUE),
+                    conditionalPanel(
+                      condition = "input.ext == 'abnormal'",
+                      textAreaInput("ext_abnormal", "Please Specify Symptoms:", "", rows = 3)
+                    )),
+             column(6, 
+                    radioButtons(inputId = "ns", 
+                                    label = "N/S:", 
+                                    choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
+                                    inline = TRUE),
+                    conditionalPanel(
+                      condition = "input.ns == 'abnormal'",
+                      textAreaInput("ns_abnormal", "Please Specify Symptoms:", "", rows = 3)
+                    ))
            ),
            # Diagnosis
-           textAreaInput("diagnosis", "Diagnosis:", "", rows = 6)
+           textAreaInput("diagnosis", "Diagnosis:", "", rows = 10)
            ),
     column(4,
            h4("Follow-up Schedule"),
@@ -338,8 +405,37 @@ ui <- navbarPage(
              ),
              inline = FALSE
            ),
-           textInput("other_lab_test", "Specify Other Tests:", ""),
-           )
+           conditionalPanel(
+             condition = "input.lab_tests == 'other'",
+             textInput("other_lab_test", "Specify Other Tests:", "",)
+           ))
+           
+    ),
+    hr(),
+    fluidRow(
+      # Nursing Activities Section
+      column(6,
+      h4("Nurse Activities"),
+      checkboxGroupInput(
+        inputId = "nursing_activities",
+        label = "Please select the nursing activities provided to the patient:",
+        choices = c(
+          "Hypertension management and prevention of complications" = "hypertension_management",
+          "Medication adherence and awareness" = "medication_adherence",
+          "Home blood pressure monitoring" = "home_monitoring",
+          "Exercise encouragement" = "exercise_encouragement",
+          "Dietary salt reduction" = "salt_reduction",
+          "Stress management" = "stress_management",
+          "Smoking cessation" = "smoking_cessation",
+          "Alcohol intake moderation" = "alcohol_moderation",
+          "Symptom monitoring for complications" = "symptom_monitoring",
+          "Chest pain, dizziness, or fainting awareness" = "chest_pain_awareness",
+          "Edema or swelling monitoring" = "edema_monitoring",
+          "Healthcare follow-up adherence" = "follow_up_adherence"
+        ),
+        inline = FALSE
+      ),
+      )
     )
   )
 )
