@@ -261,16 +261,18 @@ ui <- navbarPage(
       ),
       column(4,
              h3("Lab Results:"),
-             textInput("cr", "Cr:", ""),
-             textInput("na", "Na:", ""),
-             textInput("fbs", "FBS:", ""),
-             textInput("hba1c", "HBA1C:", ""),
-             textInput("cho", "CHO:", ""),
-             textInput("ldl", "LDL:", ""),
-             textInput("tg", "TG:", ""),
-             textInput("hdl", "HDL:", ""),
-             textInput("ast", "AST:", ""),
-             textInput("alt", "ALT:", ""),
+             column(6,
+                    textInput("cr", "Cr:", ""),
+                    textInput("na", "Na:", ""),
+                    textInput("fbs", "FBS:", ""),
+                    textInput("hba1c", "HBA1C:", ""),
+                    textInput("cho", "CHO:", "")),
+             column(6,
+                    textInput("ldl", "LDL:", ""),
+                    textInput("tg", "TG:", ""),
+                    textInput("hdl", "HDL:", ""),
+                    textInput("ast", "AST:", ""),
+                    textInput("alt", "ALT:", "")),
       )
     ),
     hr(),
@@ -321,10 +323,13 @@ ui <- navbarPage(
            fluidRow(
               column(6,textInput("height", "Height (cm):", "")),
               column(6,textInput("weight", "Weight (kg):", "")),
+                   ),
+           fluidRow(
+             column(6,
               tags$label("Your BMI:"),
               textOutput("bmi_text"),
               h6("BMI Target: 18.5-23.0 kg/m2")
-                   )
+                   ))
            ),
     column(4,
            h4("Physical Examination:"),
@@ -389,7 +394,26 @@ ui <- navbarPage(
                     ))
            ),
            # Diagnosis
-           textAreaInput("diagnosis", "Diagnosis:", "", rows = 10)
+           textAreaInput("diagnosis", "Diagnosis:", "", rows = 10),
+           # Evaluate patient Activity
+           fluidRow(
+             column(10,
+                    h4("Scores and BP Monitoring:")),
+             column(5,
+                    numericInput("bp_control_score", "BP Control Score:", value = 0, min = 0, max = 5),
+                    numericInput("weight_control_score", "Weight Control Score:", value = 0, min = 0, max = 5)
+                    ),
+             column(7,
+                    numericInput("self_care_score", "Self-Care Behavior Score:", value = 0, min = 0, max = 5),
+                    numericInput("home_bp_score", "BP Measurement at Home Score:", value = 0, min = 0, max = 5)
+                    ),
+             column(6,
+                    radioButtons(inputId = "hbpm_target", 
+                                 label = "HBPM According to Target", 
+                                 choices = c("Yes", "No", "Missed"), 
+                                 inline = TRUE)
+             )
+           )
            ),
     column(4,
            h4("Follow-up Schedule"),
@@ -431,31 +455,8 @@ ui <- navbarPage(
     ),
     hr(),
     fluidRow(
-      # Nursing Activities Section
-      column(6,
-          h4("Nurse Activities"),
-          checkboxGroupInput(
-            inputId = "nursing_activities",
-            label = "Please select the nursing activities provided to the patient:",
-            choices = c(
-              "Hypertension management and prevention of complications" = "hypertension_management",
-              "Medication awareness and side effects" = "medication_awareness",
-              "Home blood pressure monitoring" = "home_monitoring",
-              "Exercise encouragement" = "exercise_encouragement",
-              "Dietary salt reduction" = "salt_reduction",
-              "Stress management" = "stress_management",
-              "Smoking cessation" = "smoking_cessation",
-              "Alcohol intake moderation" = "alcohol_moderation",
-              "Symptom monitoring for complications" = "symptom_monitoring",
-              "Chest pain, dizziness, or fainting awareness" = "chest_pain_awareness",
-              "Edema or swelling monitoring" = "edema_monitoring",
-              "Healthcare follow-up adherence" = "follow_up_adherence"
-            ),
-            inline = FALSE
-          ),
-      ),
-      column(6,
-             h4("Home Medication")
+      column(11,
+             h3("Home Medication")
              )
     )
   )
