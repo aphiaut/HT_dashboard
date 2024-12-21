@@ -10,11 +10,12 @@ library(plotly)
 library(DT)
 library(shinythemes)
 library(ggthemes)
+library(bslib)
 
 thailand <- read_csv("data/thailand_province_amphoe.csv")
 
 ui <- navbarPage(
-  "HP Clinic",
+  "HT Clinic",
   theme = shinytheme("flatly"),
   tabPanel(
     "Patient Info",
@@ -38,6 +39,7 @@ ui <- navbarPage(
              tags$label("Your Age:"),
              textOutput("age_text"),
              textInput("phone", "Phone", ""),
+             textInput("phone2", "Phone 2 (optional)", ""),
              textInput("email", "Email", ""),
              selectInput("gender", "Gender",
                          choices = c("Male", "Female", "Other"))
@@ -53,7 +55,12 @@ ui <- navbarPage(
              selectInput("amphoe", "Amphoe",
                          choices = NULL),
              selectInput("status", "Status",
-                         choices = c("Single", "Marriage", "Other")),
+                         choices = c("Single", 
+                                     "Marriage", 
+                                     "Divorced",
+                                     "Separated",
+                                     "Widowed",
+                                     "Other")),
              conditionalPanel(
                condition = "input.status == 'Other'",
                textInput("other_status", "Please Specify Status:", "")
@@ -74,13 +81,10 @@ ui <- navbarPage(
              ),
              # Education selection
              selectInput("education", "Education Level",
-                         choices = c("Primary",
-                                     "Secondary", 
-                                     "ปวส.",
-                                     "ปวช.",
+                         choices = c("Primary/ปวช.",
+                                     "Secondary/ปวส.", 
                                      "Bachelor's Degree",
-                                     "Master's Degree", 
-                                     "PhD", 
+                                     "Master's Degree or Higher", 
                                      "Other")),
              # Conditional input for "Other" Education
              conditionalPanel(
@@ -118,9 +122,9 @@ ui <- navbarPage(
                condition = "input.medcon == 'Other'",
                textInput("other_medcon", "Please Specify Medical condition:", "")
              ),
-             textInput("ekg", "Latest EKG", ""),
-             textInput("echo", "Latest Echo", ""),
-             textInput("eye", "Latest eye examination", ""),
+             textInput("ekg", label = "Latest EKG", placeholder = "dd-mm-yyyy"),
+             textInput("echo", label = "Latest Echo", placeholder = "dd-mm-yyyy"),
+             textInput("eye", label = "Latest eye examination", placeholder = "dd-mm-yyyy"),
              textAreaInput("drugallergy", "Drug allergy", "", rows = 3, 
                            placeholder = "Enter your drug allergy here"),
              selectInput("caregiver", "Caregiver",
@@ -131,16 +135,28 @@ ui <- navbarPage(
                textInput("other_caregiver", "Please Specify Caregiver:", "")
              ),
              selectInput("hbpm", "Home Blood Pressure Mornitor",
-                         choices = c("Yes", "No")),
+                         choices = c("Have", "Don't Have")),
              selectInput("medexpenditure", "Medical expenditure",
-                         choices = c("เบิกได้", 
-                                     "จ่ายตรง", 
-                                     "ประกันสังคม",
+                         choices = c("จ่ายตรง",
+                                     "จ่ายเอง", 
                                      "บัตรทอง",
-                                     "จ่ายเอง",
+                                     "เบิกได้", 
+                                     "ประกันสังคม",
                                      "ประกันชีวิต")),
              selectInput("pateintstatus", "Patient status",
-                         choices = c("Yes", "No")),
+                         choices = c("Continuing Treatment"= "continuing_treatment",
+                                     "Loss to Follow-Up" = "loss_fu",
+                                     "Consult OPD" = "consult_opd",
+                                     "Refer to Hospital" = "refer_hospital")
+                         ),
+             conditionalPanel(
+               condition = "input.pateintstatus == 'refer_hospital'",
+               textInput("refer_hospital_details", "Specify Hospital Details:", "")
+             ),
+             conditionalPanel(
+               condition = "input.pateintstatus == 'consult_opd'",
+               textInput("consult_opd_details", "Specify OPD Details:", "")
+             ),     
              selectInput("complication", "Complication",
                          choices = c("Stroke", "Cardio", "Kidney",
                                      "Eye", "Other")),
@@ -148,7 +164,9 @@ ui <- navbarPage(
                condition = "input.complication == 'Other'",
                textInput("other_complication", "Please Specify Complication:", "")
              ),
-             textAreaInput("precriptionadjust", "Prescription adjusted", "", rows = 10),
+             selectInput("precriptionadjust", "Prescription Adjusted",
+                         choices = c("Off Medication", "Decrease", "Add",
+                                     "Same", "Change : Complication")),
              hr(),
              actionButton("save", "Save Data"), # Save button
              verbatimTextOutput("save_status")  # Save status
@@ -263,7 +281,7 @@ ui <- navbarPage(
            radioButtons("cc", "CC:", 
                         choices = c("Follow-up Visit" = "follow_up", 
                                     "Early Visit" = "early_visit", 
-                                    "New Visit" = "new_visit"), 
+                                    "Late Visit" = "late_visit"), 
                         inline = TRUE),
            radioButtons(
              inputId = "pi",
@@ -415,27 +433,30 @@ ui <- navbarPage(
     fluidRow(
       # Nursing Activities Section
       column(6,
-      h4("Nurse Activities"),
-      checkboxGroupInput(
-        inputId = "nursing_activities",
-        label = "Please select the nursing activities provided to the patient:",
-        choices = c(
-          "Hypertension management and prevention of complications" = "hypertension_management",
-          "Medication adherence and awareness" = "medication_adherence",
-          "Home blood pressure monitoring" = "home_monitoring",
-          "Exercise encouragement" = "exercise_encouragement",
-          "Dietary salt reduction" = "salt_reduction",
-          "Stress management" = "stress_management",
-          "Smoking cessation" = "smoking_cessation",
-          "Alcohol intake moderation" = "alcohol_moderation",
-          "Symptom monitoring for complications" = "symptom_monitoring",
-          "Chest pain, dizziness, or fainting awareness" = "chest_pain_awareness",
-          "Edema or swelling monitoring" = "edema_monitoring",
-          "Healthcare follow-up adherence" = "follow_up_adherence"
-        ),
-        inline = FALSE
+          h4("Nurse Activities"),
+          checkboxGroupInput(
+            inputId = "nursing_activities",
+            label = "Please select the nursing activities provided to the patient:",
+            choices = c(
+              "Hypertension management and prevention of complications" = "hypertension_management",
+              "Medication awareness and side effects" = "medication_awareness",
+              "Home blood pressure monitoring" = "home_monitoring",
+              "Exercise encouragement" = "exercise_encouragement",
+              "Dietary salt reduction" = "salt_reduction",
+              "Stress management" = "stress_management",
+              "Smoking cessation" = "smoking_cessation",
+              "Alcohol intake moderation" = "alcohol_moderation",
+              "Symptom monitoring for complications" = "symptom_monitoring",
+              "Chest pain, dizziness, or fainting awareness" = "chest_pain_awareness",
+              "Edema or swelling monitoring" = "edema_monitoring",
+              "Healthcare follow-up adherence" = "follow_up_adherence"
+            ),
+            inline = FALSE
+          ),
       ),
-      )
+      column(6,
+             h4("Home Medication")
+             )
     )
   )
 )
@@ -517,6 +538,7 @@ server <- function(input, output, session) {
         updateTextInput(session, "email", value = result$Email[1])
         updateDateInput(session, "dob", value = result$DateOfBirth[1])
         updateTextInput(session, "phone", value = result$Phone[1])
+        updateTextInput(session, "phone2", value = result$Phone2[1])
         updateSelectInput(session, "gender", selected = result$Gender[1])
         updateTextInput(session, "address", value = result$Address[1])
         updateSelectInput(session, "province", selected = result$Province[1])
@@ -533,7 +555,7 @@ server <- function(input, output, session) {
         updateSelectInput(session, "medexpenditure", selected = result$MedicalExpenditure[1])
         updateSelectInput(session, "pateintstatus", selected = result$PateintStatus[1])
         updateSelectInput(session, "complication", selected = result$Complication[1])
-        updateTextAreaInput(session, "precriptionadjust", value = result$PrecriptionAdjust[1])
+        updateSelectInput(session, "precriptionadjust", value = result$PrecriptionAdjust[1])
         output$hn_status <- renderText("Patient data loaded successfully.")
       } else {
         output$hn_status <- renderText("No patient found with this HN.")
@@ -598,6 +620,7 @@ server <- function(input, output, session) {
         Email = input$email,
         DateOfBirth = input$dob,
         Phone = input$phone,
+        Phone2 = input$phone2,
         Gender = input$gender,
         Age = calculated_age,
         Ethnicity = input$ethnicity,
@@ -637,6 +660,7 @@ server <- function(input, output, session) {
         Email = input$email,
         DateOfBirth = input$dob,
         Phone = input$phone,
+        Phone2 = input$phone2,
         Gender = input$gender,
         Age = calculated_age,
         Ethnicity = input$ethnicity,
