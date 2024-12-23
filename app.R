@@ -455,9 +455,54 @@ ui <- navbarPage(
     ),
     hr(),
     fluidRow(
-      column(11,
-             h3("Home Medication")
+      column(6,
+             h3("Home Medication"),
+             fluidRow(
+               h4("Diuretics :"),
+               column(6, uiOutput("medication_ui_diuretics")),
+               column(6, actionButton("add_medication_diuretics", "Add Diuretics"))
+             ),
+             fluidRow(
+               h4("ACEIs :"),
+               column(6, uiOutput("medication_ui_aceis")),
+               column(6, actionButton("add_medication_aceis", "Add ACEIs"))
+             ),
+             fluidRow(
+               h4("ARBs :"),
+               column(6, uiOutput("medication_ui_arbs")),
+               column(6, actionButton("add_medication_asbs", "Add ARBs"))
+             ),
+             fluidRow(
+               h4("CCBs :"),
+               column(6, uiOutput("medication_ui_ccbs")),
+               column(6, actionButton("add_medication_ccbs", "Add CCBs"))
              )
+             ),
+      column(6,
+             h3(" "),
+             fluidRow(
+               h4("Beta blockers :"),
+               column(6, uiOutput("medication_ui_beta_blockers")),
+               column(6, actionButton("add_medication_beta_blockers", "Add Beta blockers"))
+             ),
+             fluidRow(
+               h4("OAD :"),
+               column(6, uiOutput("medication_ui_oad")),
+               column(6, actionButton("add_medication_oad", "Add OAD"))
+             ),
+             fluidRow(
+               h4("Statin :"),
+               column(6, uiOutput("medication_ui_statin")),
+               column(6, actionButton("add_medication_statin", "Add Statin"))
+             ),
+             fluidRow(
+               h4("Other :"),
+               column(6, uiOutput("medication_ui_other")),
+               column(6, actionButton("add_medication_other", "Add Other"))
+             )
+      )
+          
+             
     )
   )
 )
@@ -716,7 +761,78 @@ server <- function(input, output, session) {
       output$patient_name <- renderText("No data file exists.")
     }
   })
+  
+  # Reactive lists for medication categories
+  medication_list_diuretics <- reactiveValues(data = list())
+  medication_list_aceis <- reactiveValues(data = list())
+  medication_list_arbs <- reactiveValues(data = list())
+  medication_list_ccbs <- reactiveValues(data = list())
+  medication_list_beta_blockers <- reactiveValues(data = list())
+  medication_list_oad <- reactiveValues(data = list())
+  medication_list_statin <- reactiveValues(data = list())
+  medication_list_other <- reactiveValues(data = list())
+  
+  # Add new medications dynamically for each category
+  addMedication <- function(category_list, button_id, category_name) {
+    observeEvent(input[[button_id]], {
+      new_id <- paste0(category_name, "_", length(category_list$data) + 1)
+      new_qty_id <- paste0("quantity_", category_name, "_", length(category_list$data) + 1)
+      category_list$data[[new_id]] <- new_qty_id
+    })
+  }
+  
+  addMedication(medication_list_diuretics, "add_medication_diuretics", "diuretics")
+  addMedication(medication_list_aceis, "add_medication_aceis", "aceis")
+  addMedication(medication_list_arbs, "add_medication_arbs", "arbs")
+  addMedication(medication_list_ccbs, "add_medication_ccbs", "ccbs")
+  addMedication(medication_list_beta_blockers, "add_medication_beta_blockers", "beta_blockers")
+  addMedication(medication_list_oad, "add_medication_oad", "oad")
+  addMedication(medication_list_statin, "add_medication_statin", "statin")
+  addMedication(medication_list_other, "add_medication_other", "other")
+  
+  # Render UI for each medication category
+  renderMedicationUI <- function(category_list, category_name) {
+    renderUI({
+      medication_ui <- lapply(names(category_list$data), function(id) {
+        fluidRow(
+          column(6, selectInput(
+            inputId = id,
+            label = paste("Select", category_name, ":"),
+            choices = switch(category_name,
+                             "Diuretics" = c("HCTZ (25, 50)"),
+                             "ACEIs" = c("Enalapril (5, 20)"),
+                             "ARBs" = c("Losartan (50, 100)"),
+                             "CCBs" = c("Amlodipine (5, 10)", "Madiplot (20)", "Diltiazem (30, 60)"),
+                             "Beta Blockers" = c("Atenolol (25, 50, 100)", "Carvedilol (6.25, 12.5, 25)", "Metoprolol (100)", "Propranolol (40)"),
+                             "OAD" = c("Metformin (500, 850, 1000)", "Glipizide (5)",),
+                             "Statin" = c("Atorvastatin (20, 40)", "Simvastatin (10, 20, 40)"),
+                             "Other" = c("Azilsartan (40)", "Hydralazine (25)", "Doxazosin (2)", "Methyldopa (250)")
+            )
+          )),
+          column(6, selectInput(
+            inputId = category_list$data[[id]],
+            label = "Quantity:",
+            choices = c("1*1", "1*2", "1*3")
+          ))
+        )
+      })
+      do.call(tagList, medication_ui)
+    })
+  }
+  
+  
+  output$medication_ui_diuretics <- renderMedicationUI(medication_list_diuretics, "Diuretics")
+  output$medication_ui_aceis <- renderMedicationUI(medication_list_aceis, "ACEIs")
+  output$medication_ui_arbs <- renderMedicationUI(medication_list_arbs, "ARBs")
+  output$medication_ui_ccbs <- renderMedicationUI(medication_list_ccbs, "CCBs")
+  output$medication_ui_beta_blockers <- renderMedicationUI(medication_list_beta_blockers, "Beta Blockers")
+  output$medication_ui_oad <- renderMedicationUI(medication_list_oad, "OAD")
+  output$medication_ui_statin <- renderMedicationUI(medication_list_statin, "Statin")
+  output$medication_ui_other <- renderMedicationUI(medication_list_other, "Other")
+  
+  
 
+  
 }
 
 
