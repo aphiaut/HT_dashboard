@@ -470,7 +470,7 @@ ui <- navbarPage(
              fluidRow(
                h4("ARBs :"),
                column(6, uiOutput("medication_ui_arbs")),
-               column(6, actionButton("add_medication_asbs", "Add ARBs"))
+               column(6, actionButton("add_medication_arbs", "Add ARBs"))
              ),
              fluidRow(
                h4("CCBs :"),
@@ -799,13 +799,17 @@ server <- function(input, output, session) {
             inputId = id,
             label = paste("Select", category_name, ":"),
             choices = switch(category_name,
-                             "Diuretics" = c("HCTZ (25, 50)"),
-                             "ACEIs" = c("Enalapril (5, 20)"),
-                             "ARBs" = c("Losartan (50, 100)"),
-                             "CCBs" = c("Amlodipine (5, 10)", "Madiplot (20)", "Diltiazem (30, 60)"),
-                             "Beta Blockers" = c("Atenolol (25, 50, 100)", "Carvedilol (6.25, 12.5, 25)", "Metoprolol (100)", "Propranolol (40)"),
-                             "OAD" = c("Metformin (500, 850, 1000)", "Glipizide (5)",),
-                             "Statin" = c("Atorvastatin (20, 40)", "Simvastatin (10, 20, 40)"),
+                             "Diuretics" = c("HCTZ (25)", "HCTZ (50)"),
+                             "ACEIs" = c("Enalapril (5)", "Enalapril (20)"),
+                             "ARBs" = c("Losartan (50)", "Losartan (100)"),
+                             "CCBs" = c("Amlodipine (5)", "Amlodipine (10)", "Madiplot (20)", "Diltiazem (30)", "Diltiazem (60)"),
+                             "Beta Blockers" = c("Atenolol (25)", "Atenolol (50)", "Atenolol (100)",
+                                                 "Carvedilol (6.25)", "Carvedilol (12.5)", "Carvedilol (25)",
+                                                 "Metoprolol (100)", "Propranolol (40)"),
+                             "OAD" = c("Metformin (500)", "Metformin (850)", "Metformin (1000)",
+                                       "Glipizide (5)"),
+                             "Statin" = c("Atorvastatin (20)", "Atorvastatin (40)",
+                                          "Simvastatin (10)", "Simvastatin (20)", "Simvastatin (40)"),
                              "Other" = c("Azilsartan (40)", "Hydralazine (25)", "Doxazosin (2)", "Methyldopa (250)")
             )
           )),
