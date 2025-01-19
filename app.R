@@ -857,18 +857,8 @@ server <- function(input, output, session) {
   })
   
   
-  # 3. Handle Medication Dynamically
-  # Reactive lists for medication categories
-  medication_list_diuretics <- reactiveValues(data = list())
-  medication_list_aceis <- reactiveValues(data = list())
-  medication_list_arbs <- reactiveValues(data = list())
-  medication_list_ccbs <- reactiveValues(data = list())
-  medication_list_beta_blockers <- reactiveValues(data = list())
-  medication_list_oad <- reactiveValues(data = list())
-  medication_list_statin <- reactiveValues(data = list())
-  medication_list_other <- reactiveValues(data = list())
   
-  # 4. Scores and BP Monitoring
+  # 3. Scores and BP Monitoring
   
   # Automatically calculate and update Self-Care Behavior Score
   observe({
@@ -901,18 +891,37 @@ server <- function(input, output, session) {
   })
   
   
+ # 4. medicine
+  # Reactive lists for dynamic medications
+  medication_list_diuretics <- reactiveValues(data = list())
+  medication_list_aceis <- reactiveValues(data = list())
+  medication_list_arbs <- reactiveValues(data = list())
+  medication_list_ccbs <- reactiveValues(data = list())
+  medication_list_beta_blockers <- reactiveValues(data = list())
+  medication_list_oad <- reactiveValues(data = list())
+  medication_list_statin <- reactiveValues(data = list())
+  medication_list_other <- reactiveValues(data = list())
   
-  # 5. Medication
-  
-  # Add new medications dynamically for each category
+  # Add medications dynamically for each category
   addMedication <- function(category_list, button_id, category_name) {
+    # Track the number of items added (to ensure unique IDs)
+    counter <- reactiveVal(0)
+    
     observeEvent(input[[button_id]], {
-      new_id <- paste0(category_name, "_", length(category_list$data) + 1)
-      new_qty_id <- paste0("quantity_", category_name, "_", length(category_list$data) + 1)
+      # Increment the counter for a new unique ID
+      current_count <- counter() + 1
+      counter(current_count)
+      
+      # Create new unique IDs for the medication and quantity
+      new_id <- paste0(category_name, "_", current_count)
+      new_qty_id <- paste0("quantity_", category_name, "_", current_count)
+      
+      # Add the new IDs to the reactive list
       category_list$data[[new_id]] <- new_qty_id
     })
   }
   
+  # Apply Add functionality for each category
   addMedication(medication_list_diuretics, "add_medication_diuretics", "diuretics")
   addMedication(medication_list_aceis, "add_medication_aceis", "aceis")
   addMedication(medication_list_arbs, "add_medication_arbs", "arbs")
@@ -945,10 +954,14 @@ server <- function(input, output, session) {
                              "Other" = c("Azilsartan (40)", "Hydralazine (25)", "Doxazosin (2)", "Methyldopa (250)")
             )
           )),
-          column(6, selectInput(
+          column(4, selectInput(
             inputId = category_list$data[[id]],
             label = "Quantity:",
             choices = c("1*1", "1*2", "1*3")
+          )),
+          column(2, actionButton(
+            inputId = paste0("remove_", id),
+            label = "Remove"
           ))
         )
       })
@@ -956,7 +969,30 @@ server <- function(input, output, session) {
     })
   }
   
+  # Handle Remove functionality dynamically
+  observeRemoveButtons <- function(category_list) {
+    observe({
+      req(names(category_list$data))  # Ensure there are medications to remove
+      lapply(names(category_list$data), function(id) {
+        observeEvent(input[[paste0("remove_", id)]], {
+          # Remove the corresponding medication entry from the reactiveValues list
+          category_list$data[[id]] <- NULL
+        })
+      })
+    })
+  }
   
+  # Call Remove observer for each category
+  observeRemoveButtons(medication_list_diuretics)
+  observeRemoveButtons(medication_list_aceis)
+  observeRemoveButtons(medication_list_arbs)
+  observeRemoveButtons(medication_list_ccbs)
+  observeRemoveButtons(medication_list_beta_blockers)
+  observeRemoveButtons(medication_list_oad)
+  observeRemoveButtons(medication_list_statin)
+  observeRemoveButtons(medication_list_other)
+  
+  # Render the UI for each category
   output$medication_ui_diuretics <- renderMedicationUI(medication_list_diuretics, "Diuretics")
   output$medication_ui_aceis <- renderMedicationUI(medication_list_aceis, "ACEIs")
   output$medication_ui_arbs <- renderMedicationUI(medication_list_arbs, "ARBs")
@@ -965,7 +1001,6 @@ server <- function(input, output, session) {
   output$medication_ui_oad <- renderMedicationUI(medication_list_oad, "OAD")
   output$medication_ui_statin <- renderMedicationUI(medication_list_statin, "Statin")
   output$medication_ui_other <- renderMedicationUI(medication_list_other, "Other")
-  
  
 
   
