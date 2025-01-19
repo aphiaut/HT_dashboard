@@ -300,7 +300,7 @@ ui <- navbarPage(
              condition = "input.pi == 'abnormal'",
              textAreaInput("pi_abnormal", "Please Specify Symptoms:", "", rows = 3)
            ),
-           checkboxGroupInput("medication_adherance", "Medication Adherance:", 
+           checkboxGroupInput("medication_adherence", "Medication Adherence:", 
                               choices = c("Always take medicines" = "alway_take_medicine", 
                                           "Control salty taste" = "salty_control",
                                           "Exercise" = "excercise"), 
@@ -319,8 +319,7 @@ ui <- navbarPage(
            fluidRow(
               column(6,textInput("pulse", "Pulse Rate:", ""),
                      h6("Normal value: 60-100 beats per min")),
-              column(6,textInput("resp", "Respiration Rate:", ""),
-                     h6("Normal value 12-20 breaths per minute")),
+              column(6,textInput("waist", "Waist (cm):", "")),
                    ),
            fluidRow(
               column(6,textInput("height", "Height (cm):", "")),
@@ -402,11 +401,11 @@ ui <- navbarPage(
              column(10,
                     h4("Scores and BP Monitoring:")),
              column(5,
-                    numericInput("bp_control_score", "BP Control Score:", value = 0, min = 0, max = 5),
+                    numericInput("bp_control_score", "BP Control Score:", value = 0, min = 0, max = 3),
                     numericInput("weight_control_score", "Weight Control Score:", value = 0, min = 0, max = 5)
                     ),
              column(7,
-                    numericInput("self_care_score", "Self-Care Behavior Score:", value = 0, min = 0, max = 5),
+                    numericInput("self_care_score", "Self-Care Behavior Score:", value = 0, min = 0, max = 3),
                     numericInput("home_bp_score", "BP Measurement at Home Score:", value = 0, min = 0, max = 5)
                     ),
              column(6,
@@ -428,10 +427,10 @@ ui <- navbarPage(
                                     "24 weeks" = "24_weeks"),
                         inline = TRUE
            ),
-           # Date and Time Input
+           
+           # Date  Input
            textInput("follow_up_date", label = "Date:", placeholder = "dd-mm-yyyy"),
-           textInput("follow_up_time", label = "Time:", value = format(Sys.time(), "%H:%M")),
-           textInput("follow_up_location", label = "Location:", ""),
+           
            #Lab Tests Section
            h4("Laboratory Tests:"),
            checkboxGroupInput(
@@ -531,6 +530,9 @@ ui <- navbarPage(
 #--------------- Server --------------------
 
 server <- function(input, output, session) {
+  
+  
+#----------- Patient Info Server --------------
   # Auto-incrementing No.
   output$no <- renderText({
     file_path <- "patient_data.csv"
@@ -783,8 +785,11 @@ server <- function(input, output, session) {
   })
 
 #-------------------  Visit Form ----------------------------------
+  
+  # 1. Retrieve Patient Information by HN
   observeEvent(input$check_hn_doc, {  # Use 'check_hn_doc' as the button ID
-    # Path to the CSV file
+    #  Load patient data from CSV
+    
     file_path <- "patient_data.csv"
     
     if (file.exists(file_path)) {
@@ -810,6 +815,49 @@ server <- function(input, output, session) {
     }
   })
   
+  # 2. Calculate BMI
+  output$bmi_text <- renderText({
+    if (input$height != "" && input$weight != "") {
+      tryCatch({
+        height_m <- as.numeric(input$height) / 100  # Convert height to meters
+        weight_kg <- as.numeric(input$weight)
+        bmi <- round(weight_kg / (height_m^2), 1)  # Calculate BMI
+        paste(bmi, "kg/m²")
+      }, error = function(e) {
+        "Invalid input"
+      })
+    } else {
+      ""
+    }
+  })
+  
+  observe({
+    if (input$height != "" && input$weight != "") {
+      tryCatch({
+        height_m <- as.numeric(input$height) / 100  # Convert height to meters
+        weight_kg <- as.numeric(input$weight)
+        bmi <- weight_kg / (height_m^2)  # Calculate BMI
+        
+        # Determine Weight Control Score
+        score <- ifelse(bmi < 24, 3,
+                        ifelse(bmi < 25, 2,
+                               ifelse(bmi < 26, 1, 0)))
+        
+        # Update the Weight Control Score input
+        updateNumericInput(session, "weight_control_score", value = score)
+        
+      }, error = function(e) {
+        # If there's an error, reset the score
+        updateNumericInput(session, "weight_control_score", value = 0)
+      })
+    } else {
+      # Reset the score if inputs are missing
+      updateNumericInput(session, "weight_control_score", value = 0)
+    }
+  })
+  
+  
+  # 3. Handle Medication Dynamically
   # Reactive lists for medication categories
   medication_list_diuretics <- reactiveValues(data = list())
   medication_list_aceis <- reactiveValues(data = list())
@@ -819,6 +867,42 @@ server <- function(input, output, session) {
   medication_list_oad <- reactiveValues(data = list())
   medication_list_statin <- reactiveValues(data = list())
   medication_list_other <- reactiveValues(data = list())
+  
+  # 4. Scores and BP Monitoring
+  
+  # Automatically calculate and update Self-Care Behavior Score
+  observe({
+    # Count the number of selected choices in Medication Adherence
+    adherence_score <- length(input$medication_adherence)
+    
+    # Update the Self-Care Behavior Score numeric input automatically
+    updateNumericInput(session, "self_care_score", value = adherence_score)
+  })
+  
+  # Automatically calculate BP Control Score based on Sys BP
+  observe({
+    bp_sys <- as.numeric(input$bp_sys)
+    
+    # Determine the BP Control Score based on the rules
+    if (is.na(bp_sys)) {
+      score <- 0  # Default to 0 if input is invalid
+    } else if (bp_sys <= 140) {
+      score <- 3
+    } else if (bp_sys >= 141 && bp_sys <= 169) {
+      score <- 2
+    } else if (bp_sys >= 170 && bp_sys <= 179) {
+      score <- 1
+    } else if (bp_sys >= 180) {
+      score <- 0
+    }
+    
+    # Update the BP Control Score in the numericInput
+    updateNumericInput(session, "bp_control_score", value = score)
+  })
+  
+  
+  
+  # 5. Medication
   
   # Add new medications dynamically for each category
   addMedication <- function(category_list, button_id, category_name) {
@@ -882,25 +966,7 @@ server <- function(input, output, session) {
   output$medication_ui_statin <- renderMedicationUI(medication_list_statin, "Statin")
   output$medication_ui_other <- renderMedicationUI(medication_list_other, "Other")
   
-  observeRemoveButtons <- function(category_list) {
-    observe({
-      req(names(category_list$data)) # Ensure there are rows to observe
-      lapply(names(category_list$data), function(id) {
-        observeEvent(input[[paste0("remove_", id)]], {
-          category_list$data[[id]] <- NULL # Remove the row from the reactive list
-        })
-      })
-    })
-  }
-  
-  observeRemoveButtons(medication_list_diuretics)
-  observeRemoveButtons(medication_list_aceis)
-  observeRemoveButtons(medication_list_arbs)
-  observeRemoveButtons(medication_list_ccbs)
-  observeRemoveButtons(medication_list_beta_blockers)
-  observeRemoveButtons(medication_list_oad)
-  observeRemoveButtons(medication_list_statin)
-  observeRemoveButtons(medication_list_other) 
+ 
 
   
 }
