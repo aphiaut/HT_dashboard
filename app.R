@@ -395,7 +395,15 @@ ui <- navbarPage(
                     ))
            ),
            # Diagnosis
-           textAreaInput("diagnosis", "Diagnosis:", "", rows = 10),
+           h4("Diagnosis:"),
+           selectInput("diagnosis", "HT with",
+                       list("DM", "Gout", "CKD", "Thyroid", "DLD",
+                                   "None", "Other"), 
+                       multiple = TRUE ),
+           conditionalPanel(
+             condition = "input.diagnosis.includes('Other')",  # Check if 'Other' is in the array of selected values
+             textAreaInput("other_diagnosis", "Please Specify Diagnosis:", "", rows = 6)
+           ),
            # Evaluate patient Activity
            fluidRow(
              column(10,
