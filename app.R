@@ -40,7 +40,6 @@ ui <- navbarPage(
              textOutput("age_text"),
              textInput("phone", "Phone", ""),
              textInput("phone2", "Phone 2 (optional)", ""),
-             textInput("email", "Email", ""),
              selectInput("gender", "Gender",
                          choices = c("Male", "Female", "Other"))
       ),
@@ -81,10 +80,14 @@ ui <- navbarPage(
              ),
              # Education selection
              selectInput("education", "Education Level",
-                         choices = c("Primary/ปวช.",
-                                     "Secondary/ปวส.", 
-                                     "Bachelor's Degree",
-                                     "Master's Degree or Higher", 
+                         choices = c("ประถม",
+                                     "ม.ต้น", 
+                                     "ม.ปลาย",
+                                     "ปวช.",
+                                     "ปวส.",
+                                     "ปริญญาตรี",
+                                     "ปริญญาโท", 
+                                     "ปริญญาเอก",
                                      "Other")),
              # Conditional input for "Other" Education
              conditionalPanel(
@@ -104,6 +107,7 @@ ui <- navbarPage(
                                      "รับราชการบำนาญ",
                                      "นักศึกษา",
                                      "พนักงานมหาวิทยาลัย",
+                                     "รัฐวิสหกิจ",
                                      "Other")),
              # Conditional input for "Other" Occupation
              conditionalPanel(
@@ -113,14 +117,14 @@ ui <- navbarPage(
              
       ),
       column(4,
-             selectInput("medcon", "Medical condition",
+             selectInput("comobid", "Comobid",
                          choices = c("DM", "HT", "Gout",
                                      "CKD", "Thyroid", "DLD",
                                      "DM HT", "DM DLD", "DM HT DLD",
                                      "HT Gout", "None", "Other")),
              conditionalPanel(
-               condition = "input.medcon == 'Other'",
-               textInput("other_medcon", "Please Specify Medical condition:", "")
+               condition = "input.comobid == 'Other'",
+               textInput("other_comobid", "Please Specify Comobid:", "")
              ),
              textInput("ekg", label = "Latest EKG", placeholder = "dd-mm-yyyy"),
              textInput("echo", label = "Latest Echo", placeholder = "dd-mm-yyyy"),
@@ -136,46 +140,23 @@ ui <- navbarPage(
              ),
              selectInput("hbpm", "Home Blood Pressure Mornitor",
                          choices = c("Have", "Don't Have")),
-             selectInput("medexpenditure", "Medical expenditure",
+             selectInput("medfinancial", "Medical Financial",
                          choices = c("จ่ายตรง",
                                      "จ่ายเอง", 
                                      "บัตรทอง",
                                      "เบิกได้", 
                                      "ประกันสังคม",
                                      "ประกันชีวิต")),
-             selectInput("pateintstatus", "Patient status",
-                         choices = c("Continuing Treatment"= "continuing_treatment",
-                                     "Loss to Follow-Up" = "loss_fu",
-                                     "Consult OPD" = "consult_opd",
-                                     "Refer to Hospital" = "refer_hospital")
-                         ),
-             conditionalPanel(
-               condition = "input.pateintstatus == 'refer_hospital'",
-               textInput("refer_hospital_details", "Specify Hospital Details:", "")
-             ),
-             conditionalPanel(
-               condition = "input.pateintstatus == 'consult_opd'",
-               textInput("consult_opd_details", "Specify OPD Details:", "")
-             ),     
-             selectInput("complication", "Complication",
-                         choices = c("Stroke", "Cardio", "Kidney",
-                                     "Eye", "Other")),
-             conditionalPanel(
-               condition = "input.complication == 'Other'",
-               textInput("other_complication", "Please Specify Complication:", "")
-             ),
-             selectInput("precriptionadjust", "Prescription Adjusted",
-                         choices = c("Off Medication", "Decrease", "Add",
-                                     "Same", "Change : Complication")),
+             textInput("daystart", label = "First day", placeholder = "dd-mm-yyyy"),
              hr(),
              actionButton("save", "Save Data"), # Save button
              verbatimTextOutput("save_status")  # Save status
       )
     )
   ),
-#--------------------------- Doctor Form UI -------------------
+#--------------------------- Visit Form UI -------------------
   tabPanel(
-    "Doctor Form",
+    "Visit Form",
     fluidRow(
       column(4,
              textInput("hn_doc", "Patient Code (HN):", ""),  # User-provided HN
@@ -190,6 +171,20 @@ ui <- navbarPage(
              textInput("visit_date", label = "Date", placeholder = "dd-mm-yyyy"), # Provided date
              textAreaInput("patient_note", "Patient Notes:", "", rows = 10, 
                            placeholder = "Are there any specific questions or concerns you want to discuss with the doctor?"),
+             selectInput("pateintstatus", "Patient status",
+                         choices = c("Continuing Treatment"= "continuing_treatment",
+                                     "Loss to Follow-Up" = "loss_fu",
+                                     "Consult OPD" = "consult_opd",
+                                     "Refer to Hospital" = "refer_hospital")
+             ),
+             conditionalPanel(
+               condition = "input.pateintstatus == 'refer_hospital'",
+               textInput("refer_hospital_details", "Specify Hospital Details:", "")
+             ),
+             conditionalPanel(
+               condition = "input.pateintstatus == 'consult_opd'",
+               textInput("consult_opd_details", "Specify OPD Details:", "")
+             ),     
         
       ),
       column(4,
@@ -234,8 +229,8 @@ ui <- navbarPage(
              
              # Question 6
              radioButtons(
-               inputId = "breath_shortness",
-               label = "6. Shortness of Breath",
+               inputId = "dypsnea",
+               label = "6. Dypsnea",
                choices = c("No" = "no", "Occasionally" = "sometimes", "Often" = "often"),
                inline = TRUE
              ),
@@ -279,12 +274,19 @@ ui <- navbarPage(
     fluidRow(
     column(4,
            #CC and PI Section
-           h4("CC and PI"),
            radioButtons("cc", "CC:", 
                         choices = c("Follow-up Visit" = "follow_up", 
                                     "Early Visit" = "early_visit", 
                                     "Late Visit" = "late_visit"), 
                         inline = TRUE),
+           conditionalPanel(
+             condition = "input.cc == 'early_visit'",
+             textAreaInput("cc_early_visit", "Please Specify Reason:", "", rows = 3)
+           ),
+           conditionalPanel(
+             condition = "input.cc == 'late_visit'",
+             textAreaInput("cc_late_visit", "Please Specify Reason:", "", rows = 3)
+           ),
            radioButtons(
              inputId = "pi",
              label = "PI:",
@@ -298,7 +300,7 @@ ui <- navbarPage(
              condition = "input.pi == 'abnormal'",
              textAreaInput("pi_abnormal", "Please Specify Symptoms:", "", rows = 3)
            ),
-           checkboxGroupInput("additional_activities", "Pateint Additional Activities:", 
+           checkboxGroupInput("medication_adherance", "Medication Adherance:", 
                               choices = c("Always take medicines" = "alway_take_medicine", 
                                           "Control salty taste" = "salty_control",
                                           "Exercise" = "excercise"), 
@@ -436,48 +438,66 @@ ui <- navbarPage(
              inputId = "lab_tests",
              label = NULL,
              choices = c(
-               "UA (Urinalysis)" = "ua",
-               "BUN, Cr (Blood Urea Nitrogen, Creatinine)" = "bun_cr",
-               "HbA1C" = "hba1c",
-               "FBS (Fasting Blood Sugar)" = "fbs",
-               "Lipid Profiles" = "lipid_profiles",
-               "CXR (Chest X-ray)" = "cxr",
-               "ECG (Electrocardiogram)" = "ecg",
-               "Other" = "other"
+               "UA (Urinalysis)" = "ua_test",
+               "BUN (Blood Urea Nitrogen)" = "bun_test",
+               "Cr (Creatinine)" = "cr_test",
+               "HbA1C" = "hba1c_test",
+               "FBS (Fasting Blood Sugar)" = "fbs_test",
+               "Lipid Profiles" = "lipid_profiles_test",
+               "CXR (Chest X-ray)" = "cxr_test",
+               "ECG (Electrocardiogram)" = "ecg_test",
+               "Other" = "other_test"
              ),
              inline = FALSE
            ),
            conditionalPanel(
-             condition = "input.lab_tests == 'other'",
+             condition = "input.lab_tests == 'other_test'",
              textInput("other_lab_test", "Specify Other Tests:", "",)
-           ))
+           ),
+           selectInput("complication", "Complication",
+                       choices = c("Stroke", "Cardio", "Kidney",
+                                   "Eye", "Other")),
+           conditionalPanel(
+             condition = "input.complication == 'Other'",
+             textInput("other_complication", "Please Specify Complication:", "")
+           ),
+           )
            
     ),
     hr(),
     fluidRow(
       column(6,
              h3("Home Medication"),
+             column(10, 
+                    selectInput("precriptionadjust", "Prescription Adjusted",
+                         choices = c("Off Medication", "Decrease", "Add",
+                                     "Same", "Change : Complication"))),
              fluidRow(
+               column(12,
                h4("Diuretics :"),
                column(6, uiOutput("medication_ui_diuretics")),
-               column(6, actionButton("add_medication_diuretics", "Add Diuretics"))
-             ),
+               column(6, actionButton("add_medication_diuretics", "Add Diuretics")),
+               column(4, uiOutput("remove_ui_diuretics"))
+             )),
              fluidRow(
+               column(12,
                h4("ACEIs :"),
                column(6, uiOutput("medication_ui_aceis")),
                column(6, actionButton("add_medication_aceis", "Add ACEIs"))
-             ),
+             )),
              fluidRow(
+               column(12,
                h4("ARBs :"),
                column(6, uiOutput("medication_ui_arbs")),
                column(6, actionButton("add_medication_arbs", "Add ARBs"))
-             ),
+             )),
              fluidRow(
+               column(12,
                h4("CCBs :"),
                column(6, uiOutput("medication_ui_ccbs")),
                column(6, actionButton("add_medication_ccbs", "Add CCBs"))
              )
-             ),
+             )),
       column(6,
              h3(" "),
              fluidRow(
@@ -486,9 +506,9 @@ ui <- navbarPage(
                column(6, actionButton("add_medication_beta_blockers", "Add Beta blockers"))
              ),
              fluidRow(
-               h4("OAD :"),
+               h4("DM :"),
                column(6, uiOutput("medication_ui_oad")),
-               column(6, actionButton("add_medication_oad", "Add OAD"))
+               column(6, actionButton("add_medication_oad", "Add DM"))
              ),
              fluidRow(
                h4("Statin :"),
@@ -522,6 +542,9 @@ server <- function(input, output, session) {
     }
   })
   
+  
+
+  
   # Automatically calculate and display age when Date of Birth is selected
   output$age_text <- renderText({
     if (is.null(input$dob) || input$dob == "") {
@@ -530,7 +553,7 @@ server <- function(input, output, session) {
     
     tryCatch({
       # Attempt to parse the input as a date in either dd-mm-yyyy or dd/mm/yyyy format
-      dob_input <- as.Date(input$dob, tryFormats = c("%d-%m-%Y", "%d/%m/%Y"))
+      dob_input <- as.Date(input$dob, tryFormats = c("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"))
       
       if (is.na(dob_input)) {
         return("Invalid date format. Please use dd-mm-yyyy or dd/mm/yyyy.")
@@ -572,36 +595,53 @@ server <- function(input, output, session) {
   # Check if HN exists in the file and populate the fields
   observeEvent(input$check_hn_register, {
     file_path <- "patient_data.csv"
+    
+    # Format the DOB input
+    formatted_dob <- if (!is.null(input$dob) && input$dob != "") {
+      tryCatch({
+        dob_input <- as.Date(input$dob, tryFormats = c("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"))
+        if (!is.na(dob_input)) {
+          format(dob_input, "%d/%m/%Y")  # Convert to dd/mm/yyyy format
+        } else {
+          NA  # Invalid date
+        }
+      }, error = function(e) {
+        NA  # Handle errors in date parsing
+      })
+    } else {
+      NA  # Empty DOB
+    }
+    
     if (file.exists(file_path)) {
-      all_data <- read.csv(file_path)
+      all_data <- read.csv(file_path, stringsAsFactors = FALSE)
+      # Explicitly parse the DOB column to ensure it's in the correct date format
+      all_data$dob <- as.Date(all_data$dob, format = "%d/%m/%Y")
+      
       hn_to_search <- toupper(input$hn_register)  # Convert input HN to uppercase for search
       
-      result <- all_data %>% filter(HN == hn_to_search)
+      result <- all_data %>% filter(hn == hn_to_search)
       
       if (nrow(result) > 0) {
-        updateSelectInput(session, "titles", selected = result$Titles[1])
-        updateTextInput(session, "name", value = result$Name[1])
-        updateTextInput(session, "email", value = result$Email[1])
-        updateDateInput(session, "dob", value = result$DateOfBirth[1])
-        updateTextInput(session, "phone", value = result$Phone[1])
-        updateTextInput(session, "phone2", value = result$Phone2[1])
-        updateSelectInput(session, "gender", selected = result$Gender[1])
-        updateTextInput(session, "address", value = result$Address[1])
-        updateSelectInput(session, "province", selected = result$Province[1])
-        updateSelectInput(session, "amphoe", selected = result$Amphoe[1])
-        updateSelectInput(session, "education", selected = result$Education[1])
-        updateSelectInput(session, "occupation", selected = result$Occupation[1])
-        updateTextInput(session, "medcon", value = result$MedicalCondition[1]) 
-        updateTextInput(session, "ekg", value = result$EKG[1])                
-        updateTextInput(session, "echo", value = result$Echo[1])              
-        updateTextInput(session, "eye", value = result$EyeExamination[1])     
-        updateTextAreaInput(session, "drugallergy", value = result$DrugAllergy[1]) 
-        updateSelectInput(session, "caregiver", selected = result$Caregiver[1])
-        updateSelectInput(session, "hbpm", selected = result$HBPM[1])
-        updateSelectInput(session, "medexpenditure", selected = result$MedicalExpenditure[1])
-        updateSelectInput(session, "pateintstatus", selected = result$PateintStatus[1])
-        updateSelectInput(session, "complication", selected = result$Complication[1])
-        updateSelectInput(session, "precriptionadjust", value = result$PrecriptionAdjust[1])
+        updateSelectInput(session, "titles", selected = result$titles[1])
+        updateTextInput(session, "name", value = result$name[1])
+        updateDateInput(session, "dob", value = result$dob[1])
+        updateTextInput(session, "phone", value = result$phone[1])
+        updateTextInput(session, "phone2", value = result$phone2[1])
+        updateSelectInput(session, "gender", selected = result$gender[1])
+        updateTextInput(session, "address", value = result$address[1])
+        updateSelectInput(session, "province", selected = result$province[1])
+        updateSelectInput(session, "amphoe", selected = result$amphoe[1])
+        updateSelectInput(session, "education", selected = result$education[1])
+        updateSelectInput(session, "occupation", selected = result$occupation[1])
+        updateTextInput(session, "comobid", value = result$comobid[1]) 
+        updateTextInput(session, "ekg", value = result$ekg[1])                
+        updateTextInput(session, "echo", value = result$echo[1])              
+        updateTextInput(session, "eye", value = result$eye[1])     
+        updateTextAreaInput(session, "drugallergy", value = result$drugallergy[1]) 
+        updateSelectInput(session, "caregiver", selected = result$caregiver[1])
+        updateSelectInput(session, "hbpm", selected = result$hbpm[1])
+        updateSelectInput(session, "medfinancial", selected = result$medfinancial[1])
+        updateTextInput(session, "daystart", value = result$daystart[1])
         output$hn_status <- renderText("Patient data loaded successfully.")
       } else {
         output$hn_status <- renderText("No patient found with this HN.")
@@ -615,10 +655,26 @@ server <- function(input, output, session) {
   observeEvent(input$save, {
     file_path <- "patient_data.csv"
     
+    # Format the DOB input
+    formatted_dob <- if (!is.null(input$dob) && input$dob != "") {
+      tryCatch({
+        dob_input <- as.Date(input$dob, tryFormats = c("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"))
+        if (!is.na(dob_input)) {
+          format(dob_input, "%d/%m/%Y")  # Convert to dd/mm/yyyy format
+        } else {
+          NA  # Invalid date
+        }
+      }, error = function(e) {
+        NA  # Handle errors in date parsing
+      })
+    } else {
+      NA  # Empty DOB
+    }
+    
     # Calculate Age for saving
     calculated_age <- if (!is.null(input$dob) && input$dob != "") {
       tryCatch({
-        dob_input <- as.Date(input$dob, tryFormats = c("%d-%m-%Y", "%d/%m/%Y"))
+        dob_input <- as.Date(input$dob, tryFormats = c("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"))
         if (!is.na(dob_input)) {
           gregorian_dob <- dob_input - years(543)  # Adjust for Buddhist Era
           today <- Sys.Date()
@@ -636,6 +692,8 @@ server <- function(input, output, session) {
     if (file.exists(file_path)) {
       # Load existing data
       all_data <- read.csv(file_path)
+      all_data$phone <- as.character(all_data$phone)
+      all_data$phone2 <- as.character(all_data$phone2)
       
       # Check if HN exists
       hn_to_save <- toupper(input$hn_register)  # Convert HN to uppercase for saving
@@ -653,40 +711,35 @@ server <- function(input, output, session) {
       titles <- if (input$titles == "Other") input$other_titles else input$titles
       education <- if (input$education == "Other") input$other_education else input$education
       occupation <- if (input$occupation == "Other") input$other_occupation else input$occupation
-      medcon <- if (input$medcon == "Other") input$other_medcon else input$medcon
+      comobid <- if (input$comobid == "Other") input$other_comobid else input$comobid
       caregiver <- if (input$caregiver == "Other") input$other_caregiver else input$caregiver
-      complication <- if (input$complication == "Other") input$other_complication else input$complication
+     
       
       
       user_data <- data.frame(
-        No = nrow(all_data) + 1,  # Maintain sequential No.
-        HN = hn_to_save,         # Save HN in uppercase
-        Titles = input$titles,
-        Name = input$name,
-        Email = input$email,
-        DateOfBirth = input$dob,
-        Phone = input$phone,
-        Phone2 = input$phone2,
-        Gender = input$gender,
-        Age = calculated_age,
-        Ethnicity = input$ethnicity,
-        Nationality = input$nationality,
-        Address = input$address,
-        Province = input$province,
-        Amphoe = input$amphoe,
-        Education = input$education,
-        Occupation = input$occupation,
-        MedicalCondition = input$medcon,
-        EKG = input$ekg,
-        Echo = input$echo,
-        EyeExamination = input$eye,
-        DrugAllergy = input$drugallergy,
-        Caregiver = input$caregiver,
-        HBPM = input$hbpm,
-        MedicalExpenditure = input$medexpenditure,
-        PateintStatus = input$pateintstatus,
-        Complication = input$complication,
-        PrecriptionAdjust = input$precriptionadjust,
+        no = nrow(all_data) + 1,  # Maintain sequential No.
+        hn = hn_to_save,         # Save HN in uppercase
+        titles = as.character(input$titles),
+        name = as.character(input$name),
+        dob = formatted_dob,
+        phone = as.character(input$phone),
+        phone2 = as.character(input$phone2),
+        gender = as.character(input$gender),
+        age = calculated_age,
+        address = as.character(input$address),
+        province = as.character(input$province),
+        amphoe = as.character(input$amphoe),
+        education = as.character(input$education),
+        occupation = as.character(input$occupation),
+        comobid = as.character(input$comobid),
+        ekg = as.character(input$ekg),
+        echo = as.character(input$echo),
+        eye = as.character(input$eye),
+        drugallergy = as.character(input$drugallergy),
+        caregiver = as.character(input$caregiver),
+        hbpm = as.character(input$hbpm),
+        medfinancial = input$medfinancial,
+        daystart = as.character(input$daystart),
         stringsAsFactors = FALSE
       )
       
@@ -699,34 +752,29 @@ server <- function(input, output, session) {
     } else {
       # If no file exists, save the data as a new file
       user_data <- data.frame(
-        No = 1,
-        HN = toupper(input$hn_register),  # Convert HN to uppercase for saving
-        Titles = input$titles,
-        Name = input$name,
-        Email = input$email,
-        DateOfBirth = input$dob,
-        Phone = input$phone,
-        Phone2 = input$phone2,
-        Gender = input$gender,
-        Age = calculated_age,
-        Ethnicity = input$ethnicity,
-        Nationality = input$nationality,
-        Address = input$address,
-        Province = input$province,
-        Amphoe = input$amphoe,
-        Education = input$education,
-        Occupation = input$occupation,
-        MedicalCondition = input$medcon,
-        EKG = input$ekg,
-        Echo = input$echo,
-        EyeExamination = input$eye,
-        DrugAllergy = input$drugallergy,
-        Caregiver = input$caregiver,
-        HBPM = input$hbpm,
-        MedicalExpenditure = input$medexpenditure,
-        PateintStatus = input$pateintstatus,
-        Complication = input$complication,
-        PrecriptionAdjust = input$precriptionadjust,
+        no = 1,
+        hn = toupper(input$hn_register),  # Convert HN to uppercase for saving
+        titles = as.character(input$titles),
+        name = as.character(input$name),
+        dob = formatted_dob,
+        phone = as.character(input$phone),
+        phone2 = as.character(input$phone2),
+        gender = as.character(input$gender),
+        age = calculated_age,
+        address = as.character(input$address),
+        province = as.character(input$province),
+        amphoe = as.character(input$amphoe),
+        education = as.character(input$education),
+        occupation = as.character(input$occupation),
+        comobid = as.character(input$comobid),
+        ekg = as.character(input$ekg),
+        echo = as.character(input$echo),
+        eye = as.character(input$eye),
+        drugallergy = as.character(input$drugallergy),
+        caregiver = as.character(input$caregiver),
+        hbpm = as.character(input$hbpm),
+        medfinancial = input$medfinancial,
+        daystart = as.character(input$daystart),
         stringsAsFactors = FALSE
       )
       write.csv(user_data, file_path, row.names = FALSE)
@@ -734,7 +782,7 @@ server <- function(input, output, session) {
     }
   })
 
-#-------------------  Doctor Form ----------------------------------
+#-------------------  Visit Form ----------------------------------
   observeEvent(input$check_hn_doc, {  # Use 'check_hn_doc' as the button ID
     # Path to the CSV file
     file_path <- "patient_data.csv"
@@ -805,7 +853,7 @@ server <- function(input, output, session) {
                              "CCBs" = c("Amlodipine (5)", "Amlodipine (10)", "Madiplot (20)", "Diltiazem (30)", "Diltiazem (60)"),
                              "Beta Blockers" = c("Atenolol (25)", "Atenolol (50)", "Atenolol (100)",
                                                  "Carvedilol (6.25)", "Carvedilol (12.5)", "Carvedilol (25)",
-                                                 "Metoprolol (100)", "Propranolol (40)"),
+                                                 "Metoprolol (100)", "Propranolol (10)", "Propranolol (40)"),
                              "OAD" = c("Metformin (500)", "Metformin (850)", "Metformin (1000)",
                                        "Glipizide (5)"),
                              "Statin" = c("Atorvastatin (20)", "Atorvastatin (40)",
@@ -834,7 +882,25 @@ server <- function(input, output, session) {
   output$medication_ui_statin <- renderMedicationUI(medication_list_statin, "Statin")
   output$medication_ui_other <- renderMedicationUI(medication_list_other, "Other")
   
+  observeRemoveButtons <- function(category_list) {
+    observe({
+      req(names(category_list$data)) # Ensure there are rows to observe
+      lapply(names(category_list$data), function(id) {
+        observeEvent(input[[paste0("remove_", id)]], {
+          category_list$data[[id]] <- NULL # Remove the row from the reactive list
+        })
+      })
+    })
+  }
   
+  observeRemoveButtons(medication_list_diuretics)
+  observeRemoveButtons(medication_list_aceis)
+  observeRemoveButtons(medication_list_arbs)
+  observeRemoveButtons(medication_list_ccbs)
+  observeRemoveButtons(medication_list_beta_blockers)
+  observeRemoveButtons(medication_list_oad)
+  observeRemoveButtons(medication_list_statin)
+  observeRemoveButtons(medication_list_other) 
 
   
 }
