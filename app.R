@@ -167,7 +167,18 @@ ui <- navbarPage(
                textOutput("patient_name", inline = TRUE)                     # Inline output
              ),
              tags$hr(),
-             textInput("num_visit", "Number of Visits:"), # User-provided Number of visits
+            
+             #textInput("num_visit", "Number of Visits:"), # User-provided Number of visits
+             h4("Number of Visits:"),
+             fluidRow(
+               column(4, 
+                      verbatimTextOutput("num_visit"),)
+             ),
+             
+             actionButton("prev_visit", "Previous Visit"),
+             actionButton("next_visit", "Next Visit"),
+             actionButton("add_visit", "Add Visit"),
+             
              textInput("visit_date", label = "Date", placeholder = "dd-mm-yyyy"), # Provided date
              textAreaInput("patient_note", "Patient Notes:", "", rows = 10, 
                            placeholder = "Are there any specific questions or concerns you want to discuss with the doctor?"),
@@ -530,6 +541,9 @@ ui <- navbarPage(
       )
           
              
+    ),
+    fluidRow(
+      actionButton("save_visit", "Save Visit")
     )
   )
 )
@@ -795,33 +809,41 @@ server <- function(input, output, session) {
 #-------------------  Visit Form ----------------------------------
   
   # 1. Retrieve Patient Information by HN
-  observeEvent(input$check_hn_doc, {  # Use 'check_hn_doc' as the button ID
-    #  Load patient data from CSV
-    
+  observeEvent(input$check_hn_doc, {  
+    # File path to patient data
     file_path <- "patient_data.csv"
     
-    if (file.exists(file_path)) {
-      # Read the data
-      all_data <- read.csv(file_path, stringsAsFactors = FALSE)
-      
-      # Convert input HN to uppercase for consistent comparison
-      hn_to_search <- toupper(input$hn_doc)
-      
-      # Search for the HN in the dataset
-      result <- all_data[all_data$HN == hn_to_search, ]
-      
-      # Display the patient's name if found
-      if (nrow(result) > 0) {
-        output$patient_name <- renderText({
-          paste(result$Name[1]) # Assuming the column storing the name is 'Name'
-        })
-      } else {
-        output$patient_name <- renderText("Patient not found.")
-      }
+    # Check if the file exists
+    if (!file.exists(file_path)) {
+      output$patient_name <- renderText("No data file exists. Please upload the file.")
+      return()
+    }
+    
+    # Load patient data
+    all_data <- read.csv(file_path, stringsAsFactors = FALSE)
+    
+    # Ensure required columns exist
+    required_columns <- c("hn", "name")  # Adjusted to lowercase
+    if (!all(required_columns %in% colnames(all_data))) {
+      output$patient_name <- renderText("Invalid file format. Ensure columns 'hn' and 'name' are present.")
+      return()
+    }
+    
+    # Normalize HN input and dataset for case-insensitivity
+    hn_to_search <- toupper(input$hn_doc)
+    all_data$hn <- toupper(all_data$hn)  # Convert 'hn' column to uppercase
+    
+    # Search for the HN in the dataset
+    result <- all_data[all_data$hn == hn_to_search, ]
+    
+    # Safely check if any rows are found
+    if (nrow(result) > 0) {
+      output$patient_name <- renderText(result$name[1])  # Display patient name
     } else {
-      output$patient_name <- renderText("No data file exists.")
+      output$patient_name <- renderText("Patient not found.")
     }
   })
+  
   
   # 2. Calculate BMI
   output$bmi_text <- renderText({
@@ -1010,7 +1032,200 @@ server <- function(input, output, session) {
   output$medication_ui_statin <- renderMedicationUI(medication_list_statin, "Statin")
   output$medication_ui_other <- renderMedicationUI(medication_list_other, "Other")
  
+  
+  observe({
+    visits <- filtered_visits()
+    num_visits <- nrow(visits)
+    output$num_visit <- renderText({
+      paste0(num_visits)  # Render the number of visits as plain text
+    })
+  })
+  
+  
+  
+  # Paths to data files
+  patient_data_file <- "patient_data.csv"
+  visit_data_file <- "visit_data.csv"
+  
+  # Reactive values to store filtered visits and the current visit index
+  filtered_visits <- reactiveVal(data.frame())
+  current_visit_index <- reactiveVal(1)
+  
+  # Load and initialize patient/visit data
+  observeEvent(input$check_hn_doc, {
+    if (!file.exists(patient_data_file) || !file.exists(visit_data_file)) {
+      showNotification("Required data files are missing.", type = "error")
+      return()
+    }
+    
+    # Load patient data
+    patient_data <- read.csv(patient_data_file, stringsAsFactors = FALSE)
+    patient_data$hn <- toupper(patient_data$hn)
+    hn_to_search <- toupper(input$hn_doc)
+    
+    # Fetch patient name
+    patient_name <- patient_data$name[patient_data$hn == hn_to_search]
+    if (length(patient_name) == 0) {
+      output$patient_name <- renderText("Patient not found.")
+      output$num_visit <- renderText("1")  # Default to 1 if no visits exist
+      filtered_visits(data.frame())
+      return()
+    } else {
+      output$patient_name <- renderText(patient_name[1])
+    }
+    
+    # Load visit data
+    all_visits <- read.csv(visit_data_file, stringsAsFactors = FALSE)
+    all_visits$hn <- toupper(all_visits$hn)
+    visits <- all_visits[all_visits$hn == hn_to_search, ]
+    
+    # Update filtered visits and initialize index
+    filtered_visits(visits)
+    current_visit_index(1)
+    
+    # Update the visit count
+    if (nrow(visits) > 0) {
+      output$num_visit <- renderText(nrow(visits))  # Show actual visit count
+      display_visit_data(visits[1, ])
+    } else {
+      output$num_visit <- renderText("1")  # Default to 1 for new patient visits
+      output$visit_data <- renderText("No visit records found. Start filling visit details.")
+    }
+  })
+  
+  # Handle the "Add Visit" button
+  observeEvent(input$add_visit, {
+    visits <- filtered_visits()
+    num_visits <- nrow(visits) + 1  # Increment visit count
+    
+    # Update the current visit index and filtered visits
+    current_visit_index(num_visits)
+    output$num_visit <- renderText(num_visits)  # Update visit count display
+    
+    # Clear the form for the new visit
+    updateTextInput(session, "visit_date", value = "")
+    updateTextAreaInput(session, "patient_note", value = "")
+    # Add other fields to clear here if necessary
+    
+    # Notify user
+    showNotification("New visit added. Please fill in the details.", type = "message")
+  })
+  
+  # Function to display visit data
+  display_visit_data <- function(visit) {
+    output$visit_data <- renderText({
+      paste0(
+        "Visit Date: ", visit$visit_date, "\n",
+        "Patient Note: ", visit$patient_note, "\n",
+        "Status: ", visit$patient_status, "\n",
+        "Diuretics: ", visit$diuretics, "\n",
+        "ACEIs: ", visit$aceis, "\n",
+        "ARBs: ", visit$arbs, "\n",
+        "CCBs: ", visit$ccbs, "\n",
+        "Beta Blockers: ", visit$beta_blockers, "\n",
+        "OAD: ", visit$oad, "\n",
+        "Statin: ", visit$statin, "\n",
+        "Other Medications: ", visit$other_medications
+      )
+    })
+  }
+  
+  # Navigate to the previous visit
+  observeEvent(input$prev_visit, {
+    visits <- filtered_visits()
+    index <- current_visit_index()
+    
+    if (index > 1) {
+      current_visit_index(index - 1)
+      if (index - 1 <= nrow(visits)) {
+        display_visit_data(visits[index - 1, ])
+      } else {
+        output$visit_data <- renderText("No information for this visit. Start filling details.")
+      }
+    } else {
+      showNotification("This is the first visit.", type = "warning")
+    }
+  })
+  
+  # Navigate to the next visit
+  observeEvent(input$next_visit, {
+    visits <- filtered_visits()
+    index <- current_visit_index()
+    
+    if (index < nrow(visits) + 1) {
+      current_visit_index(index + 1)
+      if (index + 1 <= nrow(visits)) {
+        display_visit_data(visits[index + 1, ])
+      } else {
+        output$visit_data <- renderText("No information for this visit. Start filling details.")
+      }
+    } else {
+      showNotification("This is the last visit.", type = "warning")
+    }
+  })
+  
+  # Save the current visit data
+  observeEvent(input$save_visit, {
+    if (is.null(input$hn_doc) || input$hn_doc == "" || is.null(input$visit_date) || input$visit_date == "") {
+      showNotification("Please provide both Patient Code (HN) and Date before saving.", type = "error")
+      return()
+    }
+    
+    # Load patient data
+    patient_data <- read.csv(patient_data_file, stringsAsFactors = FALSE)
+    patient_data$hn <- toupper(patient_data$hn)
+    hn_to_search <- toupper(input$hn_doc)
+    
+    # Fetch patient name
+    patient_name <- patient_data$name[patient_data$hn == hn_to_search]
+    if (length(patient_name) == 0) {
+      showNotification("Patient name not found. Ensure the HN exists in the patient data file.", type = "error")
+      return()
+    }
+    
+    # Create a new row with visit data
+    new_data <- data.frame(
+      hn = hn_to_search,
+      name = patient_name[1],
+      visit_date = input$visit_date,
+      patient_note = input$patient_note,
+      patient_status = input$pateintstatus,
+      refer_hospital_details = ifelse(input$pateintstatus == "refer_hospital", input$refer_hospital_details, ""),
+      consult_opd_details = ifelse(input$pateintstatus == "consult_opd", input$consult_opd_details, ""),
+      chest_tightness = input$chest_tightness,
+      nervous_system = input$nervous_system,
+      urinal_abnormal = input$urinal_abnormal,
+      headache = input$headache,
+      dizziness = input$dizziness,
+      dypsnea = input$dypsnea,
+      leg_swelling = input$leg_swelling,
+      face_swelling = input$face_swelling,
+      diuretics = "",
+      aceis = "",
+      arbs = "",
+      ccbs = "",
+      beta_blockers = "",
+      oad = "",
+      statin = "",
+      other_medications = "",
+      stringsAsFactors = FALSE
+    )
+    
+    # Append or update the visit data
+    if (file.exists(visit_data_file)) {
+      current_data <- read.csv(visit_data_file, stringsAsFactors = FALSE)
+      updated_data <- rbind(current_data, new_data)
+    } else {
+      updated_data <- new_data
+    }
+    
+    # Write updated data to the file
+    write.csv(updated_data, visit_data_file, row.names = FALSE)
+    showNotification("Visit data saved successfully.", type = "message")
+  })
+  
 
+  
   
 }
 
