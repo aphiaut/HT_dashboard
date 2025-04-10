@@ -159,8 +159,8 @@ ui <- navbarPage(
     "Visit Form",
     fluidRow(
       column(4,
-             textInput("hn_doc", "Patient Code (HN):", ""),  # User-provided HN
-             actionButton("check_hn_doc", "Check HN"),   # Button to check HN
+             textInput("hn_visit", "Patient Code (HN):", ""),  # User-provided HN
+             actionButton("check_hn_visit", "Check HN"),   # Button to check HN
              tags$div(
                tags$h4("Patient Name:",
                        style = "display: inline-block; margin-right: 10px;"), # Inline label
@@ -467,10 +467,6 @@ ui <- navbarPage(
                "Other" = "other_test"
              ),
              inline = FALSE
-           ),
-           conditionalPanel(
-             condition = "input.lab_tests == 'other_test'",
-             textInput("other_lab_test", "Specify Other Tests:", "",)
            ),
            selectInput("complication", "Complication",
                        choices = c("Stroke", "Cardio", "Kidney",
@@ -806,10 +802,10 @@ server <- function(input, output, session) {
     }
   })
 
-#-------------------  Visit Form ----------------------------------
+#-------------------  Visit Form Server  ----------------------------------
   
   # 1. Retrieve Patient Information by HN
-  observeEvent(input$check_hn_doc, {  
+  observeEvent(input$check_hn_visit, {  
     # File path to patient data
     file_path <- "patient_data.csv"
     
@@ -830,7 +826,7 @@ server <- function(input, output, session) {
     }
     
     # Normalize HN input and dataset for case-insensitivity
-    hn_to_search <- toupper(input$hn_doc)
+    hn_to_search <- toupper(input$hn_visit)
     all_data$hn <- toupper(all_data$hn)  # Convert 'hn' column to uppercase
     
     # Search for the HN in the dataset
@@ -921,7 +917,18 @@ server <- function(input, output, session) {
   })
   
   
+  
  # 4. medicine
+  
+  getMedicationList <- function(category_list) {
+    meds <- lapply(names(category_list$data), function(id) {
+      med <- input[[id]]
+      qty <- input[[category_list$data[[id]]]]
+      if (!is.null(med) && !is.null(qty)) paste0(med, " (", qty, ")") else NULL
+    })
+    paste(unlist(meds), collapse = "; ")
+  }
+  
   # Reactive lists for dynamic medications
   medication_list_diuretics <- reactiveValues(data = list())
   medication_list_aceis <- reactiveValues(data = list())
@@ -1052,7 +1059,7 @@ server <- function(input, output, session) {
   current_visit_index <- reactiveVal(1)
   
   # Load and initialize patient/visit data
-  observeEvent(input$check_hn_doc, {
+  observeEvent(input$check_hn_visit, {
     if (!file.exists(patient_data_file) || !file.exists(visit_data_file)) {
       showNotification("Required data files are missing.", type = "error")
       return()
@@ -1061,7 +1068,7 @@ server <- function(input, output, session) {
     # Load patient data
     patient_data <- read.csv(patient_data_file, stringsAsFactors = FALSE)
     patient_data$hn <- toupper(patient_data$hn)
-    hn_to_search <- toupper(input$hn_doc)
+    hn_to_search <- toupper(input$hn_visit)
     
     # Fetch patient name
     patient_name <- patient_data$name[patient_data$hn == hn_to_search]
@@ -1166,7 +1173,7 @@ server <- function(input, output, session) {
   
   # Save the current visit data
   observeEvent(input$save_visit, {
-    if (is.null(input$hn_doc) || input$hn_doc == "" || is.null(input$visit_date) || input$visit_date == "") {
+    if (is.null(input$hn_visit) || input$hn_visit == "" || is.null(input$visit_date) || input$visit_date == "") {
       showNotification("Please provide both Patient Code (HN) and Date before saving.", type = "error")
       return()
     }
@@ -1174,7 +1181,7 @@ server <- function(input, output, session) {
     # Load patient data
     patient_data <- read.csv(patient_data_file, stringsAsFactors = FALSE)
     patient_data$hn <- toupper(patient_data$hn)
-    hn_to_search <- toupper(input$hn_doc)
+    hn_to_search <- toupper(input$hn_visit)
     
     # Fetch patient name
     patient_name <- patient_data$name[patient_data$hn == hn_to_search]
@@ -1192,6 +1199,8 @@ server <- function(input, output, session) {
       patient_status = input$pateintstatus,
       refer_hospital_details = ifelse(input$pateintstatus == "refer_hospital", input$refer_hospital_details, ""),
       consult_opd_details = ifelse(input$pateintstatus == "consult_opd", input$consult_opd_details, ""),
+      
+      #Patient Symptom Checklist:
       chest_tightness = input$chest_tightness,
       nervous_system = input$nervous_system,
       urinal_abnormal = input$urinal_abnormal,
@@ -1200,14 +1209,83 @@ server <- function(input, output, session) {
       dypsnea = input$dypsnea,
       leg_swelling = input$leg_swelling,
       face_swelling = input$face_swelling,
-      diuretics = "",
-      aceis = "",
-      arbs = "",
-      ccbs = "",
-      beta_blockers = "",
-      oad = "",
-      statin = "",
-      other_medications = "",
+      
+      #Lab Results:
+      cr = input$cr,
+      na = input$na,
+      fbs = input$fbs,
+      hba1c = input$hba1c,
+      cho = input$cho,
+      ldl = input$ldl,
+      tg = input$tg,
+      hdl = input$hdl,
+      ast = input$ast,
+      alt = input$alt,
+      
+      #CC
+      cc = input$cc,
+      cc_early_visit = ifelse(input$cc == "early_visit", input$cc_early_visit, ""),
+      cc_late_visit = ifelse(input$cc == "late_visit", input$cc_late_visit, ""),
+      #PI
+      pi = input$pi,
+      pi_abnormal = ifelse(input$pi == "abnormal", input$pi_abnormal, ""),
+      #Medical adherence
+      medication_adherence = paste(input$medication_adherence, collapse = "; "),
+      allergic_history = input$allergic_history,
+      
+      #Blood Pressure/BMI
+      bp_sys = input$bp_sys,
+      bp_dia = input$bp_dia,
+      pulse = input$pulse,
+      waist = input$waist,
+      height = input$height,
+      weight = input$weight,
+      
+      # Physical Examination:
+      heent = input$heent,
+      heent_abnormal = ifelse(input$heent == "abnormal", input$heent_abnormal, ""),
+      heart = input$heart,
+      heart_abnormal = ifelse(input$heart == "abnormal", input$heart_abnormal, ""),
+      lungs = input$lungs,
+      lungs_abnormal = ifelse(input$lungs == "abnormal", input$lungs_abnormal, ""),
+      abd = input$abd,
+      abd_abnormal = ifelse(input$abd == "abnormal", input$abd_abnormal, ""),
+      ext = input$ext,
+      ext_abnormal = ifelse(input$ext == "abnormal", input$ext_abnormal, ""),
+      ns = input$ns,
+      ns_abnormal = ifelse(input$ns == "abnormal", input$ns_abnormal, ""),
+      
+      #diaganosis
+      diagnosis = paste(input$diagnosis, collapse = "; "),
+      other_diagnosis = ifelse("Other" %in% input$diagnosis, input$other_diagnosis, ""),
+      
+      #Score
+      bp_control_score = input$bp_control_score,
+      weight_control_score = input$weight_control_score,
+      self_care_score = input$self_care_score,
+      home_bp_score = input$home_bp_score,
+      hbpm_target = input$hbpm_target,
+      
+      #Follow-up
+      follow_up = input$follow_up,
+      follow_up_date = input$follow_up_date,
+      
+      #Lab test next time
+      lab_tests = paste(input$lab_tests, collapse = "; "),
+      complication = input$complication,
+      other_complication = ifelse(input$complication == "Other", input$other_complication, ""),
+      precriptionadjust = input$precriptionadjust,
+      
+      # add dynamic medication data
+      diuretics = getMedicationList(medication_list_diuretics),
+      aceis = getMedicationList(medication_list_aceis),
+      arbs = getMedicationList(medication_list_arbs),
+      ccbs = getMedicationList(medication_list_ccbs),
+      beta_blockers = getMedicationList(medication_list_beta_blockers),
+      oad = getMedicationList(medication_list_oad),
+      statin = getMedicationList(medication_list_statin),
+      other_medications = getMedicationList(medication_list_other),
+      
       stringsAsFactors = FALSE
     )
     
