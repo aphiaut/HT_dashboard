@@ -172,13 +172,15 @@ ui <- navbarPage(
              h4("Number of Visits:"),
              fluidRow(
                column(4, 
-                      verbatimTextOutput("num_visit"),)
+                      verbatimTextOutput("num_visit")),
+               column(4,
+                      textOutput("visit_position"))
              ),
              
              actionButton("prev_visit", "Previous Visit"),
              actionButton("next_visit", "Next Visit"),
              actionButton("add_visit", "Add Visit"),
-             
+             verbatimTextOutput("visit_data"),
              textInput("visit_date", label = "Date", placeholder = "dd-mm-yyyy"), # Provided date
              textAreaInput("patient_note", "Patient Notes:", "", rows = 10, 
                            placeholder = "Are there any specific questions or concerns you want to discuss with the doctor?"),
@@ -261,9 +263,7 @@ ui <- navbarPage(
                inline = TRUE
              )
              
-             # hr(),
-             # actionButton("submit", "Submit Responses"),
-             # verbatimTextOutput("response")
+            
       ),
       column(4,
              h3("Lab Results:"),
@@ -541,6 +541,36 @@ ui <- navbarPage(
     fluidRow(
       actionButton("save_visit", "Save Visit")
     )
+  ),
+
+#------------------------Patient Dashboard UI -------------------------------
+  tabPanel(
+    "Patient Dashboard",
+    fluidRow(
+      column(4,
+             textInput(inputId = "hn_dashboard", "Patient Code (HN):", ""),  # User-provided HN
+             actionButton("check_hn_dashboard", "Check HN"),   # Button to check HN
+             tags$div(
+               tags$h4("Patient Name:",
+                       style = "display: inline-block; margin-right: 10px;"), # Inline label
+               textOutput("patient_name_dashboard", inline = TRUE)                     # Inline output
+             )
+      ),
+      fluidRow(
+        column(4,
+        plotOutput("bpPlot"),
+        ),
+        column(4,
+               plotlyOutput("pulsePlot"),
+        ),
+        tags$hr()
+      )
+      
+    )
+    
+  ),
+  tabPanel("Clinic Dashboard",
+    
   )
 )
 
@@ -840,6 +870,17 @@ server <- function(input, output, session) {
     }
   })
   
+  output$visit_position <- renderText({
+    visits <- filtered_visits()
+    index <- current_visit_index()
+    total <- nrow(visits)
+    
+    if (total > 0) {
+      paste("Visit", index, "of", total)
+    } else {
+      "No visit records"
+    }
+  })
   
   # 2. Calculate BMI
   output$bmi_text <- renderText({
@@ -1048,7 +1089,50 @@ server <- function(input, output, session) {
     })
   })
   
-  
+  display_visit_data <- function(visit) {
+    output$visit_data <- renderText({
+      paste0(
+        "▶️ Visit Date: ", visit$visit_date, "\n",
+        "📝 Patient Note: ", visit$patient_note, "\n",
+        "📌 Status: ", visit$patient_status, "\n\n",
+        
+        "💊 Medications:\n",
+        "- Diuretics: ", visit$diuretics, "\n",
+        "- ACEIs: ", visit$aceis, "\n",
+        "- ARBs: ", visit$arbs, "\n",
+        "- CCBs: ", visit$ccbs, "\n",
+        "- Beta Blockers: ", visit$beta_blockers, "\n",
+        "- OAD: ", visit$oad, "\n",
+        "- Statin: ", visit$statin, "\n",
+        "- Other Medications: ", visit$other_medications, "\n\n",
+        
+        "🩺 Clinical Info:\n",
+        "- BP: ", visit$bp_sys, "/", visit$bp_dia, " mmHg\n",
+        "- Pulse: ", visit$pulse, " bpm\n",
+        "- Waist: ", visit$waist, " cm\n",
+        "- Height: ", visit$height, " cm\n",
+        "- Weight: ", visit$weight, " kg\n",
+        
+        "📊 Scores:\n",
+        "- BP Control Score: ", visit$bp_control_score, "\n",
+        "- Weight Control Score: ", visit$weight_control_score, "\n",
+        "- Self-Care Behavior Score: ", visit$self_care_score, "\n",
+        "- Home BP Score: ", visit$home_bp_score, "\n\n",
+        
+        "🧪 Lab Results:\n",
+        "- Cr: ", visit$cr, "\n",
+        "- Na: ", visit$na, "\n",
+        "- FBS: ", visit$fbs, "\n",
+        "- HbA1C: ", visit$hba1c, "\n",
+        "- CHO: ", visit$cho, "\n",
+        "- LDL: ", visit$ldl, "\n",
+        "- TG: ", visit$tg, "\n",
+        "- HDL: ", visit$hdl, "\n",
+        "- AST: ", visit$ast, "\n",
+        "- ALT: ", visit$alt, "\n"
+      )
+    })
+  }
   
   # Paths to data files
   patient_data_file <- "patient_data.csv"
@@ -1084,58 +1168,28 @@ server <- function(input, output, session) {
     # Load visit data
     all_visits <- read.csv(visit_data_file, stringsAsFactors = FALSE)
     all_visits$hn <- toupper(all_visits$hn)
+    
+    # Filter visits for this patient
     visits <- all_visits[all_visits$hn == hn_to_search, ]
     
-    # Update filtered visits and initialize index
-    filtered_visits(visits)
-    current_visit_index(1)
+    # Optional: sort by date descending to get the most recent visit first
+    visits <- visits[order(as.Date(visits$visit_date, format = "%d-%m-%Y"), decreasing = TRUE), ]
     
-    # Update the visit count
+    # Store filtered visits and initialize index
+    filtered_visits(visits)
+    
     if (nrow(visits) > 0) {
-      output$num_visit <- renderText(nrow(visits))  # Show actual visit count
-      display_visit_data(visits[1, ])
+      current_visit_index(1)  # start with most recent visit
+      output$num_visit <- renderText(nrow(visits))
+      display_visit_data(visits[1, ])  # show first (most recent)
     } else {
-      output$num_visit <- renderText("1")  # Default to 1 for new patient visits
+      current_visit_index(1)
+      output$num_visit <- renderText("1")
       output$visit_data <- renderText("No visit records found. Start filling visit details.")
     }
   })
   
-  # Handle the "Add Visit" button
-  observeEvent(input$add_visit, {
-    visits <- filtered_visits()
-    num_visits <- nrow(visits) + 1  # Increment visit count
-    
-    # Update the current visit index and filtered visits
-    current_visit_index(num_visits)
-    output$num_visit <- renderText(num_visits)  # Update visit count display
-    
-    # Clear the form for the new visit
-    updateTextInput(session, "visit_date", value = "")
-    updateTextAreaInput(session, "patient_note", value = "")
-    # Add other fields to clear here if necessary
-    
-    # Notify user
-    showNotification("New visit added. Please fill in the details.", type = "message")
-  })
-  
-  # Function to display visit data
-  display_visit_data <- function(visit) {
-    output$visit_data <- renderText({
-      paste0(
-        "Visit Date: ", visit$visit_date, "\n",
-        "Patient Note: ", visit$patient_note, "\n",
-        "Status: ", visit$patient_status, "\n",
-        "Diuretics: ", visit$diuretics, "\n",
-        "ACEIs: ", visit$aceis, "\n",
-        "ARBs: ", visit$arbs, "\n",
-        "CCBs: ", visit$ccbs, "\n",
-        "Beta Blockers: ", visit$beta_blockers, "\n",
-        "OAD: ", visit$oad, "\n",
-        "Statin: ", visit$statin, "\n",
-        "Other Medications: ", visit$other_medications
-      )
-    })
-  }
+
   
   # Navigate to the previous visit
   observeEvent(input$prev_visit, {
@@ -1190,8 +1244,27 @@ server <- function(input, output, session) {
       return()
     }
     
+    # termine visit_number
+    visit_data_file <- "visit_data.csv"
+    
+    if (file.exists(visit_data_file)) {
+      existing_visits <- read.csv(visit_data_file, stringsAsFactors = FALSE)
+      
+      if ("hn" %in% colnames(existing_visits)) {
+        existing_visits$hn <- toupper(existing_visits$hn)
+        visit_number <- existing_visits %>%
+          filter(hn == hn_to_search) %>%
+          nrow() + 1
+      } else {
+        visit_number <- 1
+      }
+    } else {
+      visit_number <- 1
+    }
+    
     # Create a new row with visit data
     new_data <- data.frame(
+      visit_number = visit_number,
       hn = hn_to_search,
       name = patient_name[1],
       visit_date = input$visit_date,
@@ -1302,7 +1375,67 @@ server <- function(input, output, session) {
     showNotification("Visit data saved successfully.", type = "message")
   })
   
-
+  #------------------------Patient Dashboard Server -------------------------------
+  
+  observeEvent(input$check_hn_dashboard, {  
+    # File path to patient data
+    file_path <- "patient_data.csv"
+    
+    # Check if the file exists
+    if (!file.exists(file_path)) {
+      output$patient_name_dashboard <- renderText("No data file exists. Please upload the file.")
+      return()
+    }
+    
+    # Load patient data
+    all_data <- read.csv(file_path, stringsAsFactors = FALSE)
+    
+    # Ensure required columns exist
+    required_columns <- c("hn", "name")  # Adjusted to lowercase
+    if (!all(required_columns %in% colnames(all_data))) {
+      output$patient_name_dashboard <- renderText("Invalid file format. Ensure columns 'hn' and 'name' are present.")
+      return()
+    }
+    
+    # Normalize HN input and dataset for case-insensitivity
+    hn_to_search <- toupper(input$hn_dashboard)
+    all_data$hn <- toupper(all_data$hn)  # Convert 'hn' column to uppercase
+    
+    # Search for the HN in the dataset
+    result <- all_data[all_data$hn == hn_to_search, ]
+    
+    # Safely check if any rows are found
+    if (nrow(result) > 0) {
+      output$patient_name_dashboard <- renderText(result$name[1])  # Display patient name
+    } else {
+      output$patient_name_dashboard <- renderText("Patient not found.")
+    }
+  })
+  
+  
+  output$bpPlot <- renderPlot({
+    
+    visit_patient <- read_csv("visit_data.csv")
+    hn_bp <- input$check_hn_dashboard
+    visit_bp <- visit_patient %>%
+      dplyr::select(hn, visit_date, bp_sys, bp_dia) %>%
+      mutate(visit_date = lubridate::dmy(visit_date),
+             visit_date_display = format(visit_date, "%d %B %Y")) %>%
+      pivot_longer(cols = "bp_sys":"bp_dia",
+                   names_to = "bp_type",
+                   values_to = "bp_value") %>%
+      filter(hn == hn_bp)
+    
+    ggplot(data = visit_bp, 
+           aes(x = visit_date, y = bp_value, colour = bp_type)) +
+      geom_line() +
+      geom_point() +
+      xlab("Date") +
+      ylab("Value") +
+      theme_minimal()
+  }
+    
+  )
   
   
 }
