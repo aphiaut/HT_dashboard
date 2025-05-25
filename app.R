@@ -557,22 +557,21 @@ ui <- navbarPage(
              )
       ),
       fluidRow(
-        column(4,
-        plotOutput("bpPlot"),
+        column(6,
+               plotOutput("bpPlot")
         ),
-        column(4,
-               plotlyOutput("pulsePlot"),
-        ),
-        tags$hr()
+        column(6,
+               plotlyOutput("pulsePlot")
+        )
       )
-      
-    )
-    
-  ),
-  tabPanel("Clinic Dashboard",
-    
-  )
 )
+),
+
+tabPanel("Clinic Dashboard",
+         
+)
+)
+
 
 
 #--------------- Server --------------------
@@ -1377,65 +1376,72 @@ server <- function(input, output, session) {
   
   #------------------------Patient Dashboard Server -------------------------------
   
-  observeEvent(input$check_hn_dashboard, {  
-    # File path to patient data
-    file_path <- "patient_data.csv"
+  visit_data_file <- "visit_data.csv"
+  
+  # Reactive expression to get filtered visit data
+  filtered_visits <- eventReactive(input$check_hn_dashboard, {
+    req(input$hn_dashboard)
+    hn <- toupper(input$hn_dashboard)
     
-    # Check if the file exists
-    if (!file.exists(file_path)) {
-      output$patient_name_dashboard <- renderText("No data file exists. Please upload the file.")
-      return()
-    }
+    if (!file.exists(visit_data_file)) return(NULL)
     
-    # Load patient data
-    all_data <- read.csv(file_path, stringsAsFactors = FALSE)
+    data <- read.csv(visit_data_file, stringsAsFactors = FALSE)
+    data$hn <- toupper(data$hn)
+    data <- data[data$hn == hn, ]
     
-    # Ensure required columns exist
-    required_columns <- c("hn", "name")  # Adjusted to lowercase
-    if (!all(required_columns %in% colnames(all_data))) {
-      output$patient_name_dashboard <- renderText("Invalid file format. Ensure columns 'hn' and 'name' are present.")
-      return()
-    }
+    if (nrow(data) == 0) return(NULL)
     
-    # Normalize HN input and dataset for case-insensitivity
-    hn_to_search <- toupper(input$hn_dashboard)
-    all_data$hn <- toupper(all_data$hn)  # Convert 'hn' column to uppercase
+    # Parse date safely and filter bad rows
+    data$visit_date <- suppressWarnings(lubridate::dmy(data$visit_date))
+    data <- data[!is.na(data$visit_date), ]
     
-    # Search for the HN in the dataset
-    result <- all_data[all_data$hn == hn_to_search, ]
+    # Also ensure numeric columns are clean
+    data$pulse <- suppressWarnings(as.numeric(data$pulse))
+    data$bp_sys <- suppressWarnings(as.numeric(data$bp_sys))
+    data$bp_dia <- suppressWarnings(as.numeric(data$bp_dia))
     
-    # Safely check if any rows are found
-    if (nrow(result) > 0) {
-      output$patient_name_dashboard <- renderText(result$name[1])  # Display patient name
-    } else {
-      output$patient_name_dashboard <- renderText("Patient not found.")
-    }
+    data
   })
   
+  # Show patient name
+  output$patient_name_dashboard <- renderText({
+    data <- filtered_visits()
+    if (is.null(data)) return("Not found")
+    data$name[1]
+  })
   
+  # Plot Blood Pressure
   output$bpPlot <- renderPlot({
+    data <- filtered_visits()
+    req(data)
     
-    visit_patient <- read_csv("visit_data.csv")
-    hn_bp <- input$check_hn_dashboard
-    visit_bp <- visit_patient %>%
-      dplyr::select(hn, visit_date, bp_sys, bp_dia) %>%
-      mutate(visit_date = lubridate::dmy(visit_date),
-             visit_date_display = format(visit_date, "%d %B %Y")) %>%
-      pivot_longer(cols = "bp_sys":"bp_dia",
-                   names_to = "bp_type",
-                   values_to = "bp_value") %>%
-      filter(hn == hn_bp)
+    bp_long <- data %>%
+      select(visit_date, bp_sys, bp_dia) %>%
+      pivot_longer(cols = c(bp_sys, bp_dia), names_to = "bp_type", values_to = "bp_value") %>%
+      mutate(bp_value = as.numeric(bp_value))
     
-    ggplot(data = visit_bp, 
-           aes(x = visit_date, y = bp_value, colour = bp_type)) +
+    ggplot(bp_long, aes(x = visit_date, y = bp_value, color = bp_type)) +
       geom_line() +
       geom_point() +
-      xlab("Date") +
-      ylab("Value") +
+      labs(x = "Date", y = "Blood Pressure (mmHg)", color = "Type") +
       theme_minimal()
-  }
+  })
+  
+  # Plot Pulse with Plotly
+  output$pulsePlot <- renderPlotly({
+    data <- filtered_visits()
+    req(data)
     
-  )
+    data$pulse <- as.numeric(data$pulse)
+    
+    plot_ly(data, x = ~visit_date, y = ~pulse, type = 'scatter', mode = 'lines+markers',
+            text = ~paste("Date:", format(visit_date, "%d %B %Y"),
+                          "<br>Pulse:", pulse),
+            hoverinfo = "text") %>%
+      layout(title = "Pulse Over Time",
+             xaxis = list(title = "Date"),
+             yaxis = list(title = "Pulse (bpm)", range = c(50, 120)))
+  })
   
   
 }
