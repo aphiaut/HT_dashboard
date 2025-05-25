@@ -1,0 +1,49 @@
+---
+title: "Testing visulisation"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+```
+
+
+```{r}
+data <- read_csv("visit_data.csv")
+```
+
+```{r}
+# HN test BA7547
+
+ba7547 <- data %>%
+  filter(hn == "BA7547")
+
+bp_long <- ba7547 %>%
+      select(visit_date, bp_sys, bp_dia) %>%
+      pivot_longer(cols = c(bp_sys, bp_dia), names_to = "bp_type", values_to = "bp_value") %>%
+      mutate(bp_value = as.numeric(bp_value))
+    
+    ggplot(bp_long, aes(x = visit_date, y = bp_value, color = bp_type)) +
+      geom_line() +
+      geom_point() +
+      labs(x = "Date", y = "Blood Pressure (mmHg)", color = "Type") +
+      theme_minimal() 
+
+```
+
+
+```{r}
+data %>%
+    mutate(
+      bp_sys = as.numeric(bp_sys),
+      bp_dia = as.numeric(bp_dia),
+      visit_date = lubridate::dmy(visit_date)
+    ) %>%
+    filter(!is.na(visit_date))
+```
+
+
+

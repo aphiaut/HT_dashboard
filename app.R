@@ -1379,57 +1379,67 @@ server <- function(input, output, session) {
   visit_data_file <- "visit_data.csv"
   
   # Reactive expression to get filtered visit data
-  filtered_visits <- eventReactive(input$check_hn_dashboard, {
+  filtered_visits_patient_dashboard <- eventReactive(input$check_hn_dashboard, {
     req(input$hn_dashboard)
     hn <- toupper(input$hn_dashboard)
     
-    if (!file.exists(visit_data_file)) return(NULL)
+    if (!file.exists("visit_data.csv")) return(NULL)
     
-    data <- read.csv(visit_data_file, stringsAsFactors = FALSE)
+    data <- read.csv("visit_data.csv", stringsAsFactors = FALSE)
     data$hn <- toupper(data$hn)
     data <- data[data$hn == hn, ]
     
     if (nrow(data) == 0) return(NULL)
     
-    # Parse date safely and filter bad rows
     data$visit_date <- suppressWarnings(lubridate::dmy(data$visit_date))
-    data <- data[!is.na(data$visit_date), ]
-    
-    # Also ensure numeric columns are clean
     data$pulse <- suppressWarnings(as.numeric(data$pulse))
     data$bp_sys <- suppressWarnings(as.numeric(data$bp_sys))
     data$bp_dia <- suppressWarnings(as.numeric(data$bp_dia))
+    data <- data[!is.na(data$visit_date), ]
     
     data
   })
   
   # Show patient name
   output$patient_name_dashboard <- renderText({
-    data <- filtered_visits()
+    data <- filtered_visits_patient_dashboard()
     if (is.null(data)) return("Not found")
     data$name[1]
   })
   
   # Plot Blood Pressure
   output$bpPlot <- renderPlot({
-    data <- filtered_visits()
-    req(data)
-    
-    bp_long <- data %>%
-      select(visit_date, bp_sys, bp_dia) %>%
-      pivot_longer(cols = c(bp_sys, bp_dia), names_to = "bp_type", values_to = "bp_value") %>%
-      mutate(bp_value = as.numeric(bp_value))
-    
-    ggplot(bp_long, aes(x = visit_date, y = bp_value, color = bp_type)) +
-      geom_line() +
-      geom_point() +
-      labs(x = "Date", y = "Blood Pressure (mmHg)", color = "Type") +
-      theme_minimal()
-  })
+  data <- filtered_visits_patient_dashboard()
+  req(data)
+
+  # Convert types explicitly
+  data <- data %>%
+    mutate(
+      bp_sys = as.numeric(bp_sys),
+      bp_dia = as.numeric(bp_dia),
+      visit_date = lubridate::dmy(visit_date)
+    ) %>%
+    filter(!is.na(visit_date))
+
+  # Pivot to long format
+  bp_long <- data %>%
+    select(visit_date, bp_sys, bp_dia) %>%
+    pivot_longer(cols = c(bp_sys, bp_dia),
+                 names_to = "bp_type",
+                 values_to = "bp_value") %>%
+    filter(!is.na(bp_value))  # drop NA rows for plotting
+
+  # Render ggplot
+  ggplot(bp_long, aes(x = visit_date, y = bp_value, color = bp_type)) +
+    geom_line() +
+    geom_point(size = 2) +
+    labs(x = "Date", y = "Blood Pressure (mmHg)", color = "Type") +
+    theme_minimal()
+})
   
   # Plot Pulse with Plotly
   output$pulsePlot <- renderPlotly({
-    data <- filtered_visits()
+    data <- data <- filtered_visits_patient_dashboard()
     req(data)
     
     data$pulse <- as.numeric(data$pulse)
