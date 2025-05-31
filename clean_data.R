@@ -10,6 +10,3 @@ dat %>% group_by(hn, visit_date) %>% dplyr::arrange(visit_date, visit_number) ->
 write_csv(dat, "visit_data.csv")
 
 
-dat %>% filter(hn == "BA7547" &
-                 )
-dat
