@@ -556,16 +556,33 @@ ui <- navbarPage(
                textOutput("patient_name_dashboard", inline = TRUE)                     # Inline output
              )
       ),
-      fluidRow(
-        column(6,
-               plotOutput("bpPlot")
+      column(8,
+             tags$div(
+               tags$h4("Patient Name:",
+                       style = "display: inline-block; margin-right: 10px;"), # Inline label
+               textOutput("patient_name_dashboard", inline = TRUE)                     # Inline output
+             )
+      )
+),
+    fluidRow(
+      column(6,
+               plotlyOutput("bpPlot")
         ),
-        column(6,
+      column(6,
                plotlyOutput("pulsePlot")
         )
+      ),
+    fluidRow(
+      column(6,
+             plotlyOutput("bmiPlot")
+      ),
+      column(6,
+             plotlyOutput("waistPlot")
       )
-)
+    )
 ),
+
+#------------------------Patient Dashboard UI -------------------------------
 
 tabPanel("Clinic Dashboard",
          
@@ -1394,19 +1411,19 @@ server <- function(input, output, session) {
   })
   
   # Show patient name
-  output$patient_name_dashboard <- renderText({
-    data <- filtered_visits_patient_dashboard()
-    req(data)
-    
-    if (nrow(data) == 0 || is.null(data$name[1])) {
-      return("Not found")
-    } else {
-      return(data$name[1])
-    }
-  })
+output$patient_name_dashboard <- renderText({
+  data <- filtered_visits_patient_dashboard()
+  req(data)
   
-  # Blood Pressure Plot (after button is pressed)
-  output$bpPlot <- renderPlot({
+  if (nrow(data) == 0 || is.null(data$name[1])) {
+    return("Not found")
+  } else {
+    return(data$name[1])
+  }
+})
+  
+  # Blood Pressure Plot 
+  output$bpPlot <- renderPlotly({
     data <- filtered_visits_patient_dashboard()
     req(data)
     req(nrow(data) > 0)
@@ -1416,16 +1433,125 @@ server <- function(input, output, session) {
       pivot_longer(cols = c(bp_sys, bp_dia),
                    names_to = "bp_type",
                    values_to = "bp_value") %>%
-      filter(!is.na(bp_value))
+      mutate(bp_type = recode(bp_type,
+                              "bp_sys" = "Systolic",
+                              "bp_dia" = "Diastolic")) %>%
+      filter(!is.na(bp_value)) 
     
-    ggplot(bp_long, aes(x = visit_date, y = bp_value, color = bp_type)) +
-      geom_line() +
-      geom_point(size = 2) +
-      labs(x = "Date", y = "Blood Pressure (mmHg)", color = "Type") +
-      theme_minimal()
+    plot_ly(bp_long,
+            x = ~visit_date,
+            y = ~bp_value,
+            color = ~bp_type,
+            type = 'scatter',
+            mode = 'lines+markers',
+            text = ~paste("Date:", format(visit_date, "%d %b %Y"),
+                          "<br>Type:", bp_type,
+                          "<br>Value:", bp_value),
+            hoverinfo = "text") %>%
+      layout(
+        title = "Blood Pressure Over Time",
+        xaxis = list(title = "Visit Date"),
+        yaxis = list(title = "Blood Pressure (mmHg)"),
+        legend = list(
+          orientation = "h",
+          x = 0.5,
+          y = -0.2,
+          xanchor = "center"
+        ),
+        hovermode = "closest"
+      )
+  })
+  
+  # Blood Pressure Plot 
+  output$pulsePlot <- renderPlotly({
+    data <- filtered_visits_patient_dashboard()
+    req(data)
+    req(nrow(data) > 0)
+    
+    bp_long <- data %>%
+      select(visit_date, pulse) %>%
+      filter(!is.na(visit_date) & !is.na(pulse))
+    
+    plot_ly(data,
+            x = ~visit_date,
+            y = ~pulse,
+            type = 'scatter',
+            mode = 'lines+markers',
+            text = ~paste("Date:", format(visit_date, "%d %b %Y"),
+                          "<br>Pulse:", pulse),
+            hoverinfo = "text",
+            line = list(color = 'rgb(255,127,80)')) %>%
+      layout(title = "Pulse Over Time",
+             xaxis = list(title = "Visit Date"),
+             yaxis = list(title = "Pulse (bpm)", range = c(50, 120)),
+             hovermode = "closest")
+  })
+  
+  output$bmiPlot <- renderPlotly({
+    data <- filtered_visits_patient_dashboard()
+    req(data)
+    req(nrow(data) > 0)
+    
+    # Convert height to meters and compute BMI
+    data <- data %>%
+      mutate(
+        height = as.numeric(height),
+        weight = as.numeric(weight),
+        visit_date = parse_date_time(visit_date, orders = c("dmy", "ymd", "mdy")),
+        height_m = height / 100,
+        bmi = round(weight / (height_m^2), 1)
+      ) %>%
+      filter(!is.na(visit_date) & !is.na(bmi) & is.finite(bmi))
+    
+    plot_ly(data,
+            x = ~visit_date,
+            y = ~bmi,
+            type = 'scatter',
+            mode = 'lines+markers',
+            text = ~paste("Date:", format(visit_date, "%d %b %Y"),
+                          "<br>BMI:", bmi),
+            hoverinfo = "text",
+            line = list(color = "darkgreen")) %>%
+      layout(
+        title = "BMI Over Time",
+        xaxis = list(title = "Visit Date"),
+        yaxis = list(title = "BMI"),
+        hovermode = "closest"
+      )
+  })
+  
+  output$waistPlot <- renderPlotly({
+    data <- filtered_visits_patient_dashboard()
+    req(data)
+    req(nrow(data) > 0)
+    
+    # Parse and clean data
+    data <- data %>%
+      mutate(
+        visit_date = parse_date_time(visit_date, orders = c("dmy", "ymd", "mdy")),
+        waist = as.numeric(waist)
+      ) %>%
+      filter(!is.na(visit_date) & !is.na(waist))
+    
+    plot_ly(data,
+            x = ~visit_date,
+            y = ~waist,
+            type = 'scatter',
+            mode = 'lines+markers',
+            text = ~paste("Date:", format(visit_date, "%d %b %Y"),
+                          "<br>Waist:", waist, "cm"),
+            hoverinfo = "text",
+            line = list(color = "royalblue")) %>%
+      layout(
+        title = "Waist Circumference Over Time",
+        xaxis = list(title = "Visit Date"),
+        yaxis = list(title = "Waist (cm)"),
+        hovermode = "closest"
+      )
   })
   
   
+  #------------------------Clinic Dashboard Server -------------------------------  
   
 }
 
