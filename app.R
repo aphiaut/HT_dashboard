@@ -53,31 +53,31 @@ ui <- navbarPage(
                          selected = NULL),
              selectInput("amphoe", "Amphoe",
                          choices = NULL),
-             selectInput("status", "Status",
-                         choices = c("Single", 
-                                     "Marriage", 
-                                     "Divorced",
-                                     "Separated",
-                                     "Widowed",
-                                     "Other")),
-             conditionalPanel(
-               condition = "input.status == 'Other'",
-               textInput("other_status", "Please Specify Status:", "")
-             ),
-             selectInput("ethnicity", "Ethnicity",
-                         choices = c("Thai", "American", "British", "Indian", "Chinese", "Other")),
-             # Conditional input for "Other" Ethnicity
-             conditionalPanel(
-               condition = "input.ethnicity == 'Other'",
-               textInput("other_ethnicity", "Please Specify Ethnicity:", "")
-             ),
-             selectInput("nationality", "Nationality",
-                         choices = c("Thai", "American", "British", "Indian", "Chinese", "Other")),
-             # Conditional input for "Other" Nationality
-             conditionalPanel(
-               condition = "input.nationality == 'Other'",
-               textInput("other_nationality", "Please Specify Nationality:", "")
-             ),
+             # selectInput("status", "Status",
+             #             choices = c("Single", 
+             #                         "Marriage", 
+             #                         "Divorced",
+             #                         "Separated",
+             #                         "Widowed",
+             #                         "Other")),
+             # conditionalPanel(
+             #   condition = "input.status == 'Other'",
+             #   textInput("other_status", "Please Specify Status:", "")
+             # ),
+             # selectInput("ethnicity", "Ethnicity",
+             #             choices = c("Thai", "American", "British", "Indian", "Chinese", "Other")),
+             # # Conditional input for "Other" Ethnicity
+             # conditionalPanel(
+             #   condition = "input.ethnicity == 'Other'",
+             #   textInput("other_ethnicity", "Please Specify Ethnicity:", "")
+             # ),
+             # selectInput("nationality", "Nationality",
+             #             choices = c("Thai", "American", "British", "Indian", "Chinese", "Other")),
+             # # Conditional input for "Other" Nationality
+             # conditionalPanel(
+             #   condition = "input.nationality == 'Other'",
+             #   textInput("other_nationality", "Please Specify Nationality:", "")
+             # ),
              # Education selection
              selectInput("education", "Education Level",
                          choices = c("ประถม",
