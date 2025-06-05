@@ -303,13 +303,18 @@ ui <- navbarPage(
              label = "PI:",
              choices = c(
                "Normal" = "normal", 
-               "Abnormal" = "abnormal"
+               "Abnormal" = "abnormal",
+               "Other" = "other"
              ),
              inline = TRUE
            ),
            conditionalPanel(
              condition = "input.pi == 'abnormal'",
              textAreaInput("pi_abnormal", "Please Specify Symptoms:", "", rows = 3)
+           ),
+           conditionalPanel(
+             condition = "input.pi == 'other'",
+             textAreaInput("pi_other", "Please Specify:", "", rows = 3)
            ),
            checkboxGroupInput("medication_adherence", "Medication Adherence:", 
                               choices = c("Always take medicines" = "alway_take_medicine", 
@@ -1318,6 +1323,7 @@ server <- function(input, output, session) {
       #PI
       pi = input$pi,
       pi_abnormal = ifelse(input$pi == "abnormal", input$pi_abnormal, ""),
+      pi_other = ifelse(input$pi == "other", input$pi_other, ""),
       #Medical adherence
       medication_adherence = paste(input$medication_adherence, collapse = "; "),
       allergic_history = input$allergic_history,

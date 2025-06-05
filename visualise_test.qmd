@@ -45,5 +45,14 @@ data %>%
     filter(!is.na(visit_date))
 ```
 
+```{r}
+
+patient <- read_csv("patient_data.csv")
+
+# 106/ need to fixed
+unique(patient$no)
+
+patient %>% arrange(no)
+```
 
 

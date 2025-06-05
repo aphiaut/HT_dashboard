@@ -1,0 +1,244 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(readxl)
+library(purrr)
+library(stringr)
+```
+
+
+```{r}
+all_raw <- read_excel("data/ข้อมูลการมาตรวจแต่ละครั้ง_รวม 4 มิย 2568.xlsx")
+other_raw <- read_excel("data/ข้อมูลการมาตรวจแต่ละครั้ง_อ.สิทธิชัย.xlsx")
+new_data <- read_csv("data/new_data.csv")
+
+
+sample_raw <- read_csv("visit_data.csv")
+```
+
+
+```{r}
+# recolname
+
+colnames(sample_raw)
+
+colnames_map <- c("HN" = "hn",
+                  "ครั้งที่มาตรวจ" = "visit_number",
+                  "วันที่มาตรวจ" = "visit_date",
+                  "สิ่งผิดปกติที่อยากบอก" = "patient_note",
+                  "แน่นหน้าอกตรงกลาง" = "chest_tightness",
+                  "ระบบประสาทผิดปกติ" = "nervous_system",
+                  "ปัสสาวะผิดปกติ" = "urinal_abnormal",
+                  "ปวดหัว" = "headache",
+                  "เวียนหัว" = "dizziness",
+                  "หอบเหนื่อย" = "dypsnea",
+                  "ขาบวม" = "leg_swelling",
+                  "บวมที่ใบหน้า" = "face_swelling",
+                  "CC" = "cc",
+                  "PI" = "pi",
+                  "SBP" = "bp_sys",
+                  "DBP" = "bp_dia",
+                  "PR" = "pulse",
+                  "waist circum" = "waist",
+                  "BW" = "weight",
+                  "Height" = "height",
+                  "HEENT" = "heent",
+                  "Heart" = "heart",
+                  "Lung" = "lungs",
+                  "Abdomen" = "abd",
+                  "Ext" = "ext",
+                  "N/S" = "ns",
+                  "Na" = "na",
+                  "HbA1C" = "hba1c",
+                  "BS" = "fbs",
+                  "Chol" = "cho",
+                  "LDL" = "ldl",
+                  "TG" = "tg",
+                  "HDL" = "hdl",
+                  "นัดครั้งต่อไป" = "follow_up_date",
+                  "คะแนนควบคุมBP" = "bp_control_score",
+                  "คะแนนควบคุมน้ำหนัก" = "weight_control_score",
+                  "คะแนนพฤติกรรมดูแลตนเอง" = "self_care_score",
+                  "คะแนนวัดBPที่บ้าน" = "home_bp_score",
+                  "HBPMตามเป้า" = "hbpm_target",
+                  "Diuretics" = "diuretics",
+                  "ACEIs" = "aceis",
+                  "ARBs" = "arbs",
+                  "CCBs" = "ccbs"
+                  )
+```
+
+
+```{r}
+colnames(all_raw) <- ifelse(colnames(all_raw) %in% names(colnames_map), colnames_map[colnames(all_raw)], colnames(all_raw))
+```
+
+
+
+
+```{r}
+# change บ่อยครั้ง นานๆครั้ง ไม่มี
+
+cols_to_replace <- c("chest_tightness", "nervous_system", "urinal_abnormal",
+                     "headache", "dizziness", "dypsnea", "leg_swelling",
+                     "face_swelling" )
+new_data <- new_data %>%
+  mutate(across(all_of(cols_to_replace), ~ recode(., 
+                                              "ไม่มี" = "no", 
+                                              "นานๆครั้ง" = "sometimes", 
+                                              "บ่อยครั้ง" = "often")))
+
+# Need to regret data
+# Columns to clean
+cols_to_clean <- c("chest_tightness", "nervous_system", "urinal_abnormal",
+                   "headache", "dizziness", "dypsnea", "leg_swelling", "face_swelling")
+
+# Define standard replacements
+dict <- c("ไม่มี" = "no",
+          "ไม่มีไม่มี" = "no",
+          "ไม่มีไม่" = "no",
+          "ไม่มีv" = "no",
+          "ไม่มีอ" = "no",
+          "v" = "no",
+          "นานๆครั้ง" = "sometimes",
+          "นานครั้ง" = "sometimes",
+          "บ่อยครั้ง" = "often",
+          "ไไม่มี" = "no",
+          "2-3 ครั้งต" = "sometimes",
+          "นานครั้ง เ" = "sometimes",
+          "อ" = "no",
+          "ไม่u" = "no",
+          "ไม่มีล" = "no",
+          "ไม่มีไ" = "no",
+          "ออไม่ม" = "no",
+          "vvไม่ม" = "no",
+          "บ่อยครั้งส" = "sometimes",
+          "มี" = "sometimes",
+          "v" = "no"
+          )
+
+new_data <- new_data %>%
+  mutate(across(all_of(cols_to_clean), ~ .x |> 
+                  str_replace_all("[\r\n\\\\]", "") |>  # remove \r \n \\ etc.
+                  str_trim() |>                          # remove leading/trailing spaces
+                  str_replace_all("ไม่มี+", "ไม่มี") |>  # multiple ไม่มี → ไม่มี
+                  str_replace_all("นานๆครั้ง", "นานๆครั้ง") |>  # standardize if needed
+                  str_replace_all("บ่อยครั้ง", "บ่อยครั้ง") |>
+                  recode(!!!dict)                         # apply translation
+  ))
+
+
+
+
+```
+
+```{r}
+# check unique 
+
+
+cols_to_check <- c("chest_tightness", "nervous_system", "urinal_abnormal",
+                   "headache", "dizziness", "dypsnea", "leg_swelling",
+                   "face_swelling")
+
+cols_to_check <- c("heent","heart","lungs","abd", "ext", "ns")
+
+# Show unique values in each specified column
+new_data %>%
+  select(all_of(cols_to_check)) %>%
+  map(unique)
+```
+
+
+```{r}
+# change cc
+
+
+new_data <- new_data %>%
+  mutate(
+    cc_early_visit = if_else(str_starts(cc, "มาก่อนนัด"), 
+                             str_extract(cc, "(?<=เพราะ).*"), 
+                             NA_character_),
+    cc_late_visit = if_else(str_starts(cc, "มาหลังนัด"), 
+                            str_extract(cc, "(?<=เพราะ).*"), 
+                            NA_character_),
+    cc = case_when(
+      str_trim(cc) == "มาตรวจตามนัด" ~ "follow_up",
+      str_starts(cc, "มาก่อนนัด") ~ "early_visit",
+      str_starts(cc, "มาหลังนัด") ~ "late_visit",
+      TRUE ~ cc
+    )
+  )
+
+unique(new_data$cc)
+unique(new_data$cc_early_visit)
+
+```
+
+```{r}
+# change pi
+
+# Define what counts as "normal" based on keywords
+normal_keywords <- c("ปกติ", "สบายดี", "ทั่วไปดีขึ้น", "อาการอื่นปกติ", "stable", "ปกตอิดี",
+                     "clinical  well being")
+manual_other_values <- c("ญาติมารับยาแทน", "ต้องการมารักษา", "สอบถามเรื่องผลตรวจ",
+                         "ญาติมา","ไม่มี", "คุมอาหารได้ดี บันทึกความดันที่บ้าน BP ดีบางครั้งต่",
+                         "หลังนอนรพ. 1 สัปดาหืที่ผ่านมา ปรับยาและให้เครื่องว",
+                         "ไม่บวม", "อากาอื่นดี แต่เป็นหวัด","ถอนฟัน 2 ซี่เมื่อวาน เจ็บเล็กน้อย",
+                         "สบาดีวัด BP ที่บ้านให้ลูกมารับยา", "มาฟังผลตรวจเลือด",
+                         "แผลที่เท้าหาย", "ปวดหัวหายแล้ว",
+                         "ปวดข้อดีขึ้น อาหารคุมได้ ออกกำลังกายโดยการเดินแกว่",
+                         "ไม่ทราบ"
+                         )
+
+new_data <- new_data %>%
+  mutate(
+    pi_class = case_when(
+      str_trim(pi) %in% manual_other_values ~ "other",
+      str_detect(pi, str_c(normal_keywords, collapse = "|")) ~ "normal",
+      TRUE ~ "abnormal"
+    ),
+    
+    pi_other = if_else(pi_class == "other", pi, NA_character_),
+    pi_abnormal = if_else(pi_class == "abnormal", pi, NA_character_),
+    pi = pi_class
+  ) %>%
+  select(-pi_class)
+
+unique(new_data$pi)
+```
+
+
+
+
+```{r}
+# Columns to process
+exam_cols <- c("heent", "heart", "lungs", "abd", "ext", "ns")
+
+# Define WNL pattern (case-insensitive)
+wnl_pattern <- regex("wnl", ignore_case = TRUE)
+
+new_data <- new_data %>%
+  # Step 1: create abnormal flag columns
+  mutate(across(all_of(exam_cols), 
+                .fns = ~ if_else(str_detect(., wnl_pattern), NA_character_, .),
+                .names = "{.col}_abnormal")) %>%
+  
+  # Step 2: overwrite original columns with "wnl"/"abnormal"
+  mutate(across(all_of(exam_cols),
+                .fns = ~ if_else(str_detect(., wnl_pattern), "wnl", "abnormal")))
+```
+
+
+```{r}
+# write csv
+# write_csv(all_raw, "data/new_data.csv")
+
+# save csv
+write_csv(new_data, "data/new_data.csv")
+```
+
