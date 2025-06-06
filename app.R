@@ -210,6 +210,11 @@ ui <- navbarPage(
                choices = c("No" = "no", "Yes" = "yes"),
                inline = TRUE
              ),
+             conditionalPanel(
+               condition = "input.nervous_system == 'yes'",
+               textInput("chest_tightness_note", "Please provide details about the chest tightness:")
+             ),
+             
              # Question 2
              radioButtons(
                inputId = "nervous_system",
@@ -217,6 +222,11 @@ ui <- navbarPage(
                choices = c("No" = "no", "Yes" = "yes"),
                inline = TRUE
              ),
+             conditionalPanel(
+               condition = "input.nervous_system == 'yes'",
+               textInput("nervous_system_note", "Please provide details about the nervous system:")
+             ),
+             
              # Question 3
              radioButtons(
                inputId = "urinal_abnormal",
@@ -224,12 +234,21 @@ ui <- navbarPage(
                choices = c("No" = "no", "Yes" = "yes"),
                inline = TRUE
              ),
+             conditionalPanel(
+               condition = "input.urinal_abnormal == 'yes'",
+               textInput("urinal_abnormal_note", "Please provide details about the abnormal urination:")
+             ),
+             
              # Question 4
              radioButtons(
                inputId = "headache",
                label = "4. Headache",
                choices = c("No" = "no", "Occasionally" = "sometimes", "Often" = "often"),
                inline = TRUE
+             ),
+             conditionalPanel(
+               condition = "input.headache == 'sometimes' || input.headache == 'often'",
+               textInput("headache_note", "Please provide details about the headache:")
              ),
              
              # Question 5
@@ -239,6 +258,10 @@ ui <- navbarPage(
                choices = c("No" = "no", "Occasionally" = "sometimes", "Often" = "often"),
                inline = TRUE
              ),
+             conditionalPanel(
+               condition = "input.dizziness == 'sometimes' || input.dizziness == 'often'",
+               textInput("dizziness_note", "Please provide details about the dizziness:")
+             ),
              
              # Question 6
              radioButtons(
@@ -247,6 +270,11 @@ ui <- navbarPage(
                choices = c("No" = "no", "Occasionally" = "sometimes", "Often" = "often"),
                inline = TRUE
              ),
+             conditionalPanel(
+               condition = "input.dypsnea == 'sometimes' || input.dypsnea == 'often'",
+               textInput("dypsnea_note", "Please provide details about the dypsnea:")
+             ),
+             
              # Question 7
              radioButtons(
                inputId = "leg_swelling",
@@ -254,6 +282,11 @@ ui <- navbarPage(
                choices = c("No" = "no", "Occasionally" = "sometimes", "Often" = "often"),
                inline = TRUE
              ),
+             conditionalPanel(
+               condition = "input.leg_swelling == 'sometimes' || input.leg_swelling == 'often'",
+               textInput("leg_swelling_note", "Please provide details about the leg swelling:")
+             ),
+             
              
              # Question 8
              radioButtons(
@@ -261,6 +294,10 @@ ui <- navbarPage(
                label = "8. Face Swelling",
                choices = c("No" = "no", "Occasionally" = "sometimes", "Often" = "often"),
                inline = TRUE
+             ),
+             conditionalPanel(
+               condition = "input.face_swelling == 'sometimes' || input.face_swelling == 'often'",
+               textInput("face_swelling_note", "Please provide details about the face swelling:")
              )
              
             
@@ -1102,13 +1139,13 @@ server <- function(input, output, session) {
   output$medication_ui_other <- renderMedicationUI(medication_list_other, "Other")
  
   
-  observe({
-    visits <- filtered_visits()
-    num_visits <- nrow(visits)
-    output$num_visit <- renderText({
-      paste0(num_visits)  # Render the number of visits as plain text
-    })
-  })
+  # observe({
+  #   visits <- filtered_visits()
+  #   num_visits <- nrow(visits)
+  #   output$num_visit <- renderText({
+  #     paste0(num_visits)  # Render the number of visits as plain text
+  #   })
+  # })
   
   display_visit_data <- function(visit) {
     output$visit_data <- renderText({
@@ -1189,15 +1226,33 @@ server <- function(input, output, session) {
     # Load visit data
     all_visits <- read.csv(visit_data_file, stringsAsFactors = FALSE)
     all_visits$hn <- toupper(all_visits$hn)
+    # Filter out visits with no meaningful data
+    all_visits <- all_visits %>%
+      filter(!(is.na(visit_date) & is.na(patient_note) & is.na(patient_status)))
     
     # Filter visits for this patient
     visits <- all_visits[all_visits$hn == hn_to_search, ]
     
-    # Optional: sort by date descending to get the most recent visit first
+    # Remove rows with missing or blank visit_date
+    visits <- visits[!is.na(visits$visit_date) & visits$visit_date != "", ]
+    
+    # Optional: sort by date descending
     visits <- visits[order(as.Date(visits$visit_date, format = "%d-%m-%Y"), decreasing = TRUE), ]
     
-    # Store filtered visits and initialize index
+    # Debug prints to console
+    print(paste("🔍 Filtered HN:", hn_to_search))
+    print(paste("🔍 Number of visits:", nrow(visits)))
+    print("🔍 Visit data:")
+    print(visits)
+    
+    # Store filtered visits
     filtered_visits(visits)
+    current_visit_index(1)
+    
+    # ✅ Fix the num_visit display using reactive value
+    output$num_visit <- renderText({
+      paste0(nrow(filtered_visits()))
+    })
     
     if (nrow(visits) > 0) {
       current_visit_index(1)  # start with most recent visit
@@ -1296,13 +1351,21 @@ server <- function(input, output, session) {
       
       #Patient Symptom Checklist:
       chest_tightness = input$chest_tightness,
+      chest_tightness_note = ifelse(input$chest_tightness == "yes", input$chest_tightness_note, ""),
       nervous_system = input$nervous_system,
+      nervous_system_note = ifelse(input$nervous_system == "yes", input$nervous_system_note, ""),
       urinal_abnormal = input$urinal_abnormal,
+      urinal_abnormal_note = ifelse(input$urinal_abnormal == "yes", input$urinal_abnormal_note, ""),
       headache = input$headache,
+      headache_note = ifelse(input$headache %in% c("sometimes", "often"), input$headache_note, ""),
       dizziness = input$dizziness,
+      dizziness_note = ifelse(input$dizziness %in% c("sometimes", "often"), input$dizziness_note, ""),
       dypsnea = input$dypsnea,
+      dypsnea_note = ifelse(input$dypsnea %in% c("sometimes", "often"), input$dypsnea_note, ""),
       leg_swelling = input$leg_swelling,
+      leg_swelling_note = ifelse(input$leg_swelling %in% c("sometimes", "often"), input$leg_swelling_note, ""),
       face_swelling = input$face_swelling,
+      face_swelling_note = ifelse(input$face_swelling %in% c("sometimes", "often"), input$face_swelling_note, ""),
       
       #Lab Results:
       cr = input$cr,
@@ -1384,15 +1447,40 @@ server <- function(input, output, session) {
       stringsAsFactors = FALSE
     )
     
+    # ⛔️ Prevent saving if visit_date and patient_note are both missing
+    if (all(is.na(new_data$visit_date)) && all(is.na(new_data$patient_note))) {
+      showNotification("Nothing to save. Visit data is empty or invalid.", type = "warning")
+      return()
+    }
+    
     # Append or update the visit data
     if (file.exists(visit_data_file)) {
-      current_data <- read.csv(visit_data_file, stringsAsFactors = FALSE)
-      updated_data <- rbind(current_data, new_data)
+      existing_data <- read.csv(visit_data_file, stringsAsFactors = FALSE)
+      
+      # Make sure both have the same column names in the same order
+      common_names <- intersect(names(existing_data), names(new_data))
+      existing_data <- existing_data[common_names]
+      new_data <- new_data[common_names]
+      
+      # Match column types by converting all to character to avoid bind errors
+      for (col in names(new_data)) {
+        if (class(existing_data[[col]]) != class(new_data[[col]])) {
+          existing_data[[col]] <- as.character(existing_data[[col]])
+          new_data[[col]] <- as.character(new_data[[col]])
+        }
+      }
+      
+      updated_data <- rbind(existing_data, new_data)
     } else {
       updated_data <- new_data
     }
     
-    # Write updated data to the file
+    
+    # 🚫 Remove rows where ALL values are NA or empty strings
+    updated_data <- updated_data %>%
+      dplyr::filter(!if_all(everything(), ~ is.na(.) | . == ""))
+    
+    # Save cleaned data
     write.csv(updated_data, visit_data_file, row.names = FALSE)
     showNotification("Visit data saved successfully.", type = "message")
   })

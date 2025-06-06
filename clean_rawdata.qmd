@@ -18,7 +18,7 @@ other_raw <- read_excel("data/ข้อมูลการมาตรวจแ�
 new_data <- read_csv("data/new_data.csv")
 
 
-sample_raw <- read_csv("visit_data.csv")
+sample_raw <- read_csv("sample_data.csv")
 ```
 
 
@@ -240,5 +240,123 @@ new_data <- new_data %>%
 
 # save csv
 write_csv(new_data, "data/new_data.csv")
+```
+
+
+
+
+
+```{r}
+sample_raw |> filter(
+  hn == "BA7547"
+)
+
+visit_data |> filter(
+  hn == "BA7547"
+)
+```
+
+
+```{r}
+# join data
+
+visit_data <- read_csv("visit_data.csv")
+# 1. Keep only matching columns
+common_cols <- intersect(names(visit_data), names(new_data))
+new_data_clean <- new_data[, common_cols]
+
+# 2. Match column types
+for (col in common_cols) {
+  target_type <- class(visit_data[[col]])[1]
+  new_type <- class(new_data_clean[[col]])[1]
+  
+  if (new_type != target_type) {
+    if (target_type == "integer") {
+      new_data_clean[[col]] <- as.integer(new_data_clean[[col]])
+    } else if (target_type == "numeric") {
+      new_data_clean[[col]] <- as.numeric(new_data_clean[[col]])
+    } else if (target_type == "character") {
+      new_data_clean[[col]] <- as.character(new_data_clean[[col]])
+    } else if (target_type == "logical") {
+      new_data_clean[[col]] <- as.logical(new_data_clean[[col]])
+    } else if (target_type == "factor") {
+      new_data_clean[[col]] <- as.factor(new_data_clean[[col]])
+    }
+  }
+}
+
+# 3. Now safely append
+visit_data <- dplyr::bind_rows(visit_data, new_data_clean)
+
+# save csv
+write_csv(visit_data, "visit_data.csv")
+
+```
+
+
+
+```{r}
+# Step 1: Read the data
+visit_data <- read_csv("visit_data.csv", na = c("", "NA"))
+
+# Step 2: Remove rows where all values are NA
+cleaned_data <- visit_data %>% filter(!if_all(everything(), is.na))
+
+# Step 3: Overwrite the original file (or change to "clean_visit_data.csv" if you want to keep the original)
+write_csv(cleaned_data, "visit_data.csv")
+```
+
+
+```{r}
+visit_data <- visit_data %>%
+  arrange(visit_date)
+
+# Define regex for valid HN: two letters + four digits
+valid_hn_pattern <- "^[A-Za-z]{2}[0-9]{4}$"
+
+# Filter rows with invalid HN
+invalid_hn <- visit_data %>%
+  filter(!str_detect(hn, valid_hn_pattern))
+
+# View problematic values
+unique(invalid_hn$hn)
+
+
+miss_hn <- c("ฉ็5654", "ฌณ6271", "ER", "ฎํ6185", "ฌ?4062", "ฤ?0752", "ฌ์8637", "K2238", "K5742", "E6599")
+
+visit_data %>%
+  filter(hn %in% miss_hn)
+```
+
+```{r}
+# ฌณ6271 -> GI6271 delete
+# ฌ?4062 -> G?4062 ->
+# K2238 -> delete
+# ฉ็5654-> CH5654
+# ฎํ6185 -> delete
+# K5742
+# E6599 -> EK6599
+# ฌ์8637-> GN8637. need to fix
+# ฤ?0752 -> A?0752 -> AM 0752 need to fix
+
+
+delete_data <- c("ฌณ6271","K2238", "ฎํ6185", "ER",
+                 "ฌ?4062", "ฉ็565", "K5742", "E6599")
+visit_data <- visit_data %>% 
+  filter(!hn %in% delete_data)
+
+visit_data <- visit_data %>%
+  mutate(hn = recode(hn,
+                     "ฌ์8637" = "GN8637",
+                     "ฤ?0752" = "AM0752"))
+
+# re number of visit
+visit_data <- visit_data %>%
+  arrange(hn, visit_date) %>%
+  group_by(hn) %>%
+  mutate(visit_number = row_number()) %>%
+  ungroup()
+
+
 ```
 
