@@ -783,8 +783,81 @@ hn_not_registered
 ```
 
 
-```{r}
+```{r patient_info}
+patient_info <- read_excel("data/ข้อมูลทั่วไป_รวม 4 มิย 68.xlsx")
+patient_info <- patient_info %>%
+  rename(
+    no = `NO`,
+    hn = `HN`,
+    titles = `คำนำหน้า`,
+    name = `ชื่อ_สกุล`,
+    dob = `วันเกิด`,
+    gender = `เพศ`,
+    phone = `โทรศัพท์`,
+    age = `อายุ`,
+    address = `ที่อยู่`,
+    province = `จังหวัด`,
+    amphoe = `อำเภอ`,
+    education = `การศึกษา`,
+    occupation = `อาชีพ`,
+    comobid = `โรคประจำตัว`,
+    ekg = `EKG ล่าสุด`,
+    echo = `Echo ล่าสุด`,
+    eye = `ตรวจตาล่าสุด`,
+    drugallergy = `ประวัติการแพ้ยา`,
+    caregiver = `ผู้ดูแล`,
+    hbpm = `เครื่องวัดBP ที่บ้าน`,
+    medfinancial = `สิทธิการรักษา`,
+    daystart = `sysdate`,
+    new_no = `ลำดับใหม่`
+  )
 
+patient_info2 <- read_excel("data/ข้อมูลทั่วไป_อ สิทธิชัย.xlsx")
+patient_info2 <- patient_info2 %>%
+  rename(
+    no = `NO`,
+    hn = `HN`,
+    titles = `คำนำหน้า`,
+    name = `ชื่อ_สกุล`,
+    dob = `วันเกิด`,
+    gender = `เพศ`,
+    phone = `โทรศัพท์`,
+    age = `อายุ`,
+    address = `ที่อยู่`,
+    province = `จังหวัด`,
+    amphoe = `อำเภอ`,
+    education = `การศึกษา`,
+    occupation = `อาชีพ`,
+    comobid = `โรคประจำตัว`,
+    ekg = `EKG ล่าสุด`,
+    echo = `Echo ล่าสุด`,
+    eye = `ตรวจตาล่าสุด`,
+    drugallergy = `ประวัติการแพ้ยา`,
+    caregiver = `ผู้ดูแล`,
+    hbpm = `เครื่องวัดBP ที่บ้าน`,
+    medfinancial = `สิทธิการรักษา`,
+    daystart = `sysdate`,
+    new_no = `ลำดับใหม่`
+  )
+
+combined_info <- bind_rows(patient_info, patient_info2)
+combined_info <- combined_info %>%
+  dplyr::distinct(hn, .keep_all = TRUE)
+
+duplicates <- combined_info %>%
+  dplyr::group_by(new_no) %>%
+  dplyr::filter(n() > 1) %>%
+  dplyr::arrange(new_no)
+
+combined_info <- combined_info %>%
+  arrange(daystart, new_no) %>%
+  mutate(no = row_number())
+
+combined_info <- combined_info %>%
+  select(no, hn, titles, gender, name, dob, age, address,
+         amphoe, province, phone, email, occupation, comobid,
+         ekg, echo, eye, caregiver, hbpm, medfinancial, drugallergy,
+         education, daystart)
 ```
 
 
