@@ -334,7 +334,8 @@ ui <- navbarPage(
            radioButtons("cc", "CC:", 
                         choices = c("Follow-up Visit" = "follow_up", 
                                     "Early Visit" = "early_visit", 
-                                    "Late Visit" = "late_visit"), 
+                                    "Late Visit" = "late_visit",
+                                    "Other" = "other"), 
                         inline = TRUE),
            conditionalPanel(
              condition = "input.cc == 'early_visit'",
@@ -343,6 +344,10 @@ ui <- navbarPage(
            conditionalPanel(
              condition = "input.cc == 'late_visit'",
              textAreaInput("cc_late_visit", "Please Specify Reason:", "", rows = 3)
+           ),
+           conditionalPanel(
+             condition = "input.cc == 'other'",
+             textAreaInput("cc_other", "Please Specify:", "", rows = 3)
            ),
            radioButtons(
              inputId = "pi",
@@ -1437,6 +1442,7 @@ server <- function(input, output, session) {
       cc = input$cc,
       cc_early_visit = ifelse(input$cc == "early_visit", input$cc_early_visit, ""),
       cc_late_visit = ifelse(input$cc == "late_visit", input$cc_late_visit, ""),
+      cc_other = ifelse(input$cc == "other", input$cc_other, ""),
       #PI
       pi = input$pi,
       pi_abnormal = ifelse(input$pi == "abnormal", input$pi_abnormal, ""),
@@ -1504,6 +1510,9 @@ server <- function(input, output, session) {
       
       stringsAsFactors = FALSE
     )
+    
+    # blank_template <- new_data[0, ]  # Keep column names but no data
+    # write.csv(blank_template, "visit_data_template.csv", row.names = FALSE)
     
     # ⛔️ Prevent saving if visit_date and patient_note are both missing
     if (all(is.na(new_data$visit_date)) && all(is.na(new_data$patient_note))) {

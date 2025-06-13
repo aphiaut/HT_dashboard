@@ -14,18 +14,18 @@ library(stringr)
 
 ```{r}
 all_raw <- read_excel("data/ข้อมูลการมาตรวจแต่ละครั้ง_รวม 4 มิย 2568.xlsx")
-other_raw <- read_excel("data/ข้อมูลการมาตรวจแต่ละครั้ง_อ.สิทธิชัย.xlsx")
-new_data <- read_csv("data/new_data.csv")
+
+template <- read_csv("visit_data_template.csv")
 
 
-sample_raw <- read_csv("sample_data.csv")
+# sample_raw <- read_csv("sample_data.csv")
 ```
 
 
-```{r}
+```{r recolname_raw}
 # recolname
 
-colnames(sample_raw)
+#colnames(sample_raw)
 
 colnames_map <- c("HN" = "hn",
                   "ครั้งที่มาตรวจ" = "visit_number",
@@ -69,19 +69,30 @@ colnames_map <- c("HN" = "hn",
                   "Diuretics" = "diuretics",
                   "ACEIs" = "aceis",
                   "ARBs" = "arbs",
-                  "CCBs" = "ccbs"
+                  "CCBs" = "ccbs",
+                  "ไม่ขาดยา" = "alway_take_medicine",
+                  "คุมอาหารเค็ม" = "salty_control",
+                  "ออกกำลังกาย" = "excercise"
                   )
+
+
 ```
 
 
-```{r}
+```{r recolnamefunction}
 colnames(all_raw) <- ifelse(colnames(all_raw) %in% names(colnames_map), colnames_map[colnames(all_raw)], colnames(all_raw))
+
+# write csv
+# write_csv(all_raw, "data/new_data.csv")
 ```
 
 
 
 
-```{r}
+
+```{r colreplace}
+new_data <- read_csv("data/new_data.csv")
+
 # change บ่อยครั้ง นานๆครั้ง ไม่มี
 
 cols_to_replace <- c("chest_tightness", "nervous_system", "urinal_abnormal",
@@ -137,7 +148,7 @@ new_data <- new_data %>%
 
 ```
 
-```{r}
+```{r checkunique}
 # check unique 
 
 
@@ -154,32 +165,62 @@ new_data %>%
 ```
 
 
-```{r}
+```{r change cc}
 # change cc
 
 
+# new_data <- new_data %>%
+#   mutate(
+#     cc_early_visit = if_else(str_starts(cc, "มาก่อนนัด"),
+#                              str_extract(cc, "(?<=เพราะ).*"),
+#                              NA_character_),
+#     cc_late_visit = if_else(str_starts(cc, "มาหลังนัด"),
+#                             str_extract(cc, "(?<=เพราะ).*"),
+#                             NA_character_),
+#     cc = case_when(
+#       str_trim(cc) == "มาตรวจตามนัด" ~ "follow_up",
+#       str_starts(cc, "มาก่อนนัด") ~ "early_visit",
+#       str_starts(cc, "มาหลังนัด") ~ "late_visit",
+#       TRUE ~ cc
+#     )
+#   )
 new_data <- new_data %>%
   mutate(
-    cc_early_visit = if_else(str_starts(cc, "มาก่อนนัด"), 
-                             str_extract(cc, "(?<=เพราะ).*"), 
-                             NA_character_),
-    cc_late_visit = if_else(str_starts(cc, "มาหลังนัด"), 
-                            str_extract(cc, "(?<=เพราะ).*"), 
-                            NA_character_),
+    # Save original cc for later use
+    cc_raw = cc,
+
+    # Classify cc
     cc = case_when(
-      str_trim(cc) == "มาตรวจตามนัด" ~ "follow_up",
-      str_starts(cc, "มาก่อนนัด") ~ "early_visit",
-      str_starts(cc, "มาหลังนัด") ~ "late_visit",
-      TRUE ~ cc
-    )
-  )
+      str_trim(cc_raw) == "มาตรวจตามนัด" ~ "follow_up",
+      str_starts(cc_raw, "มาก่อนนัด") ~ "early_visit",
+      str_starts(cc_raw, "มาหลังนัด") ~ "late_visit",
+      TRUE ~ "other"
+    ),
+
+    # Extract reasons for early/late visits
+    cc_early_visit = if_else(cc == "early_visit", 
+                             str_extract(cc_raw, "(?<=เพราะ).*"), 
+                             NA_character_),
+
+    cc_late_visit = if_else(cc == "late_visit", 
+                            str_extract(cc_raw, "(?<=เพราะ).*"), 
+                            NA_character_),
+
+    # For class 'other', store original unclassified reason
+    cc_other = if_else(cc == "other", cc_raw, NA_character_)
+  ) %>%
+  select(-cc_raw)  # optional: remove the intermediate backup
+
+
+
 
 unique(new_data$cc)
 unique(new_data$cc_early_visit)
+unique(new_data$cc_late_visit)
 
 ```
 
-```{r}
+```{r change pi}
 # change pi
 
 # Define what counts as "normal" based on keywords
@@ -197,25 +238,30 @@ manual_other_values <- c("ญาติมารับยาแทน", "ต้�
 
 new_data <- new_data %>%
   mutate(
-    pi_class = case_when(
-      str_trim(pi) %in% manual_other_values ~ "other",
-      str_detect(pi, str_c(normal_keywords, collapse = "|")) ~ "normal",
+    pi_raw = pi,  # keep original for reference
+
+    # classify pi
+    pi = case_when(
+      str_trim(pi_raw) %in% manual_other_values ~ "other",
+      str_detect(pi_raw, str_c(normal_keywords, collapse = "|")) ~ "normal",
       TRUE ~ "abnormal"
     ),
-    
-    pi_other = if_else(pi_class == "other", pi, NA_character_),
-    pi_abnormal = if_else(pi_class == "abnormal", pi, NA_character_),
-    pi = pi_class
+
+    # assign detailed reasons
+    pi_other = if_else(pi == "other", pi_raw, NA_character_),
+    pi_abnormal = if_else(pi == "abnormal", pi_raw, NA_character_)
   ) %>%
-  select(-pi_class)
+  select(-pi_raw)  # optional cleanup
 
 unique(new_data$pi)
+unique(new_data$pi_abnormal)
+unique(new_data$pi_other)
 ```
 
 
 
 
-```{r}
+```{r wnl}
 # Columns to process
 exam_cols <- c("heent", "heart", "lungs", "abd", "ext", "ns")
 
@@ -234,16 +280,371 @@ new_data <- new_data %>%
 ```
 
 
+```{r adherance}
+
+
+new_data <- new_data %>%
+  mutate(
+    alway_take_medicine = case_when(
+      alway_take_medicine == "ใช่" ~ "yes",
+      is.na(alway_take_medicine) ~ NA_character_,
+      TRUE ~ "no"
+    ),
+    salty_control = case_when(
+      salty_control == "ใช่" ~ "yes",
+      is.na(salty_control) ~ NA_character_,
+      TRUE ~ "no"
+    ),
+    excercise = case_when(
+      excercise == "ใช่" ~ "yes",
+      is.na(excercise) ~ NA_character_,
+      TRUE ~ "no"
+    )
+  )
+
+```
+
+
+```{r doctor1}
+new_data <- new_data %>%
+  mutate(doctor_name = "Doctor1")
+
+```
+
+
 ```{r}
-# write csv
-# write_csv(all_raw, "data/new_data.csv")
 
 # save csv
 write_csv(new_data, "data/new_data.csv")
 ```
 
+```{r second data}
+other_raw <- read_excel("data/ข้อมูลการมาตรวจแต่ละครั้ง_อ.สิทธิชัย.xlsx")
+```
+```{r}
+# recolname
+
+#colnames(sample_raw)
+
+colnames_map <- c("HN" = "hn",
+                  "ครั้งที่มาตรวจ" = "visit_number",
+                  "วันที่มาตรวจ" = "visit_date",
+                  "สิ่งผิดปกติที่อยากบอก" = "patient_note",
+                  "แน่นหน้าอกตรงกลาง" = "chest_tightness",
+                  "ระบบประสาทผิดปกติ" = "nervous_system",
+                  "ปัสสาวะผิดปกติ" = "urinal_abnormal",
+                  "ปวดหัว" = "headache",
+                  "เวียนหัว" = "dizziness",
+                  "หอบเหนื่อย" = "dypsnea",
+                  "ขาบวม" = "leg_swelling",
+                  "บวมที่ใบหน้า" = "face_swelling",
+                  "CC" = "cc",
+                  "PI" = "pi",
+                  "SBP" = "bp_sys",
+                  "DBP" = "bp_dia",
+                  "PR" = "pulse",
+                  "waist circum" = "waist",
+                  "BW" = "weight",
+                  "Height" = "height",
+                  "HEENT" = "heent",
+                  "Heart" = "heart",
+                  "Lung" = "lungs",
+                  "Abdomen" = "abd",
+                  "Ext" = "ext",
+                  "N/S" = "ns",
+                  "Na" = "na",
+                  "HbA1C" = "hba1c",
+                  "BS" = "fbs",
+                  "Chol" = "cho",
+                  "LDL" = "ldl",
+                  "TG" = "tg",
+                  "HDL" = "hdl",
+                  "นัดครั้งต่อไป" = "follow_up_date",
+                  "คะแนนควบคุมBP" = "bp_control_score",
+                  "คะแนนควบคุมน้ำหนัก" = "weight_control_score",
+                  "คะแนนพฤติกรรมดูแลตนเอง" = "self_care_score",
+                  "คะแนนวัดBPที่บ้าน" = "home_bp_score",
+                  "HBPMตามเป้า" = "hbpm_target",
+                  "Diuretics" = "diuretics",
+                  "ACEIs" = "aceis",
+                  "ARBs" = "arbs",
+                  "CCBs" = "ccbs",
+                  "ไม่ขาดยา" = "alway_take_medicine",
+                  "คุมอาหารเค็ม" = "salty_control",
+                  "ออกกำลังกาย" = "excercise"
+                  )
 
 
+```
+
+
+```{r}
+colnames(other_raw) <- ifelse(colnames(other_raw) %in% names(colnames_map), colnames_map[colnames(other_raw)], colnames(other_raw))
+
+# write csv
+# write_csv(other_raw, "data/new_data_2.csv")
+```
+
+```{r}
+new_data_2 <- read_csv("data/new_data_2.csv")
+```
+
+```{r}
+# change บ่อยครั้ง นานๆครั้ง ไม่มี
+
+cols_to_replace <- c("chest_tightness", "nervous_system", "urinal_abnormal",
+                     "headache", "dizziness", "dypsnea", "leg_swelling",
+                     "face_swelling" )
+new_data_2 <- new_data_2 %>%
+  mutate(across(all_of(cols_to_replace), ~ recode(., 
+                                              "ไม่มี" = "no", 
+                                              "นานๆครั้ง" = "sometimes", 
+                                              "บ่อยครั้ง" = "often")))
+
+# Need to regret data
+# Columns to clean
+cols_to_clean <- c("chest_tightness", "nervous_system", "urinal_abnormal",
+                   "headache", "dizziness", "dypsnea", "leg_swelling", "face_swelling")
+
+# Define standard replacements
+dict <- c("ไม่มี" = "no",
+          "ไม่มีไม่มี" = "no",
+          "ไม่มีไม่" = "no",
+          "ไม่มีv" = "no",
+          "ไม่มีอ" = "no",
+          "v" = "no",
+          "นานๆครั้ง" = "sometimes",
+          "นานครั้ง" = "sometimes",
+          "บ่อยครั้ง" = "often",
+          "ไไม่มี" = "no",
+          "2-3 ครั้งต" = "sometimes",
+          "นานครั้ง เ" = "sometimes",
+          "อ" = "no",
+          "ไม่u" = "no",
+          "ไม่มีล" = "no",
+          "ไม่มีไ" = "no",
+          "ออไม่ม" = "no",
+          "vvไม่ม" = "no",
+          "บ่อยครั้งส" = "sometimes",
+          "มี" = "sometimes",
+          "v" = "no"
+          )
+
+new_data_2 <- new_data_2 %>%
+  mutate(across(all_of(cols_to_clean), ~ .x |> 
+                  str_replace_all("[\r\n\\\\]", "") |>  # remove \r \n \\ etc.
+                  str_trim() |>                          # remove leading/trailing spaces
+                  str_replace_all("ไม่มี+", "ไม่มี") |>  # multiple ไม่มี → ไม่มี
+                  str_replace_all("นานๆครั้ง", "นานๆครั้ง") |>  # standardize if needed
+                  str_replace_all("บ่อยครั้ง", "บ่อยครั้ง") |>
+                  recode(!!!dict)                         # apply translation
+  ))
+
+```
+
+```{r}
+# check unique 
+
+
+cols_to_check <- c("chest_tightness", "nervous_system", "urinal_abnormal",
+                   "headache", "dizziness", "dypsnea", "leg_swelling",
+                   "face_swelling")
+
+cols_to_check <- c("heent","heart","lungs","abd", "ext", "ns")
+
+# Show unique values in each specified column
+new_data_2 %>%
+  select(all_of(cols_to_check)) %>%
+  map(unique)
+```
+
+
+```{r change cc2}
+new_data_2 <- new_data_2 %>%
+  mutate(
+    # Save original cc for later use
+    cc_raw = cc,
+
+    # Classify cc
+    cc = case_when(
+      str_trim(cc_raw) == "มาตรวจตามนัด" ~ "follow_up",
+      str_starts(cc_raw, "มาก่อนนัด") ~ "early_visit",
+      str_starts(cc_raw, "มาหลังนัด") ~ "late_visit",
+      TRUE ~ "other"
+    ),
+
+    # Extract reasons for early/late visits
+    cc_early_visit = if_else(cc == "early_visit", 
+                             str_extract(cc_raw, "(?<=เพราะ).*"), 
+                             NA_character_),
+
+    cc_late_visit = if_else(cc == "late_visit", 
+                            str_extract(cc_raw, "(?<=เพราะ).*"), 
+                            NA_character_),
+
+    # For class 'other', store original unclassified reason
+    cc_other = if_else(cc == "other", cc_raw, NA_character_)
+  ) %>%
+  select(-cc_raw)  # optional: remove the intermediate backup
+
+
+
+
+unique(new_data_2$cc)
+unique(new_data_2$cc_early_visit)
+unique(new_data_2$cc_late_visit)
+
+```
+
+```{r change pi2}
+# Define what counts as "normal" based on keywords
+normal_keywords <- c("ปกติ", "สบายดี", "ทั่วไปดีขึ้น", "อาการอื่นปกติ", "stable", "ปกตอิดี",
+                     "clinical  well being")
+manual_other_values <- c("ญาติมารับยาแทน", "ต้องการมารักษา", "สอบถามเรื่องผลตรวจ",
+                         "ญาติมา","ไม่มี", "คุมอาหารได้ดี บันทึกความดันที่บ้าน BP ดีบางครั้งต่",
+                         "หลังนอนรพ. 1 สัปดาหืที่ผ่านมา ปรับยาและให้เครื่องว",
+                         "ไม่บวม", "อากาอื่นดี แต่เป็นหวัด","ถอนฟัน 2 ซี่เมื่อวาน เจ็บเล็กน้อย",
+                         "สบาดีวัด BP ที่บ้านให้ลูกมารับยา", "มาฟังผลตรวจเลือด",
+                         "แผลที่เท้าหาย", "ปวดหัวหายแล้ว",
+                         "ปวดข้อดีขึ้น อาหารคุมได้ ออกกำลังกายโดยการเดินแกว่",
+                         "ไม่ทราบ"
+                         )
+
+new_data_2 <- new_data_2 %>%
+  mutate(
+    pi_raw = pi,  # keep original for reference
+
+    # classify pi
+    pi = case_when(
+      str_trim(pi_raw) %in% manual_other_values ~ "other",
+      str_detect(pi_raw, str_c(normal_keywords, collapse = "|")) ~ "normal",
+      TRUE ~ "abnormal"
+    ),
+
+    # assign detailed reasons
+    pi_other = if_else(pi == "other", pi_raw, NA_character_),
+    pi_abnormal = if_else(pi == "abnormal", pi_raw, NA_character_)
+  ) %>%
+  select(-pi_raw)  # optional cleanup
+
+unique(new_data_2$pi)
+unique(new_data_2$pi_abnormal)
+unique(new_data_2$pi_other)
+```
+```{r wnl2}
+# Columns to process
+exam_cols <- c("heent", "heart", "lungs", "abd", "ext", "ns")
+
+# Define WNL pattern (case-insensitive)
+wnl_pattern <- regex("wnl", ignore_case = TRUE)
+
+new_data_2 <- new_data_2 %>%
+  # Step 1: create abnormal flag columns
+  mutate(across(all_of(exam_cols), 
+                .fns = ~ if_else(str_detect(., wnl_pattern), NA_character_, .),
+                .names = "{.col}_abnormal")) %>%
+  
+  # Step 2: overwrite original columns with "wnl"/"abnormal"
+  mutate(across(all_of(exam_cols),
+                .fns = ~ if_else(str_detect(., wnl_pattern), "wnl", "abnormal")))
+```
+
+
+```{r adherance2}
+
+
+new_data_2 <- new_data_2 %>%
+  mutate(
+    alway_take_medicine = case_when(
+      alway_take_medicine == "ใช่" ~ "yes",
+      is.na(alway_take_medicine) ~ NA_character_,
+      TRUE ~ "no"
+    ),
+    salty_control = case_when(
+      salty_control == "ใช่" ~ "yes",
+      is.na(salty_control) ~ NA_character_,
+      TRUE ~ "no"
+    ),
+    excercise = case_when(
+      excercise == "ใช่" ~ "yes",
+      is.na(excercise) ~ NA_character_,
+      TRUE ~ "no"
+    )
+  )
+
+```
+
+
+```{r doctor2}
+new_data_2 <- new_data_2 %>%
+  mutate(doctor_name = "Doctor2")
+
+```
+
+```{r}
+
+# save csv
+write_csv(new_data_2, "data/new_data_2.csv")
+```
+
+
+
+```{r join 2 raw data}
+
+# Find common columns
+common_cols <- intersect(names(new_data), names(new_data_2))
+
+# Compare types in common columns
+type_mismatches <- tibble::tibble(
+  column = common_cols,
+  new_data_type = sapply(common_cols, function(col) class(new_data[[col]])[1]),
+  new_data_2_type = sapply(common_cols, function(col) class(new_data_2[[col]])[1])
+) %>%
+  dplyr::filter(new_data_type != new_data_2_type)
+
+# Show mismatched columns
+type_mismatches
+
+# Convert fbs, hba1c, BUN in new_data_2 to numeric
+new_data_2 <- new_data_2 %>%
+  mutate(
+    fbs = as.numeric(fbs),
+    hba1c = as.numeric(hba1c),
+    BUN = as.numeric(BUN)
+  )
+
+# Convert lungs_abnormal in new_data to character
+new_data <- new_data %>%
+  mutate(
+    lungs_abnormal = as.character(lungs_abnormal)
+  )
+
+
+common_cols <- intersect(names(new_data), names(new_data_2))
+
+new_data_clean <- new_data[, common_cols]
+new_data_2_clean <- new_data_2[, common_cols]
+
+combined_data <- bind_rows(new_data_clean, new_data_2_clean)
+```
+
+
+
+```{r check duplicate row}
+new_data$source <- "new_data"
+new_data_2$source <- "new_data_2"
+
+combined_data <- bind_rows(new_data, new_data_2)
+
+combined_data_unique <- combined_data %>%
+  arrange(hn, visit_date, source) %>%  # "new_data" will come before "new_data_2"
+  distinct(hn, visit_date, .keep_all = TRUE)
+combined_data_unique <- combined_data_unique %>%
+  select(-source)
+
+
+write.csv(combined_data_unique, "data/clean_data.csv")
+```
 
 
 ```{r}
@@ -257,13 +658,15 @@ visit_data |> filter(
 ```
 
 
+
+
 ```{r}
 # join data
-
-visit_data <- read_csv("visit_data.csv")
+clean_data <- read_csv("data/clean_data.csv")
+visit_data <- read_csv("visit_data_template.csv")
 # 1. Keep only matching columns
-common_cols <- intersect(names(visit_data), names(new_data))
-new_data_clean <- new_data[, common_cols]
+common_cols <- intersect(names(visit_data), names(clean_data))
+new_data_clean <- clean_data[, common_cols]
 
 # 2. Match column types
 for (col in common_cols) {
@@ -341,7 +744,7 @@ visit_data %>%
 
 
 delete_data <- c("ฌณ6271","K2238", "ฎํ6185", "ER",
-                 "ฌ?4062", "ฉ็565", "K5742", "E6599")
+                 "ฌ?4062", "ฉ็5654", "K5742", "E6599")
 visit_data <- visit_data %>% 
   filter(!hn %in% delete_data)
 
@@ -359,4 +762,29 @@ visit_data <- visit_data %>%
 
 
 ```
+
+
+```{r}
+write_csv(visit_data, "visit_data.csv")
+```
+
+
+
+
+```{r}
+# Find HNs in visit_data that are not in patient_data
+patient_data <- read_csv("patient_data.csv")
+visit_data <- read_csv("visit_data.csv")
+hn_not_registered <- visit_data %>%
+  filter(!hn %in% patient_data$hn) %>%
+  distinct(hn)
+
+hn_not_registered
+```
+
+
+```{r}
+
+```
+
 
