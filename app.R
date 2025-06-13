@@ -182,6 +182,15 @@ ui <- navbarPage(
              actionButton("add_visit", "Add Visit"),
              verbatimTextOutput("visit_data"),
              textInput("visit_date", label = "Date", placeholder = "dd-mm-yyyy"), # Provided date
+             selectInput(
+               inputId = "doctor_name",
+               label = "Doctor's Name",
+               choices = c("รศ.พญ.แพรว โคตรุฉิน", 
+                           "ผศ.นพ.ฐปนวงศ์ มิตรสูงเนิน", 
+                           "ผศ.นพ.สิทธิชัย คำใสย์", 
+                           "Other"),
+               selected = NULL
+             ),
              textAreaInput("patient_note", "Patient Notes:", "", rows = 10, 
                            placeholder = "Are there any specific questions or concerns you want to discuss with the doctor?"),
              selectInput("pateintstatus", "Patient status",
@@ -572,9 +581,21 @@ ui <- navbarPage(
                column(6, actionButton("add_medication_statin", "Add Statin"))
              ),
              fluidRow(
+               h4("Anti-platelet :"),
+               column(6, uiOutput("medication_ui_anti_platelet")),
+               column(6, actionButton("add_medication_anti_platelet", "Add Anti-platelet"))
+             ),
+             fluidRow(
                h4("Other :"),
                column(6, uiOutput("medication_ui_other")),
                column(6, actionButton("add_medication_other", "Add Other"))
+             ),
+             fluidRow(
+               column(12,
+                      h4("Single-pill Combination:"),
+                      column(6, uiOutput("medication_ui_spc")),
+                      column(6, actionButton("add_medication_spc", "Add Single-pill Combination"))
+               )
              )
       )
           
@@ -592,11 +613,7 @@ ui <- navbarPage(
       column(4,
              textInput(inputId = "hn_dashboard", "Patient Code (HN):", ""),  # User-provided HN
              actionButton("check_hn_dashboard", "Check HN"),   # Button to check HN
-             tags$div(
-               tags$h4("Patient Name:",
-                       style = "display: inline-block; margin-right: 10px;"), # Inline label
-               textOutput("patient_name_dashboard", inline = TRUE)                     # Inline output
-             )
+             
       ),
       column(8,
              tags$div(
@@ -1036,7 +1053,9 @@ server <- function(input, output, session) {
   medication_list_beta_blockers <- reactiveValues(data = list())
   medication_list_oad <- reactiveValues(data = list())
   medication_list_statin <- reactiveValues(data = list())
+  medication_list_anti_platelet <- reactiveValues(data = list())
   medication_list_other <- reactiveValues(data = list())
+  medication_list_spc <- reactiveValues(data = list())
   
   # Add medications dynamically for each category
   addMedication <- function(category_list, button_id, category_name) {
@@ -1065,7 +1084,9 @@ server <- function(input, output, session) {
   addMedication(medication_list_beta_blockers, "add_medication_beta_blockers", "beta_blockers")
   addMedication(medication_list_oad, "add_medication_oad", "oad")
   addMedication(medication_list_statin, "add_medication_statin", "statin")
+  addMedication(medication_list_anti_platelet, "add_medication_anti_platelet", "Anti-platelet")
   addMedication(medication_list_other, "add_medication_other", "other")
+  addMedication(medication_list_spc, "add_medication_spc", "spc")
   
   # Render UI for each medication category
   renderMedicationUI <- function(category_list, category_name) {
@@ -1086,7 +1107,9 @@ server <- function(input, output, session) {
                              "OAD" = c("Metformin (500)", "Metformin (850)", "Metformin (1000)",
                                        "Glipizide (5)"),
                              "Statin" = c("Atorvastatin (20)", "Atorvastatin (40)",
-                                          "Simvastatin (10)", "Simvastatin (20)", "Simvastatin (40)"),
+                                          "Simvastatin (10)", "Simvastatin (20)", "Simvastatin (40)",
+                                          "Ezetimibe (10)"),
+                             "Anti-platelet" = c("ASA (81)"),
                              "Other" = c("Azilsartan (40)", "Hydralazine (25)", "Doxazosin (2)", "Methyldopa (250)")
             )
           )),
@@ -1094,6 +1117,28 @@ server <- function(input, output, session) {
             inputId = category_list$data[[id]],
             label = "Quantity:",
             choices = c("1*1", "1*2", "1*3")
+          )),
+          column(2, actionButton(
+            inputId = paste0("remove_", id),
+            label = "Remove"
+          ))
+        )
+      })
+      do.call(tagList, medication_ui)
+    })
+  }
+  
+  renderSPCMedicationUI <- function(category_list, category_name) {
+    renderUI({
+      medication_ui <- lapply(names(category_list$data), function(id) {
+        fluidRow(
+          column(6, textInput(
+            inputId = id,
+            label = paste("Pill name:")
+          )),
+          column(4, textInput(
+            inputId = category_list$data[[id]],
+            label = "Quantity:"
           )),
           column(2, actionButton(
             inputId = paste0("remove_", id),
@@ -1126,7 +1171,9 @@ server <- function(input, output, session) {
   observeRemoveButtons(medication_list_beta_blockers)
   observeRemoveButtons(medication_list_oad)
   observeRemoveButtons(medication_list_statin)
+  observeRemoveButtons(medication_list_anti_platelet)
   observeRemoveButtons(medication_list_other)
+  observeRemoveButtons(medication_list_spc)
   
   # Render the UI for each category
   output$medication_ui_diuretics <- renderMedicationUI(medication_list_diuretics, "Diuretics")
@@ -1136,7 +1183,9 @@ server <- function(input, output, session) {
   output$medication_ui_beta_blockers <- renderMedicationUI(medication_list_beta_blockers, "Beta Blockers")
   output$medication_ui_oad <- renderMedicationUI(medication_list_oad, "OAD")
   output$medication_ui_statin <- renderMedicationUI(medication_list_statin, "Statin")
+  output$medication_ui_anti_platelet <- renderMedicationUI(medication_list_anti_platelet, "Anti-platelet")
   output$medication_ui_other <- renderMedicationUI(medication_list_other, "Other")
+  output$medication_ui_spc <- renderSPCMedicationUI(medication_list_spc, "Single-pill combination")
  
   
   # observe({
@@ -1151,6 +1200,7 @@ server <- function(input, output, session) {
     output$visit_data <- renderText({
       paste0(
         "▶️ Visit Date: ", visit$visit_date, "\n",
+        "👨️ Doctor: ", visit$doctor_name, "\n",
         "📝 Patient Note: ", visit$patient_note, "\n",
         "📌 Status: ", visit$patient_status, "\n\n",
         
@@ -1160,9 +1210,12 @@ server <- function(input, output, session) {
         "- ARBs: ", visit$arbs, "\n",
         "- CCBs: ", visit$ccbs, "\n",
         "- Beta Blockers: ", visit$beta_blockers, "\n",
+        "- Anti Platelet: ", visit$anti_platelet, "\n",
         "- OAD: ", visit$oad, "\n",
         "- Statin: ", visit$statin, "\n",
+        "- Single-pill Combination: ", visit$single_pill_combination, "\n",
         "- Other Medications: ", visit$other_medications, "\n\n",
+        
         
         "🩺 Clinical Info:\n",
         "- BP: ", visit$bp_sys, "/", visit$bp_dia, " mmHg\n",
@@ -1344,6 +1397,7 @@ server <- function(input, output, session) {
       hn = hn_to_search,
       name = patient_name[1],
       visit_date = input$visit_date,
+      doctor_name = input$doctor_name,
       patient_note = input$patient_note,
       patient_status = input$pateintstatus,
       refer_hospital_details = ifelse(input$pateintstatus == "refer_hospital", input$refer_hospital_details, ""),
@@ -1388,7 +1442,9 @@ server <- function(input, output, session) {
       pi_abnormal = ifelse(input$pi == "abnormal", input$pi_abnormal, ""),
       pi_other = ifelse(input$pi == "other", input$pi_other, ""),
       #Medical adherence
-      medication_adherence = paste(input$medication_adherence, collapse = "; "),
+      adherence_alway_take_medicine = ifelse("alway_take_medicine" %in% input$medication_adherence, "yes", "no"),
+      adherence_salty_control = ifelse("salty_control" %in% input$medication_adherence, "yes", "no"),
+      adherence_exercise = ifelse("excercise" %in% input$medication_adherence, "yes", "no"),
       allergic_history = input$allergic_history,
       
       #Blood Pressure/BMI
@@ -1442,7 +1498,9 @@ server <- function(input, output, session) {
       beta_blockers = getMedicationList(medication_list_beta_blockers),
       oad = getMedicationList(medication_list_oad),
       statin = getMedicationList(medication_list_statin),
+      anti_platelet = getMedicationList(medication_list_anti_platelet),
       other_medications = getMedicationList(medication_list_other),
+      single_pill_combination = getMedicationList(medication_list_spc),
       
       stringsAsFactors = FALSE
     )
