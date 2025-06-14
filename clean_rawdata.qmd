@@ -761,6 +761,8 @@ visit_data <- visit_data %>%
   ungroup()
 
 
+visit_data <- visit_data %>%
+  mutate(hn = toupper(hn))
 ```
 
 
@@ -776,7 +778,7 @@ write_csv(visit_data, "visit_data.csv")
 patient_data <- read_csv("patient_data.csv")
 visit_data <- read_csv("visit_data.csv")
 hn_not_registered <- visit_data %>%
-  filter(!hn %in% patient_data$hn) %>%
+  filter(!hn %in% combined_info$hn) %>%
   distinct(hn)
 
 hn_not_registered
@@ -858,6 +860,142 @@ combined_info <- combined_info %>%
          amphoe, province, phone, email, occupation, comobid,
          ekg, echo, eye, caregiver, hbpm, medfinancial, drugallergy,
          education, daystart)
+combined_info <- combined_info %>%
+  mutate(hn = toupper(hn))
+
+
+```
+
+
+```{r changetitle}
+
+combined_info <- combined_info %>%
+  mutate(
+    title_clean = case_when(
+      titles %in% c("นาย") ~ "Mr",
+      titles %in% c("นางสาว", "น.ส.") ~ "Miss",
+      titles %in% c("นาง") ~ "Mrs",
+      titles %in% c("คุณ") ~ "Ms",
+      titles %in% c("ดร.", "ดอกเตอร์", "Dr") ~ "Dr",
+      TRUE ~ "Other"
+    ),
+    other_titles = if_else(title_clean == "Other", titles, NA_character_),
+    titles = title_clean
+  ) %>%
+  select(-title_clean)
+
+combined_info <- combined_info %>%
+  mutate(
+    gender = case_when(
+      gender %in% c("ชาย", "male", "Male") ~ "Male",
+      gender %in% c("หญิง", "หญิงตั้งครรภ์", "female", "Female") ~ "Female",
+      TRUE ~ "Other"
+    )
+  )
+
+combined_info <- combined_info %>%
+  mutate(
+    hbpm = case_when(
+      hbpm == "มี" ~ "yes",
+      hbpm == "ไม่มี" ~ "no",
+      TRUE ~ hbpm  # keep NA or other unexpected values
+    )
+  )
+```
+
+```{r change education}
+
+primary <- c("ป.1", "ป.2", "ป.3", "ป.4","ป4", "ป.5", "ป.6", "ป.7", "ประถมต้น", "ประถม",
+             "ประถมศึกษา")
+lower_sec_group <- c("ม.1", "ม.2", "ม.3", "ม3" ,"ม.ต้น", "ม.ส.3","มส.3","มศ.3",
+                     "ม ต้น")
+upper_sec_group <- c("ม.4", "ม.5", "ม.6","ม6", "ม.ปลาย", "มศ5", "มศ.5", "มัธยมปลาย",
+                     "ม.ศ.5", "มัธยมศึกษา")
+pwch <- c("ปวช.","ปวช", "ป.ว.ช")
+pws <- c("ปวส.","ปวส","ป.ว.ส.")
+undergrad <- c("ป.ตรี","ปตรี","ป\r\r\nป.ตรี","ป ตรี", "ปริญญาตรี", "ป.ตรี\r\r\nตรี")
+master <- c("กำลังเรียนป.โท","บธ.ม","ป.โท","ป.ท","ปริญญาโท")
+phd <- c("ป.เอก","Ph.D")
+other <- c("พ.บ.","คบ", "ไม่เรียน", "-*", "ไมเรียน","ปวท.","ประกาศนียบัตรวิชาชีพ",
+           "อนุปริญญา","-")
+
+
+combined_info <- combined_info %>%
+  mutate(
+    education = case_when(
+      education %in% primary ~ "ประถม",
+      education %in% lower_sec_group ~ "ม.ต้น",
+      education %in% upper_sec_group ~ "ม.ปลาย",
+      education %in% pwch ~ "ปวช.",
+      education %in% pws ~ "ปวส.",
+      education %in% undergrad ~ "ปริญญาตรี",
+      education %in% master ~ "ปริญญาโท",
+      education %in% phd ~ "ปริญญาเอก",
+      education %in% other ~ "Other",
+      TRUE ~ education
+    )
+  )
+
+unique(combined_info$education)
+```
+
+
+```{r change caregiver}
+unique(combined_info$caregiver)
+
+self <- c("ตนเอง", "มีลูกแต่ไม่ได้ดูแล")
+child <- c("ตนเอง,บุตร", "บุตร/ตนเอง", "บุตร", "บุตรสาว")
+spouse <- c("ภรรยา อ.พรทิพย์คณะพยาบาล", "ตนเอง/ภรรยา","สามี","ภรรยา", "บุตร,ภรรยา", "บุตร,สามี")
+other_fam <- c("หลาน")
+other <- c("อื่นๆ")
+
+combined_info <- combined_info %>%
+  mutate(
+    caregiver = case_when(
+      caregiver %in% self ~ "Self",
+      caregiver %in% child ~ "Child",
+      caregiver %in% spouse ~ "Spouse (Husband/Wife)",
+      caregiver %in% other_fam ~ "Other Family Member",
+      caregiver %in% other ~ "Other",
+      TRUE ~ caregiver
+    )
+  )
+```
+
+```{r change medfinance}
+unique(combined_info$medfinancial)
+```
+
+```{r}
+write_csv(combined_info, "data/combined_info.csv")
+```
+
+
+```{r join_info}
+info <- read_csv("data/combined_info.csv")
+info_template <- read_csv("info_data_template.csv")
+
+# Get the column names from the template
+template_cols <- names(info_template)
+
+# Get the actual data columns that match the template
+common_cols <- intersect(template_cols, names(info))
+
+# Step 1: Keep and reorder only matching columns from actual_data
+aligned_data <- info %>%
+  select(all_of(common_cols))
+
+# Step 2: Add missing columns (in template but not in actual_data)
+missing_cols <- setdiff(template_cols, names(aligned_data))
+aligned_data[missing_cols] <- NA
+
+# Step 3: Reorder to match the template column order
+aligned_data <- aligned_data %>%
+  select(all_of(template_cols))
+```
+
+```{r}
+write_csv(aligned_data, "patient_data.csv")
 ```
 
 

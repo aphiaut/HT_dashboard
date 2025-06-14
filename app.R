@@ -146,7 +146,8 @@ ui <- navbarPage(
                                      "บัตรทอง",
                                      "เบิกได้", 
                                      "ประกันสังคม",
-                                     "ประกันชีวิต")),
+                                     "ประกันชีวิต"
+                                     )),
              textInput("daystart", label = "First day", placeholder = "dd-mm-yyyy"),
              hr(),
              actionButton("save", "Save Data"), # Save button
@@ -855,18 +856,23 @@ server <- function(input, output, session) {
         phone = as.character(input$phone),
         phone2 = as.character(input$phone2),
         gender = as.character(input$gender),
+        gender_other = ifelse(input$gender == "Other", input$gender_other, ""),
         age = calculated_age,
         address = as.character(input$address),
         province = as.character(input$province),
         amphoe = as.character(input$amphoe),
         education = as.character(input$education),
+        education_other = ifelse(input$education == "Other", input$education_other, ""),
         occupation = as.character(input$occupation),
+        occupation_other = ifelse(input$occupation == "Other", input$occupation_other, ""),
         comobid = as.character(input$comobid),
+        comobid_other = ifelse(input$comobid == "Other", input$comobid_other, ""),
         ekg = as.character(input$ekg),
         echo = as.character(input$echo),
         eye = as.character(input$eye),
         drugallergy = as.character(input$drugallergy),
         caregiver = as.character(input$caregiver),
+        caregiver_other = ifelse(input$caregiver == "Other", input$caregiver_other, ""),
         hbpm = as.character(input$hbpm),
         medfinancial = input$medfinancial,
         daystart = as.character(input$daystart),
@@ -890,23 +896,30 @@ server <- function(input, output, session) {
         phone = as.character(input$phone),
         phone2 = as.character(input$phone2),
         gender = as.character(input$gender),
+        gender_other = ifelse(input$gender == "Other", input$gender_other, ""),
         age = calculated_age,
         address = as.character(input$address),
         province = as.character(input$province),
         amphoe = as.character(input$amphoe),
         education = as.character(input$education),
+        education_other = ifelse(input$education == "Other", input$education_other, ""),
         occupation = as.character(input$occupation),
+        occupation_other = ifelse(input$occupation == "Other", input$occupation_other, ""),
         comobid = as.character(input$comobid),
+        comobid_other = ifelse(input$comobid == "Other", input$comobid_other, ""),
         ekg = as.character(input$ekg),
         echo = as.character(input$echo),
         eye = as.character(input$eye),
         drugallergy = as.character(input$drugallergy),
         caregiver = as.character(input$caregiver),
+        caregiver_other = ifelse(input$caregiver == "Other", input$caregiver_other, ""),
         hbpm = as.character(input$hbpm),
         medfinancial = input$medfinancial,
         daystart = as.character(input$daystart),
         stringsAsFactors = FALSE
       )
+      # blank_template <- user_data[0, ]  # Keep column names but no data
+      # write.csv(blank_template, "info_data_template.csv", row.names = FALSE)
       write.csv(user_data, file_path, row.names = FALSE)
       output$save_status <- renderText("Data saved successfully!")
     }
@@ -1193,13 +1206,7 @@ server <- function(input, output, session) {
   output$medication_ui_spc <- renderSPCMedicationUI(medication_list_spc, "Single-pill combination")
  
   
-  # observe({
-  #   visits <- filtered_visits()
-  #   num_visits <- nrow(visits)
-  #   output$num_visit <- renderText({
-  #     paste0(num_visits)  # Render the number of visits as plain text
-  #   })
-  # })
+
   
   display_visit_data <- function(visit) {
     output$visit_data <- renderText({
@@ -1298,10 +1305,10 @@ server <- function(input, output, session) {
     visits <- visits[order(as.Date(visits$visit_date, format = "%d-%m-%Y"), decreasing = TRUE), ]
     
     # Debug prints to console
-    print(paste("🔍 Filtered HN:", hn_to_search))
-    print(paste("🔍 Number of visits:", nrow(visits)))
-    print("🔍 Visit data:")
-    print(visits)
+    # print(paste("🔍 Filtered HN:", hn_to_search))
+    # print(paste("🔍 Number of visits:", nrow(visits)))
+    # print("🔍 Visit data:")
+    # print(visits)
     
     # Store filtered visits
     filtered_visits(visits)
