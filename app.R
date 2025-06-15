@@ -36,7 +36,7 @@ ui <- navbarPage(
                textInput("other_titles", "Please Specify Titles:", "")
              ),
              textInput("name", "Name", ""),
-             textInput("dob", label = "Date of Birth", placeholder = "dd-mm-yyyy"),
+             textInput("dob", label = "Date of Birth", placeholder = "dd-mm-yyyy (พ.ศ.)"),
              tags$label("Your Age:"),
              textOutput("age_text"),
              textInput("phone", "Phone", ""),
@@ -127,9 +127,9 @@ ui <- navbarPage(
                condition = "input.comobid == 'Other'",
                textInput("other_comobid", "Please Specify Comobid:", "")
              ),
-             textInput("ekg", label = "Latest EKG", placeholder = "dd-mm-yyyy"),
-             textInput("echo", label = "Latest Echo", placeholder = "dd-mm-yyyy"),
-             textInput("eye", label = "Latest eye examination", placeholder = "dd-mm-yyyy"),
+             textInput("ekg", label = "Latest EKG", placeholder = "dd-mm-yyyy (พ.ศ.)"),
+             textInput("echo", label = "Latest Echo", placeholder = "dd-mm-yyyy (พ.ศ.)"),
+             textInput("eye", label = "Latest eye examination", placeholder = "dd-mm-yyyy (พ.ศ.)"),
              textAreaInput("drugallergy", "Drug allergy", "", rows = 3, 
                            placeholder = "Enter your drug allergy here"),
              selectInput("caregiver", "Caregiver",
@@ -149,7 +149,7 @@ ui <- navbarPage(
                                      "ประกันสังคม",
                                      "ประกันชีวิต"
                                      )),
-             textInput("daystart", label = "First day", placeholder = "dd-mm-yyyy"),
+             textInput("daystart", label = "First day", placeholder = "dd-mm-yyyy (พ.ศ.)"),
              hr(),
              actionButton("save", "Save Data"), # Save button
              verbatimTextOutput("save_status")  # Save status
@@ -731,14 +731,14 @@ server <- function(input, output, session) {
     }
     
     tryCatch({
-      # Attempt to parse the input as a date in either dd-mm-yyyy or dd/mm/yyyy format
+      # Parse the input date (assuming Buddhist Era)
       dob_input <- as.Date(input$dob, tryFormats = c("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"))
       
       if (is.na(dob_input)) {
         return("Invalid date format. Please use dd-mm-yyyy or dd/mm/yyyy.")
       }
       
-      # Convert Buddhist Era (พ.ศ.) to Gregorian calendar
+      # Convert Buddhist Era to Gregorian calendar (subtract 543 years)
       gregorian_dob <- dob_input - years(543)
       
       # Current date
@@ -775,35 +775,41 @@ server <- function(input, output, session) {
   observeEvent(input$check_hn_register, {
     file_path <- "patient_data.csv"
     
-    # Format the DOB input
-    formatted_dob <- if (!is.null(input$dob) && input$dob != "") {
-      tryCatch({
-        dob_input <- as.Date(input$dob, tryFormats = c("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"))
-        if (!is.na(dob_input)) {
-          format(dob_input, "%d/%m/%Y")  # Convert to dd/mm/yyyy format
-        } else {
-          NA  # Invalid date
-        }
-      }, error = function(e) {
-        NA  # Handle errors in date parsing
-      })
-    } else {
-      NA  # Empty DOB
-    }
-    
     if (file.exists(file_path)) {
       all_data <- read.csv(file_path, stringsAsFactors = FALSE)
-      # Explicitly parse the DOB column to ensure it's in the correct date format
+      # Parse the DOB column (already in Gregorian format in the file)
       all_data$dob <- as.Date(all_data$dob, format = "%d/%m/%Y")
       
-      hn_to_search <- toupper(input$hn_register)  # Convert input HN to uppercase for search
-      
+      hn_to_search <- toupper(input$hn_register)
       result <- all_data %>% filter(hn == hn_to_search)
       
       if (nrow(result) > 0) {
+        # Convert Gregorian dates back to Buddhist Era for display
+        convert_gregorian_to_be <- function(gregorian_date_str) {
+          if (is.na(gregorian_date_str) || gregorian_date_str == "") return("")
+          
+          tryCatch({
+            gregorian_date <- as.Date(gregorian_date_str, format = "%d/%m/%Y")
+            if (!is.na(gregorian_date)) {
+              # Add 543 years to convert back to Buddhist Era for display
+              be_date <- gregorian_date + years(543)
+              format(be_date, "%d/%m/%Y")
+            } else {
+              ""
+            }
+          }, error = function(e) {
+            ""
+          })
+        }
+        
+        # Update form fields with Buddhist Era dates for display
         updateSelectInput(session, "titles", selected = result$titles[1])
         updateTextInput(session, "name", value = result$name[1])
-        updateDateInput(session, "dob", value = result$dob[1])
+        
+        # Convert DOB back to Buddhist Era for display
+        be_dob <- convert_gregorian_to_be(format(result$dob[1], "%d/%m/%Y"))
+        updateTextInput(session, "dob", value = be_dob)
+        
         updateTextInput(session, "phone", value = result$phone[1])
         updateTextInput(session, "phone2", value = result$phone2[1])
         updateSelectInput(session, "gender", selected = result$gender[1])
@@ -812,15 +818,21 @@ server <- function(input, output, session) {
         updateSelectInput(session, "amphoe", selected = result$amphoe[1])
         updateSelectInput(session, "education", selected = result$education[1])
         updateSelectInput(session, "occupation", selected = result$occupation[1])
-        updateTextInput(session, "comobid", value = result$comobid[1]) 
-        updateTextInput(session, "ekg", value = result$ekg[1])                
-        updateTextInput(session, "echo", value = result$echo[1])              
-        updateTextInput(session, "eye", value = result$eye[1])     
-        updateTextAreaInput(session, "drugallergy", value = result$drugallergy[1]) 
+        updateTextInput(session, "comobid", value = result$comobid[1])
+        
+        # Convert other dates back to Buddhist Era for display
+        updateTextInput(session, "ekg", value = convert_gregorian_to_be(result$ekg[1]))
+        updateTextInput(session, "echo", value = convert_gregorian_to_be(result$echo[1]))
+        updateTextInput(session, "eye", value = convert_gregorian_to_be(result$eye[1]))
+        
+        updateTextAreaInput(session, "drugallergy", value = result$drugallergy[1])
         updateSelectInput(session, "caregiver", selected = result$caregiver[1])
         updateSelectInput(session, "hbpm", selected = result$hbpm[1])
         updateSelectInput(session, "medfinancial", selected = result$medfinancial[1])
-        updateTextInput(session, "daystart", value = result$daystart[1])
+        
+        # Convert daystart back to Buddhist Era for display
+        updateTextInput(session, "daystart", value = convert_gregorian_to_be(result$daystart[1]))
+        
         output$hn_status <- renderText("Patient data loaded successfully.")
       } else {
         output$hn_status <- renderText("No patient found with this HN.")
@@ -830,100 +842,151 @@ server <- function(input, output, session) {
     }
   })
   
+  
   # Save or replace data in the file when the "Save Data" button is clicked
   observeEvent(input$save, {
     file_path <- "patient_data.csv"
     
-    # Format the DOB input
-    formatted_dob <- if (!is.null(input$dob) && input$dob != "") {
-      tryCatch({
-        dob_input <- as.Date(input$dob, tryFormats = c("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"))
-        if (!is.na(dob_input)) {
-          format(dob_input, "%d/%m/%Y")  # Convert to dd/mm/yyyy format
-        } else {
-          NA  # Invalid date
-        }
-      }, error = function(e) {
-        NA  # Handle errors in date parsing
-      })
-    } else {
-      NA  # Empty DOB
+    # Validate required inputs
+    if (is.null(input$hn_register) || input$hn_register == "") {
+      output$save_status <- renderText("Error: HN is required!")
+      return()
     }
     
-    # Calculate Age for saving
-    calculated_age <- if (!is.null(input$dob) && input$dob != "") {
+    # Convert Buddhist Era to Gregorian and format DOB
+    convert_be_to_gregorian <- function(date_string) {
+      if (is.null(date_string) || date_string == "") return("")
+      
       tryCatch({
-        dob_input <- as.Date(input$dob, tryFormats = c("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"))
-        if (!is.na(dob_input)) {
-          gregorian_dob <- dob_input - years(543)  # Adjust for Buddhist Era
+        # Parse the date (assuming it's in Buddhist Era)
+        be_date <- as.Date(date_string, tryFormats = c("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"))
+        
+        if (!is.na(be_date)) {
+          # Convert Buddhist Era to Gregorian (subtract 543 years)
+          gregorian_date <- be_date - years(543)
+          format(gregorian_date, "%d/%m/%Y")  # Convert to dd/mm/yyyy format
+        } else {
+          ""  # Invalid date
+        }
+      }, error = function(e) {
+        ""  # Handle errors in date parsing
+      })
+    }
+    
+    formatted_dob <- convert_be_to_gregorian(input$dob)
+    
+    # Calculate Age for saving (using Gregorian date)
+    calculated_age <- if (!is.null(input$dob) && input$dob != "" && formatted_dob != "") {
+      tryCatch({
+        # The formatted_dob is already in Gregorian, so use it directly
+        gregorian_dob <- as.Date(formatted_dob, format = "%d/%m/%Y")
+        if (!is.na(gregorian_dob)) {
           today <- Sys.Date()
           as.numeric(floor(difftime(today, gregorian_dob, units = "days") / 365.25))
         } else {
-          NA  # Invalid date
+          ""  # Invalid date
         }
       }, error = function(e) {
-        NA  # Handle errors in date parsing
+        ""  # Handle errors in date parsing
       })
     } else {
-      NA  # Empty DOB
+      ""  # Empty DOB
     }
+    
+    # Safely get input values with defaults
+    get_input_safe <- function(input_name, default = "") {
+      value <- input[[input_name]]
+      if (is.null(value)) return(default)
+      return(as.character(value))
+    }
+    
+    # Handle conditional inputs
+    titles_value <- if (!is.null(input$titles) && input$titles == "Other") {
+      get_input_safe("other_titles")
+    } else {
+      get_input_safe("titles")
+    }
+    
+    gender_value <- if (!is.null(input$gender) && input$gender == "Other") {
+      get_input_safe("gender_other")
+    } else {
+      get_input_safe("gender")
+    }
+    
+    education_value <- if (!is.null(input$education) && input$education == "Other") {
+      get_input_safe("other_education")
+    } else {
+      get_input_safe("education")
+    }
+    
+    occupation_value <- if (!is.null(input$occupation) && input$occupation == "Other") {
+      get_input_safe("other_occupation")
+    } else {
+      get_input_safe("occupation")
+    }
+    
+    comobid_value <- if (!is.null(input$comobid) && input$comobid == "Other") {
+      get_input_safe("other_comobid")
+    } else {
+      get_input_safe("comobid")
+    }
+    
+    caregiver_value <- if (!is.null(input$caregiver) && input$caregiver == "Other") {
+      get_input_safe("other_caregiver")
+    } else {
+      get_input_safe("caregiver")
+    }
+    
+    # Convert daystart from Buddhist Era to Gregorian
+    formatted_daystart <- convert_be_to_gregorian(input$daystart)
+    formatted_ekg <- convert_be_to_gregorian(input$ekg)
+    formatted_echo <- convert_be_to_gregorian(input$echo)
+    formatted_eye <- convert_be_to_gregorian(input$eye)
     
     if (file.exists(file_path)) {
       # Load existing data
-      all_data <- read.csv(file_path)
+      all_data <- read.csv(file_path, stringsAsFactors = FALSE)
       all_data$phone <- as.character(all_data$phone)
       all_data$phone2 <- as.character(all_data$phone2)
       
       # Check if HN exists
       hn_to_save <- toupper(input$hn_register)  # Convert HN to uppercase for saving
-      if (hn_to_save %in% all_data$HN) {
+      if (hn_to_save %in% all_data$hn) {
         # Replace the existing data for this HN
         all_data <- all_data %>%
-          filter(HN != hn_to_save)  # Remove the old record
+          filter(hn != hn_to_save)  # Fixed: use lowercase 'hn' not 'HN'
       }
       
-      # Consolidate updated user inputs into a data frame
-      gender <- if (input$gender == "Other") input$other_gender else input$gender
-      nationality <- if (input$nationality == "Other") input$other_nationality else input$nationality
-      ethnicity <- if (input$ethnicity == "Other") input$other_ethnicity else input$ethnicity
-      status <- if (input$status == "Other") input$other_status else input$status
-      titles <- if (input$titles == "Other") input$other_titles else input$titles
-      education <- if (input$education == "Other") input$other_education else input$education
-      occupation <- if (input$occupation == "Other") input$other_occupation else input$occupation
-      comobid <- if (input$comobid == "Other") input$other_comobid else input$comobid
-      caregiver <- if (input$caregiver == "Other") input$other_caregiver else input$caregiver
-     
-      
-      
+      # Create new user data
       user_data <- data.frame(
         no = nrow(all_data) + 1,  # Maintain sequential No.
         hn = hn_to_save,         # Save HN in uppercase
-        titles = as.character(input$titles),
-        name = as.character(input$name),
+        titles = titles_value,
+        name = get_input_safe("name"),
         dob = formatted_dob,
-        phone = as.character(input$phone),
-        phone2 = as.character(input$phone2),
-        gender = as.character(input$gender),
-        gender_other = ifelse(input$gender == "Other", input$gender_other, ""),
+        phone = get_input_safe("phone"),
+        phone2 = get_input_safe("phone2"),
+        gender = gender_value,
+        gender_other = ifelse(!is.null(input$gender) && input$gender == "Other", get_input_safe("gender_other"), ""),
         age = calculated_age,
-        address = as.character(input$address),
-        province = as.character(input$province),
-        amphoe = as.character(input$amphoe),
-        education = as.character(input$education),
-        education_other = ifelse(input$education == "Other", input$education_other, ""),
-        occupation = as.character(input$occupation),
-        occupation_other = ifelse(input$occupation == "Other", input$occupation_other, ""),
-        comobid = as.character(input$comobid),
-        comobid_other = ifelse(input$comobid == "Other", input$comobid_other, ""),
-        ekg = as.character(input$ekg),
-        echo = as.character(input$echo),
-        eye = as.character(input$eye),
-        drugallergy = as.character(input$drugallergy),
-        caregiver = as.character(input$caregiver),
-        caregiver_other = ifelse(input$caregiver == "Other", input$caregiver_other, ""),
-        hbpm = as.character(input$hbpm),
-        medfinancial = input$medfinancial,
-        daystart = as.character(input$daystart),
+        address = get_input_safe("address"),
+        province = get_input_safe("province"),
+        amphoe = get_input_safe("amphoe"),
+        education = education_value,
+        education_other = ifelse(!is.null(input$education) && input$education == "Other", get_input_safe("education_other"), ""),
+        occupation = occupation_value,
+        occupation_other = ifelse(!is.null(input$occupation) && input$occupation == "Other", get_input_safe("occupation_other"), ""),
+        comobid = comobid_value,
+        comobid_other = ifelse(!is.null(input$comobid) && input$comobid == "Other", get_input_safe("comobid_other"), ""),
+        ekg = formatted_ekg,
+        echo = formatted_echo,
+        eye = formatted_eye,
+        drugallergy = get_input_safe("drugallergy"),
+        caregiver = caregiver_value,
+        caregiver_other = ifelse(!is.null(input$caregiver) && input$caregiver == "Other", get_input_safe("caregiver_other"), ""),
+        hbpm = get_input_safe("hbpm"),
+        medfinancial = get_input_safe("medfinancial"),
+        daystart = formatted_daystart,
         stringsAsFactors = FALSE
       )
       
@@ -933,46 +996,45 @@ server <- function(input, output, session) {
       # Save the updated data back to the file
       write.csv(all_data, file_path, row.names = FALSE)
       output$save_status <- renderText("Data saved successfully!")
+      
     } else {
       # If no file exists, save the data as a new file
       user_data <- data.frame(
         no = 1,
         hn = toupper(input$hn_register),  # Convert HN to uppercase for saving
-        titles = as.character(input$titles),
-        name = as.character(input$name),
+        titles = titles_value,
+        name = get_input_safe("name"),
         dob = formatted_dob,
-        phone = as.character(input$phone),
-        phone2 = as.character(input$phone2),
-        gender = as.character(input$gender),
-        gender_other = ifelse(input$gender == "Other", input$gender_other, ""),
+        phone = get_input_safe("phone"),
+        phone2 = get_input_safe("phone2"),
+        gender = gender_value,
+        gender_other = ifelse(!is.null(input$gender) && input$gender == "Other", get_input_safe("gender_other"), ""),
         age = calculated_age,
-        address = as.character(input$address),
-        province = as.character(input$province),
-        amphoe = as.character(input$amphoe),
-        education = as.character(input$education),
-        education_other = ifelse(input$education == "Other", input$education_other, ""),
-        occupation = as.character(input$occupation),
-        occupation_other = ifelse(input$occupation == "Other", input$occupation_other, ""),
-        comobid = as.character(input$comobid),
-        comobid_other = ifelse(input$comobid == "Other", input$comobid_other, ""),
-        ekg = as.character(input$ekg),
-        echo = as.character(input$echo),
-        eye = as.character(input$eye),
-        drugallergy = as.character(input$drugallergy),
-        caregiver = as.character(input$caregiver),
-        caregiver_other = ifelse(input$caregiver == "Other", input$caregiver_other, ""),
-        hbpm = as.character(input$hbpm),
-        medfinancial = input$medfinancial,
-        daystart = as.character(input$daystart),
+        address = get_input_safe("address"),
+        province = get_input_safe("province"),
+        amphoe = get_input_safe("amphoe"),
+        education = education_value,
+        education_other = ifelse(!is.null(input$education) && input$education == "Other", get_input_safe("education_other"), ""),
+        occupation = occupation_value,
+        occupation_other = ifelse(!is.null(input$occupation) && input$occupation == "Other", get_input_safe("occupation_other"), ""),
+        comobid = comobid_value,
+        comobid_other = ifelse(!is.null(input$comobid) && input$comobid == "Other", get_input_safe("comobid_other"), ""),
+        ekg = formatted_ekg,
+        echo = formatted_echo,
+        eye = formatted_eye,
+        drugallergy = get_input_safe("drugallergy"),
+        caregiver = caregiver_value,
+        caregiver_other = ifelse(!is.null(input$caregiver) && input$caregiver == "Other", get_input_safe("caregiver_other"), ""),
+        hbpm = get_input_safe("hbpm"),
+        medfinancial = get_input_safe("medfinancial"),
+        daystart = formatted_daystart,
         stringsAsFactors = FALSE
       )
-      # blank_template <- user_data[0, ]  # Keep column names but no data
-      # write.csv(blank_template, "info_data_template.csv", row.names = FALSE)
+      
       write.csv(user_data, file_path, row.names = FALSE)
       output$save_status <- renderText("Data saved successfully!")
     }
   })
-
 #-------------------  Visit Form Server  ----------------------------------
   
   # 1. Retrieve Patient Information by HN
