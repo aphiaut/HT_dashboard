@@ -11,6 +11,7 @@ library(DT)
 library(shinythemes)
 library(ggthemes)
 library(bslib)
+library(shinydashboard)
 
 thailand <- read_csv("data/thailand_province_amphoe.csv")
 
@@ -650,7 +651,54 @@ ui <- navbarPage(
 #------------------------Patient Dashboard UI -------------------------------
 
 tabPanel("Clinic Dashboard",
-         
+    fluidRow(
+      shiny::HTML("<br><br><center> <h1>Hypertension Clinic</h1> </center><br>"),
+    ),
+    fluidRow(
+    tabsetPanel(
+      tabPanel("Overview",
+      fluidRow(
+        column(1,),
+        column(11,
+        valueBoxOutput("total_count_box", width = 3),
+        valueBoxOutput("male_count_box", width = 3),
+        valueBoxOutput("female_count_box", width = 3),
+        valueBoxOutput("other_count_box", width = 3)
+        )
+      ),
+      fluidRow(
+      column(6,
+             plotlyOutput("all_gender")
+             ),
+      column(6,
+             plotlyOutput("all_age")
+      )
+    )
+
+    ),
+    tabPanel("Insight",
+                sidebarPanel(
+
+            h3("Time"),
+
+            dateRangeInput('dateRange2',
+      label = paste('Date range input 2: range is limited,',
+       'dd/mm/yy, language: th, week starts on day 1 (Monday),',
+       'separator is "-", start view is year'),
+      start = Sys.Date() - 3, end = Sys.Date() + 3,
+      min = Sys.Date() - 10, max = Sys.Date() + 10,
+      separator = " - ", format = "dd/mm/yy",
+      startview = 'year', language = 'th', weekstart = 1
+    ),
+
+
+            actionButton("actionDT", "Filter", class = "btn btn-warning"),
+          )
+
+    )
+    )
+)
+
 )
 )
 
@@ -1720,6 +1768,79 @@ output$patient_name_dashboard <- renderText({
   
   
   #------------------------Clinic Dashboard Server -------------------------------  
+  
+ 
+# value boxes
+  output$total_count_box <- renderValueBox({
+    if (file.exists("patient_data.csv")) {
+      data <- read.csv("patient_data.csv", stringsAsFactors = FALSE)
+      total <- nrow(data)
+      valueBox(
+        paste0(total, " (100%)"),
+        subtitle = "Total Patients",
+        icon = icon("users"),
+        color = "green"
+      )
+    } else {
+      valueBox("0 (0%)", "Total Patients", icon = icon("users"), color = "green")
+    }
+  })
+  
+  output$male_count_box <- renderValueBox({
+    if (file.exists("patient_data.csv")) {
+      data <- read.csv("patient_data.csv", stringsAsFactors = FALSE)
+      total <- nrow(data)
+      count <- sum(data$gender == "Male", na.rm = TRUE)
+      perc <- if (total > 0) round((count / total) * 100, 1) else 0
+      valueBox(
+        paste0(count, " (", perc, "%)"),
+        subtitle = "Male Patients",
+        icon = icon("mars"),
+        color = "blue"
+      )
+    } else {
+      valueBox("0 (0%)", "Male Patients", icon = icon("mars"), color = "blue")
+    }
+  })
+  
+  output$female_count_box <- renderValueBox({
+    if (file.exists("patient_data.csv")) {
+      data <- read.csv("patient_data.csv", stringsAsFactors = FALSE)
+      total <- nrow(data)
+      count <- sum(data$gender == "Female", na.rm = TRUE)
+      perc <- if (total > 0) round((count / total) * 100, 1) else 0
+      valueBox(
+        paste0(count, " (", perc, "%)"),
+        subtitle = "Female Patients",
+        icon = icon("venus"),
+        color = "maroon"
+      )
+    } else {
+      valueBox("0 (0%)", "Female Patients", icon = icon("venus"), color = "pink")
+    }
+  })
+  
+  output$other_count_box <- renderValueBox({
+    if (file.exists("patient_data.csv")) {
+      data <- read.csv("patient_data.csv", stringsAsFactors = FALSE)
+      total <- nrow(data)
+      count <- sum(!(data$gender %in% c("Male", "Female")), na.rm = TRUE)
+      perc <- if (total > 0) round((count / total) * 100, 1) else 0
+      valueBox(
+        paste0(count, " (", perc, "%)"),
+        subtitle = "Other Gender",
+        icon = icon("genderless"),
+        color = "purple"
+      )
+    } else {
+      valueBox("0 (0%)", "Other Gender", icon = icon("genderless"), color = "purple")
+    }
+  })
+  
+  
+  
+  
+  
   
 }
 
