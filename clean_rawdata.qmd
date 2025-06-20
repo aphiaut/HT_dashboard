@@ -1019,6 +1019,8 @@ patient_test %>%
   filter(age <= 25)
 ```
 ```{r}
+patient <- read_csv("patient_data.csv")
+visit <- read_csv("visit_data.csv")
 # change day start
 # Read data
 patient <- read_csv("patient_data.csv")
@@ -1053,3 +1055,53 @@ patient_info %>%
 ```{r}
 write_csv(patient_info, "patient_data.csv")
 ```
+
+
+```{r}
+#forgot to join properly
+visit_data <- read_csv("visit_data.csv")
+
+#get it from clean_data.csv
+clean_data_2 <- clean_data %>%
+  mutate(hn = recode(hn,
+                     "ฌ์8637" = "GN8637",
+                     "ฤ?0752" = "AM0752"))
+
+# re number of visit
+clean_data_2 <- clean_data_2 %>%
+  arrange(hn, visit_date) %>%
+  group_by(hn) %>%
+  mutate(visit_number = row_number()) %>%
+  ungroup()
+
+
+clean_data_2 <- clean_data_2 %>%
+  mutate(hn = toupper(hn))
+clean_selected <- clean_data_2 %>%
+  select(hn, visit_number, alway_take_medicine, salty_control, excercise) %>%
+  rename(
+    adherence_alway_take_medicine = alway_take_medicine,
+    adherence_salty_control = salty_control,
+    adherence_exercise = excercise
+  )
+clean_selected <- clean_selected %>%
+  distinct(hn, visit_number, .keep_all = TRUE)
+
+visit_data_new <- visit_data %>%
+  inner_join(clean_selected, by = c("hn", "visit_number"))
+
+cols <- c("adherence_alway_take_medicine", "adherence_salty_control", "adherence_exercise")
+
+for (col in cols) {
+  visit_data_new <- visit_data_new %>%
+    mutate(!!sym(col) := coalesce(.data[[paste0(col, ".y")]], .data[[paste0(col, ".x")]])) %>%
+    select(-all_of(paste0(col, ".x")), -all_of(paste0(col, ".y")))
+}
+
+```
+
+```{r}
+#write_csv(visit_data_new, "visit_data.csv")
+```
+
+
