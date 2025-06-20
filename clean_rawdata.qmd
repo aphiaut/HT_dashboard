@@ -11,7 +11,6 @@ library(purrr)
 library(stringr)
 ```
 
-
 ```{r}
 all_raw <- read_excel("data/ข้อมูลการมาตรวจแต่ละครั้ง_รวม 4 มิย 2568.xlsx")
 
@@ -20,7 +19,6 @@ template <- read_csv("visit_data_template.csv")
 
 # sample_raw <- read_csv("sample_data.csv")
 ```
-
 
 ```{r recolname_raw}
 # recolname
@@ -78,17 +76,12 @@ colnames_map <- c("HN" = "hn",
 
 ```
 
-
 ```{r recolnamefunction}
 colnames(all_raw) <- ifelse(colnames(all_raw) %in% names(colnames_map), colnames_map[colnames(all_raw)], colnames(all_raw))
 
 # write csv
 # write_csv(all_raw, "data/new_data.csv")
 ```
-
-
-
-
 
 ```{r colreplace}
 new_data <- read_csv("data/new_data.csv")
@@ -163,7 +156,6 @@ new_data %>%
   select(all_of(cols_to_check)) %>%
   map(unique)
 ```
-
 
 ```{r change cc}
 # change cc
@@ -258,9 +250,6 @@ unique(new_data$pi_abnormal)
 unique(new_data$pi_other)
 ```
 
-
-
-
 ```{r wnl}
 # Columns to process
 exam_cols <- c("heent", "heart", "lungs", "abd", "ext", "ns")
@@ -278,7 +267,6 @@ new_data <- new_data %>%
   mutate(across(all_of(exam_cols),
                 .fns = ~ if_else(str_detect(., wnl_pattern), "wnl", "abnormal")))
 ```
-
 
 ```{r adherance}
 
@@ -304,13 +292,11 @@ new_data <- new_data %>%
 
 ```
 
-
 ```{r doctor1}
 new_data <- new_data %>%
   mutate(doctor_name = "Doctor1")
 
 ```
-
 
 ```{r}
 
@@ -321,6 +307,7 @@ write_csv(new_data, "data/new_data.csv")
 ```{r second data}
 other_raw <- read_excel("data/ข้อมูลการมาตรวจแต่ละครั้ง_อ.สิทธิชัย.xlsx")
 ```
+
 ```{r}
 # recolname
 
@@ -376,7 +363,6 @@ colnames_map <- c("HN" = "hn",
 
 
 ```
-
 
 ```{r}
 colnames(other_raw) <- ifelse(colnames(other_raw) %in% names(colnames_map), colnames_map[colnames(other_raw)], colnames(other_raw))
@@ -458,7 +444,6 @@ new_data_2 %>%
   map(unique)
 ```
 
-
 ```{r change cc2}
 new_data_2 <- new_data_2 %>%
   mutate(
@@ -531,6 +516,7 @@ unique(new_data_2$pi)
 unique(new_data_2$pi_abnormal)
 unique(new_data_2$pi_other)
 ```
+
 ```{r wnl2}
 # Columns to process
 exam_cols <- c("heent", "heart", "lungs", "abd", "ext", "ns")
@@ -548,7 +534,6 @@ new_data_2 <- new_data_2 %>%
   mutate(across(all_of(exam_cols),
                 .fns = ~ if_else(str_detect(., wnl_pattern), "wnl", "abnormal")))
 ```
-
 
 ```{r adherance2}
 
@@ -574,7 +559,6 @@ new_data_2 <- new_data_2 %>%
 
 ```
 
-
 ```{r doctor2}
 new_data_2 <- new_data_2 %>%
   mutate(doctor_name = "Doctor2")
@@ -586,8 +570,6 @@ new_data_2 <- new_data_2 %>%
 # save csv
 write_csv(new_data_2, "data/new_data_2.csv")
 ```
-
-
 
 ```{r join 2 raw data}
 
@@ -628,8 +610,6 @@ new_data_2_clean <- new_data_2[, common_cols]
 combined_data <- bind_rows(new_data_clean, new_data_2_clean)
 ```
 
-
-
 ```{r check duplicate row}
 new_data$source <- "new_data"
 new_data_2$source <- "new_data_2"
@@ -646,7 +626,6 @@ combined_data_unique <- combined_data_unique %>%
 write.csv(combined_data_unique, "data/clean_data.csv")
 ```
 
-
 ```{r}
 sample_raw |> filter(
   hn == "BA7547"
@@ -656,9 +635,6 @@ visit_data |> filter(
   hn == "BA7547"
 )
 ```
-
-
-
 
 ```{r}
 # join data
@@ -696,8 +672,6 @@ write_csv(visit_data, "visit_data.csv")
 
 ```
 
-
-
 ```{r}
 # Step 1: Read the data
 visit_data <- read_csv("visit_data.csv", na = c("", "NA"))
@@ -708,7 +682,6 @@ cleaned_data <- visit_data %>% filter(!if_all(everything(), is.na))
 # Step 3: Overwrite the original file (or change to "clean_visit_data.csv" if you want to keep the original)
 write_csv(cleaned_data, "visit_data.csv")
 ```
-
 
 ```{r}
 visit_data <- visit_data %>%
@@ -765,13 +738,9 @@ visit_data <- visit_data %>%
   mutate(hn = toupper(hn))
 ```
 
-
 ```{r}
 write_csv(visit_data, "visit_data.csv")
 ```
-
-
-
 
 ```{r}
 # Find HNs in visit_data that are not in patient_data
@@ -783,7 +752,6 @@ hn_not_registered <- visit_data %>%
 
 hn_not_registered
 ```
-
 
 ```{r patient_info}
 patient_info <- read_excel("data/ข้อมูลทั่วไป_รวม 4 มิย 68.xlsx")
@@ -866,7 +834,6 @@ combined_info <- combined_info %>%
 
 ```
 
-
 ```{r changetitle}
 
 combined_info <- combined_info %>%
@@ -939,7 +906,6 @@ combined_info <- combined_info %>%
 unique(combined_info$education)
 ```
 
-
 ```{r change caregiver}
 unique(combined_info$caregiver)
 
@@ -970,7 +936,6 @@ unique(combined_info$medfinancial)
 write_csv(combined_info, "data/combined_info.csv")
 ```
 
-
 ```{r join_info}
 info <- read_csv("data/combined_info.csv")
 info_template <- read_csv("info_data_template.csv")
@@ -999,3 +964,92 @@ write_csv(aligned_data, "patient_data.csv")
 ```
 
 
+```{r}
+# change format of data to be same with app
+
+patient_info <- patient
+patient_info <- patient_info %>%
+  mutate(
+    dob = format(as.Date(dob), "%d/%m/%Y"),
+    daystart = format(as.Date(daystart), "%d/%m/%Y")
+  )
+
+```
+
+
+```{r}
+patient_test <- patient %>%
+  mutate(
+    # Step 1: extract year as number
+    dob_split = str_split_fixed(dob, "/", 3),
+    dob_day = dob_split[,1],
+    dob_month = dob_split[,2],
+    dob_year = as.integer(dob_split[,3]),
+
+    # Step 2: convert Buddhist year to Gregorian if > 2400
+    dob_year = if_else(dob_year > 2400, dob_year - 543, dob_year),
+
+    # Step 3: create standardized dob string in dd/mm/yyyy (Gregorian)
+    dob_fixed = paste(dob_day, dob_month, dob_year, sep = "/"),
+
+    # Step 4: convert to Date class
+    dob = dmy(dob_fixed),
+
+    # Step 5: calculate age
+    age = if_else(!is.na(dob), interval(dob, today()) %/% years(1), NA_integer_)
+  ) %>%
+  select(-dob_split, -dob_day, -dob_month, -dob_year, -dob_fixed)  # clean up
+
+#remove missing dob by less than 25 years
+patient_test <- patient_test %>%
+  mutate(
+    dob = if_else(age < 25, as.Date(NA), dob))
+
+#re-calculate age
+patient_test <- patient_test %>%
+  mutate(
+    age = if_else(
+      !is.na(dob),
+      interval(dob, today()) %/% years(1),
+      NA_integer_
+    )
+  )
+
+patient_test %>%
+  filter(age <= 25)
+```
+```{r}
+# change day start
+# Read data
+patient <- read_csv("patient_data.csv")
+visit <- read_csv("visit_data.csv")
+
+# Ensure visit_date is Date
+visit_data <- visit %>%
+  mutate(visit_date = as.Date(visit_date))
+
+# Get the first visit date per HN
+first_visits <- visit_data %>%
+  group_by(hn) %>%
+  summarise(first_visit_date = min(visit_date, na.rm = TRUE), .groups = "drop")
+
+# Convert daystart to Date (assumed format: dd/mm/yyyy) and fill NAs with first visit date
+patient_info <- patient %>%
+  mutate(
+    daystart = dmy(str_trim(daystart))  # parse from character to Date
+  ) %>%
+  left_join(first_visits, by = "hn") %>%
+  mutate(
+    daystart = if_else(is.na(daystart), first_visit_date, daystart)
+  ) %>%
+  select(-first_visit_date)
+
+# Check for NAs or Inf
+patient_info %>%
+  filter(is.na(daystart) | is.infinite(daystart))
+```
+
+
+```{r}
+write_csv(patient_info, "patient_data.csv")
+```

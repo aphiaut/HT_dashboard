@@ -681,19 +681,39 @@ tabPanel("Clinic Dashboard",
 
             h3("Time"),
 
-            dateRangeInput('dateRange2',
-      label = paste('Date range input 2: range is limited,',
-       'dd/mm/yy, language: th, week starts on day 1 (Monday),',
-       'separator is "-", start view is year'),
-      start = Sys.Date() - 3, end = Sys.Date() + 3,
-      min = Sys.Date() - 10, max = Sys.Date() + 10,
-      separator = " - ", format = "dd/mm/yy",
-      startview = 'year', language = 'th', weekstart = 1
+            
+    dateRangeInput('dateRange',
+                   label = 'Date range input: dd/mm/yyyy',
+                   format = "dd/mm/yyyy",        
+                   start = Sys.Date() - 2, 
+                   end = Sys.Date() + 2),
+    
+    radioButtons("insightMode", "Count Mode",
+                 choices = c("Unique Patients" = "unique", "All Visits" = "visits"),
+                 selected = "unique",
+                 inline = TRUE),
+
+            actionButton("actionDT", "Filter", class = "btn btn-warning")
+          ),
+    fluidRow(
+      column(1,
+             ),
+      column(11,
+             valueBoxOutput("total_count_box_insight", width = 3),
+             valueBoxOutput("male_count_box_insight", width = 3),
+             valueBoxOutput("female_count_box_insight", width = 3),
+             valueBoxOutput("other_count_box_insight", width = 3)
+      )
     ),
-
-
-            actionButton("actionDT", "Filter", class = "btn btn-warning"),
-          )
+    fluidRow(
+      column(6,
+             plotlyOutput("sex_insight")
+        
+      ),
+      column(6,
+             plotlyOutput("age_insight")
+      )
+    )
 
     )
     )
@@ -1831,7 +1851,8 @@ output$patient_name_dashboard <- renderText({
   
   #------------------------Clinic Dashboard Server -------------------------------  
   
- 
+  #----------------------------Overviwe Clinic--------------------------------
+  
 # value boxes
   output$total_count_box <- renderValueBox({
     if (file.exists("patient_data.csv")) {
@@ -1899,9 +1920,181 @@ output$patient_name_dashboard <- renderText({
     }
   })
   
+
+  #----------------------------Insight Clinic--------------------------------
+  
+  # Reactive to load and filter visit_data based on input date range
+  filtered_visits <- eventReactive(input$actionDT, {
+    visit_file <- "visit_data.csv"
+    if (file.exists(visit_file)) {
+      visit_data <- read.csv(visit_file, stringsAsFactors = FALSE)
+      visit_data$visit_date <- as.Date(visit_data$visit_date, tryFormats = c("%Y-%m-%d", "%d/%m/%Y"))
+      visit_data <- visit_data[visit_data$visit_date >= input$dateRange[1] & visit_data$visit_date <= input$dateRange[2], ]
+      return(visit_data)
+    } else {
+      return(data.frame()) # Return empty data frame instead of NULL
+    }
+  })
+  
+  # Join patient info
+  filtered_patient_info <- eventReactive(input$actionDT, {
+    req(input$dateRange, input$insightMode)
+    
+    # Load visit data
+    visit_file <- "visit_data.csv"
+    if (!file.exists(visit_file)) return(data.frame())
+    visit_data <- read.csv(visit_file, stringsAsFactors = FALSE)
+    visit_data$visit_date <- as.Date(visit_data$visit_date, tryFormats = c("%Y-%m-%d", "%d/%m/%Y"))
+    
+    # Filter by date range
+    visit_data <- visit_data[
+      visit_data$visit_date >= input$dateRange[1] & visit_data$visit_date <= input$dateRange[2], ]
+    
+    if (nrow(visit_data) == 0) return(data.frame())
+    
+    # Load patient data
+    patient_file <- "patient_data.csv"
+    if (!file.exists(patient_file)) return(data.frame())
+    patient_data <- read.csv(patient_file, stringsAsFactors = FALSE)
+    
+    # Join with patient data
+    joined_data <- merge(visit_data, patient_data, by = "hn", all.x = TRUE)
+    
+    # Apply mode logic
+    if (input$insightMode == "unique") {
+      joined_data <- joined_data %>%
+        distinct(hn, .keep_all = TRUE)  # One row per patient
+    }
+    
+    # Add age group
+    joined_data <- joined_data %>%
+      mutate(
+        age_group = case_when(
+          age >= 25 & age < 35 ~ "25–34",
+          age >= 35 & age < 45 ~ "35–44",
+          age >= 45 & age < 55 ~ "45–54",
+          age >= 55 & age < 65 ~ "55–64",
+          age >= 65 & age < 75 ~ "65–74",
+          age >= 75 & age < 85 ~ "75–84",
+          age >= 85 & age < 90 ~ "85–89",
+          age >= 90 ~ "90+",
+          TRUE ~ NA_character_
+        )
+      )
+    
+    return(joined_data)
+  })
   
   
+  output$total_count_box_insight <- renderValueBox({
+    df <- filtered_patient_info()
+    total <- nrow(df)
+    valueBox(
+      value = paste0(total, " (100%)"),
+      subtitle = "Total Patients",
+      icon = icon("users"),
+      color = "green"
+    )
+  })
   
+  output$male_count_box_insight <- renderValueBox({
+    df <- filtered_patient_info()
+    count <- if (nrow(df) > 0) sum(df$gender == "Male", na.rm = TRUE) else 0
+    total <- if (nrow(df) > 0) nrow(df) else 1
+    valueBox(
+      value = paste0(count, " (", round(100 * count / total, 1), "%)"),
+      subtitle = "Male",
+      icon = icon("male"),
+      color = "light-blue"
+    )
+  })
+  
+  output$female_count_box_insight <- renderValueBox({
+    df <- filtered_patient_info()
+    count <- if (nrow(df) > 0) sum(df$gender == "Female", na.rm = TRUE) else 0
+    total <- if (nrow(df) > 0) nrow(df) else 1
+    valueBox(
+      value = paste0(count, " (", round(100 * count / total, 1), "%)"),
+      subtitle = "Female",
+      icon = icon("female"),
+      color = "black"
+    )
+  })
+  
+  output$other_count_box_insight <- renderValueBox({
+    df <- filtered_patient_info()
+    count <- if (nrow(df) > 0) sum(!(df$gender %in% c("Male", "Female")), na.rm = TRUE) else 0
+    total <- if (nrow(df) > 0) nrow(df) else 1
+    valueBox(
+      value = paste0(count, " (", round(100 * count / total, 1), "%)"),
+      subtitle = "Other",
+      icon = icon("genderless"),
+      color = "purple"
+    )
+  })
+  
+  #------- sex insight------
+  
+  output$sex_insight <- renderPlotly({
+    df <- filtered_patient_info()
+    
+    # Check if we have data
+    if (nrow(df) == 0 || sum(!is.na(df$gender)) == 0) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No data available"), size = 5) +
+        theme_void() +
+        labs(title = "Gender Distribution")
+      
+      return(ggplotly(p))
+    }
+    
+    # Filter and set gender order
+    gender_summary <- df %>%
+      filter(!is.na(gender)) %>%
+      mutate(gender = factor(gender, levels = c("Male", "Female", "Other"))) %>%
+      count(gender, name = "count")
+    
+    # Plot
+    p <- ggplot(gender_summary, aes(x = gender, y = count, fill = gender)) +
+      geom_bar(stat = "identity") +
+      theme_minimal() +
+      scale_fill_brewer(palette = "Pastel1") +
+      labs(title = "Gender Distribution", x = "Gender", y = "Count") +
+      theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
+            legend.position = "none")
+    
+    ggplotly(p)
+  })
+  
+  
+  #-------age distribution plot-------
+  output$age_insight <- renderPlotly({
+    df <- filtered_patient_info()
+    
+    # Check if we have data
+    if (nrow(df) == 0 || sum(!is.na(df$age_group)) == 0) {
+      # Create empty plot for no data
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No data available"), size = 5) +
+        theme_void() +
+        labs(title = "Age Distribution")
+      
+      return(ggplotly(p))
+    }
+    
+    # Create the plot with data
+    p <- ggplot(df %>% filter(!is.na(age_group)), aes(x = age_group, fill = age_group)) +
+      geom_bar() +
+      scale_fill_brewer(palette = "Set2") +
+      theme_bw() +
+      labs(title = "Age Distribution", x = "Age Group", y = "Number of Patients") +
+      theme(
+        legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust = 1)
+      )
+    
+    ggplotly(p)
+  })
   
   
 }
