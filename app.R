@@ -166,7 +166,7 @@ ui <- navbarPage(
              tags$div(
                tags$h4("Patient Name:",
                        style = "display: inline-block; margin-right: 10px;"), # Inline label
-               textOutput("patient_name", inline = TRUE)                     # Inline output
+               uiOutput("patient_name_html")                     # Inline output
              ),
              tags$hr(),
             
@@ -626,7 +626,7 @@ ui <- navbarPage(
              tags$div(
                tags$h4("Patient Name:",
                        style = "display: inline-block; margin-right: 10px;"), # Inline label
-               textOutput("patient_name_dashboard", inline = TRUE)                     # Inline output
+               uiOutput("patient_name_dashboard")                     # Inline output
              )
       )
 ),
@@ -673,7 +673,8 @@ tabPanel("Clinic Dashboard",
       column(6,
              plotlyOutput("all_age")
       )
-    )
+    ),
+    
 
     ),
     tabPanel("Insight",
@@ -713,7 +714,44 @@ tabPanel("Clinic Dashboard",
       column(6,
              plotlyOutput("age_insight")
       )
-    )
+    ),
+    
+    fluidRow(
+      column(6,
+             plotlyOutput("hbpm_insight")
+      ),
+      column(6,
+             plotlyOutput("num_visit_insight")
+      )
+    ),
+    fluidRow(
+      column(6,
+             plotlyOutput("bp_control_score_insight")
+      ),
+      column(6,
+             plotlyOutput("home_bp_score_insight")
+      )
+    ),
+    
+    fluidRow(
+      column(6,
+             plotlyOutput("weight_control_score_insight")
+      ),
+      column(6,
+             plotlyOutput("self_care_score_insight")
+      )
+    ),
+    fluidRow(
+      column(4,
+             plotlyOutput("salty_control_insight")
+      ),
+      column(4,
+               plotlyOutput("alway_take_medicine_insight")
+      ),
+      column(4,
+             plotlyOutput("exercise_insight")
+      )
+    ),
 
     )
     )
@@ -1055,46 +1093,70 @@ server <- function(input, output, session) {
       output$save_status <- renderText("Data saved successfully!")
     }
   })
-#-------------------  Visit Form Server  ----------------------------------
+  #-------------------  Visit Form Server  ----------------------------------
   
   # 1. Retrieve Patient Information by HN
-  observeEvent(input$check_hn_visit, {  
-    # File path to patient data
+  patient_info <- reactiveValues(name = "", hn = "", found = FALSE)
+  
+  observeEvent(input$check_hn_visit, {
     file_path <- "patient_data.csv"
     
-    # Check if the file exists
     if (!file.exists(file_path)) {
-      output$patient_name <- renderText("No data file exists. Please upload the file.")
+      patient_info$name <- "No data file exists"
+      patient_info$found <- FALSE
       return()
     }
     
-    # Load patient data
     all_data <- read.csv(file_path, stringsAsFactors = FALSE)
     
-    # Ensure required columns exist
-    required_columns <- c("hn", "name")  # Adjusted to lowercase
-    if (!all(required_columns %in% colnames(all_data))) {
-      output$patient_name <- renderText("Invalid file format. Ensure columns 'hn' and 'name' are present.")
+    if (!all(c("hn", "name") %in% colnames(all_data))) {
+      patient_info$name <- "Invalid file format"
+      patient_info$found <- FALSE
       return()
     }
     
-    # Normalize HN input and dataset for case-insensitivity
-    hn_to_search <- toupper(input$hn_visit)
-    all_data$hn <- toupper(all_data$hn)  # Convert 'hn' column to uppercase
+    hn_to_search <- toupper(trimws(input$hn_visit))
+    all_data$hn <- toupper(trimws(all_data$hn))
     
-    # Search for the HN in the dataset
-    result <- all_data[all_data$hn == hn_to_search, ]
+    matching_rows <- which(all_data$hn == hn_to_search)
     
-    # Safely check if any rows are found
-    if (nrow(result) > 0) {
-      output$patient_name <- renderText(result$name[1])  # Display patient name
+    if (length(matching_rows) > 0) {
+      patient_info$name <- all_data$name[matching_rows[1]]
+      patient_info$hn <- hn_to_search
+      patient_info$found <- TRUE
     } else {
-      output$patient_name <- renderText("Patient not found.")
+      patient_info$name <- "Patient not found"
+      patient_info$found <- FALSE
     }
   })
   
+  # Display using reactive values
+  output$patient_name <- renderText({
+  if (patient_info$found) {
+    paste("Patient:", patient_info$name)
+  } else {
+    patient_info$name
+  }
+})
+
+  
+# Option 2: Using HTML output for better formatting
+output$patient_name_html <- renderUI({
+  if (patient_info$found) {
+    tags$div(
+      style = "color: green; font-weight: bold;",
+      paste("👤 Patient Found:", patient_info$name)
+    )
+  } else {
+    tags$div(
+      style = "color: red;",
+      paste("", patient_info$name)
+    )
+  }
+})
+  # Fixed: Use correct syntax for reactiveVal
   output$visit_position <- renderText({
-    visits <- filtered_visits()
+    visits <- filtered_visits_data()  # Use the correct reactive name
     index <- current_visit_index()
     total <- nrow(visits)
     
@@ -1182,7 +1244,7 @@ server <- function(input, output, session) {
   
   
   
- # 4. medicine
+  # 4. medicine
   
   getMedicationList <- function(category_list) {
     meds <- lapply(names(category_list$data), function(id) {
@@ -1334,9 +1396,9 @@ server <- function(input, output, session) {
   output$medication_ui_anti_platelet <- renderMedicationUI(medication_list_anti_platelet, "Anti-platelet")
   output$medication_ui_other <- renderMedicationUI(medication_list_other, "Other")
   output$medication_ui_spc <- renderSPCMedicationUI(medication_list_spc, "Single-pill combination")
- 
   
-
+  
+  
   
   display_visit_data <- function(visit) {
     output$visit_data <- renderText({
@@ -1391,8 +1453,8 @@ server <- function(input, output, session) {
   patient_data_file <- "patient_data.csv"
   visit_data_file <- "visit_data.csv"
   
-  # Reactive values to store filtered visits and the current visit index
-  filtered_visits <- reactiveVal(data.frame())
+  # FIXED: Use consistent naming for reactive values
+  filtered_visits_data <- reactiveVal(data.frame())
   current_visit_index <- reactiveVal(1)
   
   # Load and initialize patient/visit data
@@ -1412,7 +1474,7 @@ server <- function(input, output, session) {
     if (length(patient_name) == 0) {
       output$patient_name <- renderText("Patient not found.")
       output$num_visit <- renderText("1")  # Default to 1 if no visits exist
-      filtered_visits(data.frame())
+      filtered_visits_data(data.frame())
       return()
     } else {
       output$patient_name <- renderText(patient_name[1])
@@ -1434,19 +1496,13 @@ server <- function(input, output, session) {
     # Optional: sort by date descending
     visits <- visits[order(as.Date(visits$visit_date, format = "%d-%m-%Y"), decreasing = TRUE), ]
     
-    # Debug prints to console
-    # print(paste("🔍 Filtered HN:", hn_to_search))
-    # print(paste("🔍 Number of visits:", nrow(visits)))
-    # print("🔍 Visit data:")
-    # print(visits)
-    
-    # Store filtered visits
-    filtered_visits(visits)
+    # Store filtered visits using the consistent reactive name
+    filtered_visits_data(visits)
     current_visit_index(1)
     
-    # ✅ Fix the num_visit display using reactive value
+    # Fix the num_visit display using correct reactive value
     output$num_visit <- renderText({
-      paste0(nrow(filtered_visits()))
+      paste0(nrow(filtered_visits_data()))
     })
     
     if (nrow(visits) > 0) {
@@ -1460,11 +1516,11 @@ server <- function(input, output, session) {
     }
   })
   
-
+  
   
   # Navigate to the previous visit
   observeEvent(input$prev_visit, {
-    visits <- filtered_visits()
+    visits <- filtered_visits_data()  # Use consistent reactive name
     index <- current_visit_index()
     
     if (index > 1) {
@@ -1481,7 +1537,7 @@ server <- function(input, output, session) {
   
   # Navigate to the next visit
   observeEvent(input$next_visit, {
-    visits <- filtered_visits()
+    visits <- filtered_visits_data()  # Use consistent reactive name
     index <- current_visit_index()
     
     if (index < nrow(visits) + 1) {
@@ -1515,7 +1571,7 @@ server <- function(input, output, session) {
       return()
     }
     
-    # termine visit_number
+    # Determine visit_number
     visit_data_file <- "visit_data.csv"
     
     if (file.exists(visit_data_file)) {
@@ -1648,10 +1704,7 @@ server <- function(input, output, session) {
       stringsAsFactors = FALSE
     )
     
-    # blank_template <- new_data[0, ]  # Keep column names but no data
-    # write.csv(blank_template, "visit_data_template.csv", row.names = FALSE)
-    
-    # ⛔️ Prevent saving if visit_date and patient_note are both missing
+    # Prevent saving if visit_date and patient_note are both missing
     if (all(is.na(new_data$visit_date)) && all(is.na(new_data$patient_note))) {
       showNotification("Nothing to save. Visit data is empty or invalid.", type = "warning")
       return()
@@ -1680,7 +1733,7 @@ server <- function(input, output, session) {
     }
     
     
-    # 🚫 Remove rows where ALL values are NA or empty strings
+    # Remove rows where ALL values are NA or empty strings
     updated_data <- updated_data %>%
       dplyr::filter(!if_all(everything(), ~ is.na(.) | . == ""))
     
@@ -1709,16 +1762,52 @@ server <- function(input, output, session) {
   })
   
   # Show patient name
-output$patient_name_dashboard <- renderText({
-  data <- filtered_visits_patient_dashboard()
-  req(data)
+  patient_dashboard_info <- reactiveValues(name = "", found = FALSE)
+  observeEvent(input$check_hn_dashboard, {
+    file_path <- "patient_data.csv"
+    
+    if (!file.exists(file_path)) {
+      patient_dashboard_info$name <- "No data file exists"
+      patient_dashboard_info$found <- FALSE
+      return()
+    }
+    
+    all_data <- read.csv(file_path, stringsAsFactors = FALSE)
+    
+    if (!all(c("hn", "name") %in% colnames(all_data))) {
+      patient_dashboard_info$name <- "Invalid file format"
+      patient_dashboard_info$found <- FALSE
+      return()
+    }
+    
+    hn_to_search <- toupper(trimws(input$hn_dashboard))
+    all_data$hn <- toupper(trimws(all_data$hn))
+    
+    matching_rows <- which(all_data$hn == hn_to_search)
+    
+    if (length(matching_rows) > 0) {
+      patient_dashboard_info$name <- all_data$name[matching_rows[1]]
+      patient_dashboard_info$found <- TRUE
+    } else {
+      patient_dashboard_info$name <- "Patient not found"
+      patient_dashboard_info$found <- FALSE
+    }
+  })
+  output$patient_name_dashboard <- renderUI({
+    if (patient_dashboard_info$found) {
+      tags$div(
+        style = "color: green; font-weight: bold;",
+        paste("👤 Patient Found:", patient_dashboard_info$name)
+      )
+    } else {
+      tags$div(
+        style = "color: red; font-weight: bold;",
+        paste("", patient_dashboard_info$name)
+      )
+    }
+  })
   
-  if (nrow(data) == 0 || is.null(data$name[1])) {
-    return("Not found")
-  } else {
-    return(data$name[1])
-  }
-})
+  
   
   # Blood Pressure Plot 
   output$bpPlot <- renderPlotly({
@@ -2095,6 +2184,297 @@ output$patient_name_dashboard <- renderText({
     
     ggplotly(p)
   })
+  
+  #------ hbpm ---------
+  output$hbpm_insight <- renderPlotly({
+    df <- filtered_patient_info()  # or read.csv("patient_data.csv") if you want all patients
+    
+    # Ensure hbpm column exists and is not all NA
+    if (!"hbpm" %in% names(df) || sum(!is.na(df$hbpm)) == 0) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No HBPM data available"), size = 5) +
+        theme_void() +
+        labs(title = "HBPM Usage")
+      return(ggplotly(p))
+    }
+    
+    # Clean and count values
+    df$hbpm <- trimws(tolower(df$hbpm))  # handle Yes / No variations
+    df$hbpm <- ifelse(df$hbpm %in% c("yes", "no"), tools::toTitleCase(df$hbpm), NA)
+    
+    summary_df <- df %>%
+      filter(!is.na(hbpm)) %>%
+      count(hbpm, name = "count") %>%
+      mutate(hbpm = factor(hbpm, levels = c("Yes", "No")))
+    
+    # Bar plot
+    p <- ggplot(summary_df, aes(x = hbpm, y = count, fill = hbpm)) +
+      geom_bar(stat = "identity") +
+      theme_minimal() +
+      scale_fill_manual(values = c("Yes" = "#66c2a5", "No" = "#fc8d62")) +
+      labs(title = "HBPM Usage", x = "Used HBPM", y = "Number of Patients") +
+      theme(legend.position = "none")
+    
+    ggplotly(p)
+  })
+  
+  output$num_visit_insight <- renderPlotly({
+    visit_data <- filtered_visits()
+    
+    if (nrow(visit_data) == 0 || !"visit_number" %in% names(visit_data)) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No visit data available"), size = 5) +
+        theme_void() +
+        labs(title = "Visit Frequency per Patient")
+      return(ggplotly(p))
+    }
+    
+    # Clean visit_number: ensure numeric and remove NAs
+    visit_data$visit_number <- suppressWarnings(as.numeric(visit_data$visit_number))
+    visit_data <- visit_data[!is.na(visit_data$visit_number), ]
+    
+    # Now calculate the max visit number per patient
+    visit_summary <- visit_data %>%
+      group_by(hn) %>%
+      summarise(num_visits = max(visit_number), .groups = "drop") %>%
+      count(num_visits, name = "patients")
+    
+    # Bar plot
+    p <- ggplot(visit_summary, aes(x = factor(num_visits), y = patients)) +
+      geom_bar(stat = "identity", fill = "#1f77b4") +
+      theme_minimal() +
+      labs(title = "Distribution of Number of Visits per Patient",
+           x = "Number of Visits",
+           y = "Number of Patients") +
+      theme(axis.text.x = element_text(angle = 0, hjust = 0.5))
+    
+    ggplotly(p)
+  })
+  
+  output$bp_control_score_insight <- renderPlotly({
+    df <- filtered_visits()
+    
+    if (nrow(df) == 0 || !"bp_control_score" %in% names(df)) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No BP control score data"), size = 5) +
+        theme_void() +
+        labs(title = "BP Control Score")
+      return(ggplotly(p))
+    }
+    
+    df <- df[!is.na(df$bp_control_score), ]
+    df$bp_control_score <- factor(df$bp_control_score, levels = c(0, 1, 2, 3))
+    
+    summary_df <- df %>%
+      count(bp_control_score, name = "count") %>%
+      mutate(percentage = round(100 * count / sum(count), 1),
+             label = paste0(count, " (", percentage, "%)"))
+    
+    p <- ggplot(summary_df, aes(x = bp_control_score, y = count, fill = bp_control_score)) +
+      geom_bar(stat = "identity") +
+      geom_text(aes(label = label, y = count + 2), size = 3.5) +
+      scale_fill_brewer(palette = "Set2") +
+      theme_minimal() +
+      labs(title = "BP Control Score (0–3)", x = "Score", y = "Number of Visits") +
+      theme(legend.position = "none")
+    
+    ggplotly(p)
+  })
+  
+  output$home_bp_score_insight <- renderPlotly({
+    df <- filtered_visits()
+    
+    if (nrow(df) == 0 || !"home_bp_score" %in% names(df)) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No Home BP score data"), size = 5) +
+        theme_void() +
+        labs(title = "Home BP Score")
+      return(ggplotly(p))
+    }
+    
+    df <- df[!is.na(df$home_bp_score), ]
+    df$home_bp_score <- factor(df$home_bp_score, levels = c(0, 1, 2, 3))
+    
+    summary_df <- df %>%
+      count(home_bp_score, name = "count") %>%
+      mutate(percentage = round(100 * count / sum(count), 1),
+             label = paste0(count, " (", percentage, "%)"))
+    
+    p <- ggplot(summary_df, aes(x = home_bp_score, y = count, fill = home_bp_score)) +
+      geom_bar(stat = "identity") +
+      geom_text(aes(label = label, y = count + 2), size = 3.5) +
+      scale_fill_brewer(palette = "Set3") +
+      theme_minimal() +
+      labs(title = "Home BP Score (0–3)", x = "Score", y = "Number of Visits") +
+      theme(legend.position = "none")
+    
+    ggplotly(p)
+  })
+  
+  output$weight_control_score_insight <- renderPlotly({
+    df <- filtered_visits()
+    
+    if (nrow(df) == 0 || !"weight_control_score" %in% names(df)) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No weight control score data"), size = 5) +
+        theme_void() +
+        labs(title = "Weight Control Score")
+      return(ggplotly(p))
+    }
+    
+    df <- df[!is.na(df$weight_control_score), ]
+    df$weight_control_score <- factor(df$weight_control_score, levels = c(0, 1, 2, 3))
+    
+    summary_df <- df %>%
+      count(weight_control_score, name = "count") %>%
+      mutate(percentage = round(100 * count / sum(count), 1),
+             label = paste0(count, " (", percentage, "%)"))
+    
+    p <- ggplot(summary_df, aes(x = weight_control_score, y = count, fill = weight_control_score)) +
+      geom_bar(stat = "identity") +
+      geom_text(aes(label = label, y = count + 2), size = 3.5) +
+      scale_fill_brewer(palette = "Set2") +
+      theme_minimal() +
+      labs(title = "Weight Control Score (0–3)", x = "Score", y = "Number of Visits") +
+      theme(legend.position = "none")
+    
+    ggplotly(p)
+  })
+  
+  
+  
+  output$self_care_score_insight <- renderPlotly({
+    df <- filtered_visits()
+    
+    if (nrow(df) == 0 || !"self_care_score" %in% names(df)) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No self-care score data"), size = 5) +
+        theme_void() +
+        labs(title = "Self-Care Score")
+      return(ggplotly(p))
+    }
+    
+    df <- df[!is.na(df$self_care_score), ]
+    df$self_care_score <- factor(df$self_care_score, levels = c(0, 1, 2, 3))
+    
+    summary_df <- df %>%
+      count(self_care_score, name = "count") %>%
+      mutate(percentage = round(100 * count / sum(count), 1),
+             label = paste0(count, " (", percentage, "%)"))
+    
+    p <- ggplot(summary_df, aes(x = self_care_score, y = count, fill = self_care_score)) +
+      geom_bar(stat = "identity") +
+      geom_text(aes(label = label, y = count + 2), size = 3.5) +
+      scale_fill_brewer(palette = "Set3") +
+      theme_minimal() +
+      labs(title = "Self-Care Score (0–3)", x = "Score", y = "Number of Visits") +
+      theme(legend.position = "none")
+    
+    ggplotly(p)
+  })
+  
+  #------ salty control --------------
+  output$salty_control_insight <- renderPlotly({
+    df <- filtered_visits()
+    
+    if (nrow(df) == 0 || !"adherence_salty_control" %in% names(df)) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No salty control data"), size = 5) +
+        theme_void() +
+        labs(title = "Salt Intake Control")
+      return(ggplotly(p))
+    }
+    
+    # Clean and standardize values
+    df <- df %>%
+      mutate(adherence_salty_control = trimws(tolower(adherence_salty_control))) %>%
+      filter(adherence_salty_control %in% c("yes", "no")) %>%
+      mutate(adherence_salty_control = factor(tools::toTitleCase(adherence_salty_control), levels = c("Yes", "No")))
+    
+    summary_df <- df %>%
+      count(adherence_salty_control, name = "count") %>%
+      mutate(percentage = round(100 * count / sum(count), 1),
+             label = paste0(count, " (", percentage, "%)"))
+    
+    p <- ggplot(summary_df, aes(x = adherence_salty_control, y = count, fill = adherence_salty_control)) +
+      geom_bar(stat = "identity") +
+      geom_text(aes(label = label, y = count + 2), size = 3.5) +
+      scale_fill_brewer(palette = "Pastel1") +
+      theme_minimal() +
+      labs(title = "Salt Intake Control", x = "Response", y = "Number of Visits") +
+      theme(legend.position = "none")
+    
+    ggplotly(p)
+  })
+  
+  #-------- take medicine--------
+  output$alway_take_medicine_insight <- renderPlotly({
+    df <- filtered_visits()
+    
+    if (nrow(df) == 0 || !"adherence_alway_take_medicine" %in% names(df)) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No medication adherence data"), size = 5) +
+        theme_void() +
+        labs(title = "Always Take Medication")
+      return(ggplotly(p))
+    }
+    
+    df <- df %>%
+      mutate(adherence_alway_take_medicine = trimws(tolower(adherence_alway_take_medicine))) %>%
+      filter(adherence_alway_take_medicine %in% c("yes", "no")) %>%
+      mutate(adherence_alway_take_medicine = factor(tools::toTitleCase(adherence_alway_take_medicine), levels = c("Yes", "No")))
+    
+    summary_df <- df %>%
+      count(adherence_alway_take_medicine, name = "count") %>%
+      mutate(percentage = round(100 * count / sum(count), 1),
+             label = paste0(count, " (", percentage, "%)"))
+    
+    p <- ggplot(summary_df, aes(x = adherence_alway_take_medicine, y = count, fill = adherence_alway_take_medicine)) +
+      geom_bar(stat = "identity") +
+      geom_text(aes(label = label, y = count + 2), size = 3.5) +
+      scale_fill_brewer(palette = "Pastel2") +
+      theme_minimal() +
+      labs(title = "Always Take Medication", x = "Response", y = "Number of Visits") +
+      theme(legend.position = "none")
+    
+    ggplotly(p)
+  })
+  
+  
+  #-------- exercise----------
+  output$exercise_insight <- renderPlotly({
+    df <- filtered_visits()
+    
+    if (nrow(df) == 0 || !"adherence_exercise" %in% names(df)) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No exercise data"), size = 5) +
+        theme_void() +
+        labs(title = "Exercise Adherence")
+      return(ggplotly(p))
+    }
+    
+    df <- df %>%
+      mutate(adherence_exercise = trimws(tolower(adherence_exercise))) %>%
+      filter(adherence_exercise %in% c("yes", "no")) %>%
+      mutate(adherence_exercise = factor(tools::toTitleCase(adherence_exercise), levels = c("Yes", "No")))
+    
+    summary_df <- df %>%
+      count(adherence_exercise, name = "count") %>%
+      mutate(percentage = round(100 * count / sum(count), 1),
+             label = paste0(count, " (", percentage, "%)"))
+    
+    p <- ggplot(summary_df, aes(x = adherence_exercise, y = count, fill = adherence_exercise)) +
+      geom_bar(stat = "identity") +
+      geom_text(aes(label = label, y = count + 2), size = 3.5) +
+      scale_fill_brewer(palette = "Pastel1") +
+      theme_minimal() +
+      labs(title = "Exercise Adherence", x = "Response", y = "Number of Visits") +
+      theme(legend.position = "none")
+    
+    ggplotly(p)
+  })
+  
+  
   
   
 }
