@@ -524,18 +524,22 @@ ui <- navbarPage(
                "FBS (Fasting Blood Sugar)" = "fbs_test",
                "Lipid Profiles" = "lipid_profiles_test",
                "CXR (Chest X-ray)" = "cxr_test",
-               "ECG (Electrocardiogram)" = "ecg_test",
-               "Other" = "other_test"
+               "ECG (Electrocardiogram)" = "ecg_test"
+               
              ),
              inline = FALSE
            ),
-           selectInput("complication", "Complication",
-                       choices = c("Stroke", "Cardio", "Kidney",
-                                   "Eye", "Other")),
-           conditionalPanel(
-             condition = "input.complication == 'Other'",
-             textInput("other_complication", "Please Specify Complication:", "")
-           ),
+           textAreaInput("other_lab_tests", "Please Specify Other Lab Tests:", "", rows = 3),
+           checkboxGroupInput("complication", "Complication:", 
+                              choices = c("Stroke" = "complication_stroke", 
+                                          "Cardio MI" = "complication_cardio_mi",
+                                          "CHF" = "complication_chf",
+                                          "Kidney" = "complication_kidney",
+                                          "Eye" = "complication_eye"),
+                              inline = TRUE),
+           textAreaInput("other_complication", "Please Specify Complication:", "", rows = 3)
+           
+           
            )
            
     ),
@@ -890,11 +894,19 @@ server <- function(input, output, session) {
   # Auto-incrementing No.
   output$no <- renderText({
     file_path <- "patient_data.csv"
-    if (file.exists(file_path)) {
-      num_rows <- nrow(read.csv(file_path))
-      paste("No.:", num_rows + 1)
+    
+    if (!file.exists(file_path)) {
+      return("No.: 1")
+    }
+    
+    all_data <- read.csv(file_path, stringsAsFactors = FALSE)
+    hn_to_search <- toupper(input$hn_register)
+    
+    if (!is.null(hn_to_search) && hn_to_search %in% all_data$hn) {
+      row_no <- which(all_data$hn == hn_to_search)[1]  # Use first match if duplicated
+      paste("No.:", row_no)
     } else {
-      paste("No.:", 1)
+      paste("No.:", nrow(all_data) + 1)
     }
   })
   
@@ -1017,6 +1029,8 @@ server <- function(input, output, session) {
     } else {
       output$hn_status <- renderText("No data file exists yet.")
     }
+    
+    
   })
   
   
@@ -1712,12 +1726,36 @@ output$patient_name_html <- renderUI({
       visit_number <- 1
     }
     
+    # Convert Buddhist Era to Gregorian and format DOB
+    convert_be_to_gregorian <- function(date_string) {
+      if (is.null(date_string) || date_string == "") return("")
+      
+      tryCatch({
+        # Parse the date (assuming it's in Buddhist Era)
+        be_date <- as.Date(date_string, tryFormats = c("%d-%m-%Y", "%d/%m/%Y", "%Y-%m-%d"))
+        
+        if (!is.na(be_date)) {
+          # Convert Buddhist Era to Gregorian (subtract 543 years)
+          gregorian_date <- be_date - years(543)
+          format(gregorian_date, "%d/%m/%Y")  # Convert to dd/mm/yyyy format
+        } else {
+          ""  # Invalid date
+        }
+      }, error = function(e) {
+        ""  # Handle errors in date parsing
+      })
+    }
+    
+    formatted_visit_date <- convert_be_to_gregorian(input$visit_date)
+    formatted_follow_up_date <- convert_be_to_gregorian(input$follow_up_date)
+    
+    
     # Create a new row with visit data
     new_data <- data.frame(
       visit_number = visit_number,
       hn = hn_to_search,
       name = patient_name[1],
-      visit_date = input$visit_date,
+      visit_date = formatted_visit_date,
       doctor_name = input$doctor_name,
       patient_note = input$patient_note,
       patient_status = input$pateintstatus,
@@ -1804,14 +1842,19 @@ output$patient_name_html <- renderUI({
       
       #Follow-up
       follow_up = input$follow_up,
-      follow_up_date = input$follow_up_date,
+      follow_up_date = formatted_follow_up_date,
       
       #Lab test next time
       lab_tests = paste(input$lab_tests, collapse = "; "),
-      complication = input$complication,
-      other_complication = ifelse(input$complication == "Other", input$other_complication, ""),
+      other_lab_tests = input$other_lab_tests,
+      complication_stroke = ifelse("complication_stroke" %in% input$complication, "yes", "no"),
+      complication_cardio_mi = ifelse("complication_cardio_mi" %in% input$complication, "yes", "no"),
+      complication_chf = ifelse("complication_chf" %in% input$complication, "yes", "no"),
+      complication_kidney = ifelse("complication_kidney" %in% input$complication, "yes", "no"),
+      complication_eye = ifelse("complication_eye" %in% input$complication, "yes", "no"),
+      other_complication = input$other_complication,
       precriptionadjust = input$precriptionadjust,
-      
+ 
       # add dynamic medication data
       diuretics = getMedicationList(medication_list_diuretics),
       aceis = getMedicationList(medication_list_aceis),
