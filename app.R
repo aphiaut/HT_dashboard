@@ -185,7 +185,7 @@ ui <- navbarPage(
              actionButton("prev_visit", "Previous Visit"),
              actionButton("next_visit", "Next Visit"),
              actionButton("add_visit", "Add Visit"),
-             verbatimTextOutput("visit_data"),
+             verbatimTextOutput("visit_summary"),
              textInput("visit_date", label = "Date", placeholder = "dd-mm-yyyy"), # Provided date
              selectInput(
                inputId = "doctor_name",
@@ -889,11 +889,18 @@ tabPanel("Clinic Dashboard",
 
 server <- function(input, output, session) {
   
+  # Ensure the "data" folder exists
+  if (!dir.exists("data")) dir.create("data")
+  
+  # Centralized file paths
+  patient_data_file <- "data/patient_data.csv"
+  visit_data_file <- "data/visit_data.csv"
+  
   
 #----------- Patient Info Server --------------
   # Auto-incrementing No.
   output$no <- renderText({
-    file_path <- "patient_data.csv"
+    file_path <- patient_data_file
     
     if (!file.exists(file_path)) {
       return("No.: 1")
@@ -962,7 +969,7 @@ server <- function(input, output, session) {
   
   # Check if HN exists in the file and populate the fields
   observeEvent(input$check_hn_register, {
-    file_path <- "patient_data.csv"
+    file_path <- patient_data_file
     
     if (file.exists(file_path)) {
       all_data <- read.csv(file_path, stringsAsFactors = FALSE)
@@ -1036,7 +1043,7 @@ server <- function(input, output, session) {
   
   # Save or replace data in the file when the "Save Data" button is clicked
   observeEvent(input$save, {
-    file_path <- "patient_data.csv"
+    file_path <- patient_data_file
     
     # Validate required inputs
     if (is.null(input$hn_register) || input$hn_register == "") {
@@ -1232,7 +1239,7 @@ server <- function(input, output, session) {
   patient_info <- reactiveValues(name = "", hn = "", found = FALSE)
   
   observeEvent(input$check_hn_visit, {
-    file_path <- "patient_data.csv"
+    file_path <- patient_data_file
     
     if (!file.exists(file_path)) {
       patient_info$name <- "No data file exists"
@@ -1538,7 +1545,7 @@ output$patient_name_html <- renderUI({
   
   
   display_visit_data <- function(visit) {
-    output$visit_data <- renderText({
+    output$visit_summary <- renderText({
       paste0(
         "▶️ Visit Date: ", visit$visit_date, "\n",
         "👨️ Doctor: ", visit$doctor_name, "\n",
@@ -1586,9 +1593,6 @@ output$patient_name_html <- renderUI({
     })
   }
   
-  # Paths to data files
-  patient_data_file <- "patient_data.csv"
-  visit_data_file <- "visit_data.csv"
   
   # FIXED: Use consistent naming for reactive values
   filtered_visits_data <- reactiveVal(data.frame())
@@ -1708,8 +1712,6 @@ output$patient_name_html <- renderUI({
       return()
     }
     
-    # Determine visit_number
-    visit_data_file <- "visit_data.csv"
     
     if (file.exists(visit_data_file)) {
       existing_visits <- read.csv(visit_data_file, stringsAsFactors = FALSE)
@@ -1914,7 +1916,7 @@ output$patient_name_html <- renderUI({
   filtered_visits_patient_dashboard <- eventReactive(input$check_hn_dashboard, {
     req(input$hn_dashboard)
     
-    data <- read.csv("visit_data.csv", stringsAsFactors = FALSE)
+    data <- read.csv(visit_data_file, stringsAsFactors = FALSE)
     data$hn <- toupper(trimws(data$hn))
     data$visit_date <- parse_date_time(data$visit_date, orders = c("dmy", "ymd", "mdy"))
     
@@ -1930,7 +1932,7 @@ output$patient_name_html <- renderUI({
   # Show patient name
   patient_dashboard_info <- reactiveValues(name = "", found = FALSE)
   observeEvent(input$check_hn_dashboard, {
-    file_path <- "patient_data.csv"
+    file_path <- patient_data_file
     
     if (!file.exists(file_path)) {
       patient_dashboard_info$name <- "No data file exists"
@@ -2223,8 +2225,8 @@ output$patient_name_html <- renderUI({
   #----------------------------Overviwe Clinic--------------------------------
   
   output$total_count_text <- renderText({
-    if (file.exists("patient_data.csv")) {
-      data <- read.csv("patient_data.csv", stringsAsFactors = FALSE)
+    if (file.exists(patient_data_file)) {
+      data <- read.csv(patient_data_file, stringsAsFactors = FALSE)
       total <- nrow(data)
       paste0(total, " (100%)")
     } else {
@@ -2233,8 +2235,8 @@ output$patient_name_html <- renderUI({
   })
   
   output$male_count_text <- renderText({
-    if (file.exists("patient_data.csv")) {
-      data <- read.csv("patient_data.csv", stringsAsFactors = FALSE)
+    if (file.exists(patient_data_file)) {
+      data <- read.csv(patient_data_file, stringsAsFactors = FALSE)
       total <- nrow(data)
       count <- sum(data$gender == "Male", na.rm = TRUE)
       perc <- if (total > 0) round((count / total) * 100, 1) else 0
@@ -2245,8 +2247,8 @@ output$patient_name_html <- renderUI({
   })
   
   output$female_count_text <- renderText({
-    if (file.exists("patient_data.csv")) {
-      data <- read.csv("patient_data.csv", stringsAsFactors = FALSE)
+    if (file.exists(patient_data_file)) {
+      data <- read.csv(patient_data_file, stringsAsFactors = FALSE)
       total <- nrow(data)
       count <- sum(data$gender == "Female", na.rm = TRUE)
       perc <- if (total > 0) round((count / total) * 100, 1) else 0
@@ -2257,8 +2259,8 @@ output$patient_name_html <- renderUI({
   })
   
   output$other_count_text <- renderText({
-    if (file.exists("patient_data.csv")) {
-      data <- read.csv("patient_data.csv", stringsAsFactors = FALSE)
+    if (file.exists(patient_data_file)) {
+      data <- read.csv(patient_data_file, stringsAsFactors = FALSE)
       total <- nrow(data)
       count <- sum(!(data$gender %in% c("Male", "Female")), na.rm = TRUE)
       perc <- if (total > 0) round((count / total) * 100, 1) else 0
@@ -2274,9 +2276,8 @@ output$patient_name_html <- renderUI({
   
   # Reactive to load and filter visit_data based on input date range
   filtered_visits <- eventReactive(input$actionDT, {
-    visit_file <- "visit_data.csv"
-    if (file.exists(visit_file)) {
-      visit_data <- read.csv(visit_file, stringsAsFactors = FALSE)
+    if (file.exists(visit_data_file)) {
+      visit_data <- read.csv(visit_data_file, stringsAsFactors = FALSE)
       visit_data$visit_date <- as.Date(visit_data$visit_date, tryFormats = c("%Y-%m-%d", "%d/%m/%Y"))
       visit_data <- visit_data[visit_data$visit_date >= input$dateRange[1] & visit_data$visit_date <= input$dateRange[2], ]
       return(visit_data)
@@ -2290,24 +2291,23 @@ output$patient_name_html <- renderUI({
     req(input$dateRange, input$insightMode)
     
     # Load visit data
-    visit_file <- "visit_data.csv"
-    if (!file.exists(visit_file)) return(data.frame())
-    visit_data <- read.csv(visit_file, stringsAsFactors = FALSE)
-    visit_data$visit_date <- as.Date(visit_data$visit_date, tryFormats = c("%Y-%m-%d", "%d/%m/%Y"))
+    if (!file.exists(visit_data_file)) return(data.frame())
+    visit_data_file <- read.csv(visit_data_file, stringsAsFactors = FALSE)
+    visit_data_file$visit_date <- as.Date(visit_data_file$visit_date, tryFormats = c("%Y-%m-%d", "%d/%m/%Y"))
     
     # Filter by date range
-    visit_data <- visit_data[
-      visit_data$visit_date >= input$dateRange[1] & visit_data$visit_date <= input$dateRange[2], ]
+    visit_data_file <- visit_data_file[
+      visit_data_file$visit_date >= input$dateRange[1] & visit_data_file$visit_date <= input$dateRange[2], ]
     
-    if (nrow(visit_data) == 0) return(data.frame())
+    if (nrow(visit_data_file) == 0) return(data.frame())
     
     # Load patient data
-    patient_file <- "patient_data.csv"
+    patient_file <- patient_data_file
     if (!file.exists(patient_file)) return(data.frame())
     patient_data <- read.csv(patient_file, stringsAsFactors = FALSE)
     
     # Join with patient data
-    joined_data <- merge(visit_data, patient_data, by = "hn", all.x = TRUE)
+    joined_data <- merge(visit_data_file, patient_data, by = "hn", all.x = TRUE)
     
     # Apply mode logic
     if (input$insightMode == "unique") {
@@ -2434,7 +2434,7 @@ output$patient_name_html <- renderUI({
   
   #------ hbpm ---------
   output$hbpm_insight <- renderPlotly({
-    df <- filtered_patient_info()  # or read.csv("patient_data.csv") if you want all patients
+    df <- filtered_patient_info()  # or read.csv(patient_data_file) if you want all patients
     
     # Ensure hbpm column exists and is not all NA
     if (!"hbpm" %in% names(df) || sum(!is.na(df$hbpm)) == 0) {
