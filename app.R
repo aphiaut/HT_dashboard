@@ -18,6 +18,9 @@ thailand <- read_csv("data/thailand_province_amphoe.csv")
 ui <- navbarPage(
   "HT Clinic",
   theme = shinytheme("flatly"),
+  tags$head(
+    includeCSS("styles.css")
+  ),
   tabPanel(
     "Patient Info",
     fluidRow(
@@ -398,7 +401,7 @@ ui <- navbarPage(
              column(6,
               tags$label("Your BMI:"),
               textOutput("bmi_text"),
-              h6("BMI Target: 18.5-23.0 kg/m2")
+              h6("BMI Target: 18.5-24.0 kg/m2")
                    ))
            ),
     column(4,
@@ -630,22 +633,50 @@ ui <- navbarPage(
              )
       )
 ),
+tags$br(),
     fluidRow(
       column(6,
+             div(class = "plot-card",
                plotlyOutput("bpPlot")
+             )
         ),
       column(6,
+             div(class = "plot-card",
                plotlyOutput("pulsePlot")
+             )
         )
       ),
+tags$br(),
     fluidRow(
       column(6,
+             div(class = "plot-card",
              plotlyOutput("bmiPlot")
+             )
       ),
       column(6,
+             div(class = "plot-card",
              plotlyOutput("waistPlot")
+             )
       )
-    )
+    ),
+tags$br(),
+  fluidRow(
+      column(4,
+             div(class = "plot-card",
+               plotlyOutput("saltycontrolPlot")
+             )
+        ),
+      column(4,
+             div(class = "plot-card",
+               plotlyOutput("alwaytakemedicinePlot")
+             )
+        ),
+      column(4,
+             div(class = "plot-card",
+             plotlyOutput("exercisePlot")
+             )
+      )
+      ),
 ),
 
 #------------------------Patient Dashboard UI -------------------------------
@@ -659,13 +690,41 @@ tabPanel("Clinic Dashboard",
       tabPanel("Overview",
       fluidRow(
         column(1,),
-        column(11,
-        valueBoxOutput("total_count_box", width = 3),
-        valueBoxOutput("male_count_box", width = 3),
-        valueBoxOutput("female_count_box", width = 3),
-        valueBoxOutput("other_count_box", width = 3)
-        )
+        column(10,
+      fluidRow(
+  column(3,
+         div(class = "custom-value-box box-total",
+             h3(textOutput("total_count_text")),
+             p("Total Patients"),
+             icon("users", class = "custom-icon")
+         )
+  ),
+  column(3,
+         div(class = "custom-value-box box-male",
+             h3(textOutput("male_count_text")),
+             p("Male Patients"),
+             icon("mars", class = "custom-icon")
+         )
+  ),
+  column(3,
+         div(class = "custom-value-box box-female",
+             h3(textOutput("female_count_text")),
+             p("Female Patients"),
+             icon("venus", class = "custom-icon")
+         )
+  ),
+  column(3,
+         div(class = "custom-value-box box-other",
+             h3(textOutput("other_count_text")),
+             p("Other Gender"),
+             icon("genderless", class = "custom-icon")
+         )
+  )
+      )
       ),
+  column(1,)
+)
+,
       fluidRow(
       column(6,
              plotlyOutput("all_gender")
@@ -696,6 +755,7 @@ tabPanel("Clinic Dashboard",
 
             actionButton("actionDT", "Filter", class = "btn btn-warning")
           ),
+    
     fluidRow(
       column(1,
              ),
@@ -707,49 +767,108 @@ tabPanel("Clinic Dashboard",
       )
     ),
     fluidRow(
+      column(1,),
+      column(10,
+             fluidRow(
+               column(3,
+                      div(class = "custom-value-box box-total",
+                          h3(textOutput("total_count_box_insight")),
+                          p("Total Patients"),
+                          icon("users", class = "custom-icon")
+                      )
+               ),
+               column(3,
+                      div(class = "custom-value-box box-male",
+                          h3(textOutput("male_count_box_insight")),
+                          p("Male Patients"),
+                          icon("mars", class = "custom-icon")
+                      )
+               ),
+               column(3,
+                      div(class = "custom-value-box box-female",
+                          h3(textOutput("female_count_box_insight")),
+                          p("Female Patients"),
+                          icon("venus", class = "custom-icon")
+                      )
+               ),
+               column(3,
+                      div(class = "custom-value-box box-other",
+                          h3(textOutput("other_count_box_insight")),
+                          p("Other Gender"),
+                          icon("genderless", class = "custom-icon")
+                      )
+               )
+             )
+      ),
+      column(1,)
+    ),
+    tags$br(),
+    fluidRow(
       column(6,
+             div(class = "plot-card",
              plotlyOutput("sex_insight")
+             )
         
       ),
       column(6,
+             div(class = "plot-card",
              plotlyOutput("age_insight")
+             )
       )
     ),
     
     fluidRow(
       column(6,
+             div(class = "plot-card",
              plotlyOutput("hbpm_insight")
+             )
       ),
       column(6,
+             div(class = "plot-card",
              plotlyOutput("num_visit_insight")
+             )
       )
     ),
     fluidRow(
       column(6,
+             div(class = "plot-card",
              plotlyOutput("bp_control_score_insight")
+             )
       ),
       column(6,
+             div(class = "plot-card",
              plotlyOutput("home_bp_score_insight")
+             )
       )
     ),
     
     fluidRow(
       column(6,
+             div(class = "plot-card",
              plotlyOutput("weight_control_score_insight")
+             )
       ),
       column(6,
+             div(class = "plot-card",
              plotlyOutput("self_care_score_insight")
+             )
       )
     ),
     fluidRow(
       column(4,
+             div(class = "plot-card",
              plotlyOutput("salty_control_insight")
+             )
       ),
       column(4,
+             div(class = "plot-card",
                plotlyOutput("alway_take_medicine_insight")
+             )
       ),
       column(4,
+             div(class = "plot-card",
              plotlyOutput("exercise_insight")
+             )
       )
     ),
 
@@ -1191,9 +1310,13 @@ output$patient_name_html <- renderUI({
         bmi <- weight_kg / (height_m^2)  # Calculate BMI
         
         # Determine Weight Control Score
-        score <- ifelse(bmi < 24, 3,
-                        ifelse(bmi < 25, 2,
-                               ifelse(bmi < 26, 1, 0)))
+        score <- case_when(
+          bmi < 18.5 ~ 0,
+          bmi >= 18.5 & bmi <= 24 ~ 3,
+          bmi > 24 & bmi <= 25 ~ 2,
+          bmi > 25 & bmi < 26 ~ 1,
+          bmi >= 26 ~ 0
+        )
         
         # Update the Weight Control Score input
         updateNumericInput(session, "weight_control_score", value = score)
@@ -1230,9 +1353,9 @@ output$patient_name_html <- renderUI({
       score <- 0  # Default to 0 if input is invalid
     } else if (bp_sys <= 140) {
       score <- 3
-    } else if (bp_sys >= 141 && bp_sys <= 169) {
+    } else if (bp_sys >= 141 && bp_sys <= 159) {
       score <- 2
-    } else if (bp_sys >= 170 && bp_sys <= 179) {
+    } else if (bp_sys >= 160 && bp_sys <= 179) {
       score <- 1
     } else if (bp_sys >= 180) {
       score <- 0
@@ -1937,77 +2060,171 @@ output$patient_name_html <- renderUI({
       )
   })
   
+  output$saltycontrolPlot <- renderPlotly({
+    data <- filtered_visits_patient_dashboard()
+    req(data)
+    req(nrow(data) > 0)
+    
+    data <- data %>%
+      mutate(
+        visit_date = parse_date_time(visit_date, orders = c("dmy", "ymd", "mdy")),
+        value = ifelse(adherence_salty_control == "yes", 0.6, 0.4), #mark value
+        color = ifelse(adherence_salty_control == "yes", "darkgreen", "darkred")
+      ) %>%
+      filter(!is.na(visit_date) & !is.na(adherence_salty_control))
+    
+    plot_ly(data,
+            x = ~visit_date,
+            y = ~value,
+            type = 'scatter',
+            mode = 'markers',
+            marker = list(size = 10),
+            color = ~color,
+            colors = c("darkgreen", "darkred"),
+            text = ~paste("Date:", format(visit_date, "%d %b %Y"),
+                          "<br>Response:", ifelse(value == 1, "Yes", "No")),
+            hoverinfo = "text") %>%
+      layout(
+        title = "Salty Control Responses Over Time",
+        xaxis = list(title = "Visit Date"),
+        yaxis = list(title = "Response",
+                     tickvals = c(0.4, 0.6), #show point
+                     ticktext = c("No", "Yes"),
+                     range = c(0.3, 0.7), #Zoom the plot
+                     zeroline = FALSE),
+        hovermode = "closest",
+        showlegend = FALSE  
+      )
+  })
+  
+
+  output$alwaytakemedicinePlot <- renderPlotly({
+    data <- filtered_visits_patient_dashboard()
+    req(data)
+    req(nrow(data) > 0)
+    
+    data <- data %>%
+      mutate(
+        visit_date = parse_date_time(visit_date, orders = c("dmy", "ymd", "mdy")),
+        value = ifelse(adherence_alway_take_medicine == "yes", 0.6, 0.4),
+        response = ifelse(adherence_alway_take_medicine == "yes", "Yes", "No")
+      ) %>%
+      filter(!is.na(visit_date) & !is.na(adherence_alway_take_medicine))
+    
+    plot_ly(data,
+            x = ~visit_date,
+            y = ~value,
+            type = 'scatter',
+            mode = 'markers',
+            marker = list(size = 10),
+            color = ~response,
+            colors = c("No" = "darkred", "Yes" = "darkgreen"),
+            text = ~paste("Date:", format(visit_date, "%d %b %Y"),
+                          "<br>Response:", response),
+            hoverinfo = "text") %>%
+      layout(
+        title = "Take Medicine Over Time",
+        xaxis = list(title = "Visit Date"),
+        yaxis = list(
+          title = "Response",
+          tickvals = c(0.4, 0.6),
+          ticktext = c("No", "Yes"),
+          range = c(0.3, 0.7),
+          zeroline = FALSE
+        ),
+        hovermode = "closest",
+        showlegend = FALSE
+      )
+  })
+  
+  output$exercisePlot <- renderPlotly({
+    data <- filtered_visits_patient_dashboard()
+    req(data)
+    req(nrow(data) > 0)
+    
+    data <- data %>%
+      mutate(
+        visit_date = parse_date_time(visit_date, orders = c("dmy", "ymd", "mdy")),
+        value = ifelse(adherence_exercise == "yes", 0.6, 0.4), #mark value
+        color = ifelse(adherence_exercise == "yes", "darkgreen", "darkred")
+      ) %>%
+      filter(!is.na(visit_date) & !is.na(adherence_alway_take_medicine))
+    
+    plot_ly(data,
+            x = ~visit_date,
+            y = ~value,
+            type = 'scatter',
+            mode = 'markers',
+            marker = list(size = 10),
+            color = ~color,
+            colors = c("darkgreen", "darkred"),
+            text = ~paste("Date:", format(visit_date, "%d %b %Y"),
+                          "<br>Response:", ifelse(value == 1, "Yes", "No")),
+            hoverinfo = "text") %>%
+      layout(
+        title = "Execise Responses Over Time",
+        xaxis = list(title = "Visit Date"),
+        yaxis = list(title = "Response",
+                     tickvals = c(0.4, 0.6), #show point
+                     ticktext = c("No", "Yes"),
+                     range = c(0.3, 0.7), #Zoom the plot
+                     zeroline = FALSE),
+        hovermode = "closest",
+        showlegend = FALSE  
+      )
+  })
+  
   
   #------------------------Clinic Dashboard Server -------------------------------  
   
   #----------------------------Overviwe Clinic--------------------------------
   
-# value boxes
-  output$total_count_box <- renderValueBox({
+  output$total_count_text <- renderText({
     if (file.exists("patient_data.csv")) {
       data <- read.csv("patient_data.csv", stringsAsFactors = FALSE)
       total <- nrow(data)
-      valueBox(
-        paste0(total, " (100%)"),
-        subtitle = "Total Patients",
-        icon = icon("users"),
-        color = "green"
-      )
+      paste0(total, " (100%)")
     } else {
-      valueBox("0 (0%)", "Total Patients", icon = icon("users"), color = "green")
+      "0 (0%)"
     }
   })
   
-  output$male_count_box <- renderValueBox({
+  output$male_count_text <- renderText({
     if (file.exists("patient_data.csv")) {
       data <- read.csv("patient_data.csv", stringsAsFactors = FALSE)
       total <- nrow(data)
       count <- sum(data$gender == "Male", na.rm = TRUE)
       perc <- if (total > 0) round((count / total) * 100, 1) else 0
-      valueBox(
-        paste0(count, " (", perc, "%)"),
-        subtitle = "Male Patients",
-        icon = icon("mars"),
-        color = "blue"
-      )
+      paste0(count, " (", perc, "%)")
     } else {
-      valueBox("0 (0%)", "Male Patients", icon = icon("mars"), color = "blue")
+      "0 (0%)"
     }
   })
   
-  output$female_count_box <- renderValueBox({
+  output$female_count_text <- renderText({
     if (file.exists("patient_data.csv")) {
       data <- read.csv("patient_data.csv", stringsAsFactors = FALSE)
       total <- nrow(data)
       count <- sum(data$gender == "Female", na.rm = TRUE)
       perc <- if (total > 0) round((count / total) * 100, 1) else 0
-      valueBox(
-        paste0(count, " (", perc, "%)"),
-        subtitle = "Female Patients",
-        icon = icon("venus"),
-        color = "maroon"
-      )
+      paste0(count, " (", perc, "%)")
     } else {
-      valueBox("0 (0%)", "Female Patients", icon = icon("venus"), color = "pink")
+      "0 (0%)"
     }
   })
   
-  output$other_count_box <- renderValueBox({
+  output$other_count_text <- renderText({
     if (file.exists("patient_data.csv")) {
       data <- read.csv("patient_data.csv", stringsAsFactors = FALSE)
       total <- nrow(data)
       count <- sum(!(data$gender %in% c("Male", "Female")), na.rm = TRUE)
       perc <- if (total > 0) round((count / total) * 100, 1) else 0
-      valueBox(
-        paste0(count, " (", perc, "%)"),
-        subtitle = "Other Gender",
-        icon = icon("genderless"),
-        color = "purple"
-      )
+      paste0(count, " (", perc, "%)")
     } else {
-      valueBox("0 (0%)", "Other Gender", icon = icon("genderless"), color = "purple")
+      "0 (0%)"
     }
   })
+  
   
 
   #----------------------------Insight Clinic--------------------------------
@@ -2059,14 +2276,10 @@ output$patient_name_html <- renderUI({
     joined_data <- joined_data %>%
       mutate(
         age_group = case_when(
-          age >= 25 & age < 35 ~ "25–34",
-          age >= 35 & age < 45 ~ "35–44",
-          age >= 45 & age < 55 ~ "45–54",
-          age >= 55 & age < 65 ~ "55–64",
-          age >= 65 & age < 75 ~ "65–74",
-          age >= 75 & age < 85 ~ "75–84",
-          age >= 85 & age < 90 ~ "85–89",
-          age >= 90 ~ "90+",
+          age >= 0 & age < 40 ~ "Less than 40",
+          age >= 40 & age < 60 ~ "40-59",
+          age >= 60 & age < 80 ~ "60-79",
+          age >= 80 ~ "80+",
           TRUE ~ NA_character_
         )
       )
@@ -2075,51 +2288,31 @@ output$patient_name_html <- renderUI({
   })
   
   
-  output$total_count_box_insight <- renderValueBox({
+  output$total_count_box_insight <- renderText({
     df <- filtered_patient_info()
     total <- nrow(df)
-    valueBox(
-      value = paste0(total, " (100%)"),
-      subtitle = "Total Patients",
-      icon = icon("users"),
-      color = "green"
-    )
+    paste0(total, " (100%)")
   })
   
-  output$male_count_box_insight <- renderValueBox({
+  output$male_count_box_insight <- renderText({
     df <- filtered_patient_info()
     count <- if (nrow(df) > 0) sum(df$gender == "Male", na.rm = TRUE) else 0
     total <- if (nrow(df) > 0) nrow(df) else 1
-    valueBox(
-      value = paste0(count, " (", round(100 * count / total, 1), "%)"),
-      subtitle = "Male",
-      icon = icon("male"),
-      color = "light-blue"
-    )
+    paste0(count, " (", round(100 * count / total, 1), "%)")
   })
   
-  output$female_count_box_insight <- renderValueBox({
+  output$female_count_box_insight <- renderText({
     df <- filtered_patient_info()
     count <- if (nrow(df) > 0) sum(df$gender == "Female", na.rm = TRUE) else 0
     total <- if (nrow(df) > 0) nrow(df) else 1
-    valueBox(
-      value = paste0(count, " (", round(100 * count / total, 1), "%)"),
-      subtitle = "Female",
-      icon = icon("female"),
-      color = "black"
-    )
+    paste0(count, " (", round(100 * count / total, 1), "%)")
   })
   
-  output$other_count_box_insight <- renderValueBox({
+  output$other_count_box_insight <- renderText({
     df <- filtered_patient_info()
     count <- if (nrow(df) > 0) sum(!(df$gender %in% c("Male", "Female")), na.rm = TRUE) else 0
     total <- if (nrow(df) > 0) nrow(df) else 1
-    valueBox(
-      value = paste0(count, " (", round(100 * count / total, 1), "%)"),
-      subtitle = "Other",
-      icon = icon("genderless"),
-      color = "purple"
-    )
+    paste0(count, " (", round(100 * count / total, 1), "%)")
   })
   
   #------- sex insight------
@@ -2131,29 +2324,36 @@ output$patient_name_html <- renderUI({
     if (nrow(df) == 0 || sum(!is.na(df$gender)) == 0) {
       p <- ggplot() +
         geom_text(aes(x = 1, y = 1, label = "No data available"), size = 5) +
-        theme_void() +
+        theme_bw() +
         labs(title = "Gender Distribution")
       
       return(ggplotly(p))
     }
     
-    # Filter and set gender order
+    # Filter and summarize
     gender_summary <- df %>%
       filter(!is.na(gender)) %>%
       mutate(gender = factor(gender, levels = c("Male", "Female", "Other"))) %>%
-      count(gender, name = "count")
+      count(gender, name = "count") %>%
+      mutate(percentage = round(100 * count / sum(count), 1),
+             label = paste0(count, " (", percentage, "%)"))
+    
+    # Custom color map
+    gender_colors <- c("Male" = "#bae1ff", "Female" = "#ffd4e5", "Other" = "#e6e6ff")
     
     # Plot
-    p <- ggplot(gender_summary, aes(x = gender, y = count, fill = gender)) +
+    p <- ggplot(gender_summary, aes(x = gender, y = count, fill = gender, text = label)) +
       geom_bar(stat = "identity") +
+      geom_text(aes(label = label, y = count + 5), size = 4) +
+      scale_fill_manual(values = gender_colors) +
       theme_minimal() +
-      scale_fill_brewer(palette = "Pastel1") +
       labs(title = "Gender Distribution", x = "Gender", y = "Count") +
       theme(axis.text.x = element_text(angle = 0, hjust = 0.5),
             legend.position = "none")
     
-    ggplotly(p)
+    ggplotly(p, tooltip = "text")
   })
+  
   
   
   #-------age distribution plot-------
@@ -2165,17 +2365,21 @@ output$patient_name_html <- renderUI({
       # Create empty plot for no data
       p <- ggplot() +
         geom_text(aes(x = 1, y = 1, label = "No data available"), size = 5) +
-        theme_void() +
+        theme_minimal() +
         labs(title = "Age Distribution")
       
       return(ggplotly(p))
     }
     
     # Create the plot with data
-    p <- ggplot(df %>% filter(!is.na(age_group)), aes(x = age_group, fill = age_group)) +
+    df_plot <- df %>%
+      filter(!is.na(age_group)) %>%
+      mutate(age_group = factor(age_group, levels = c("Less than 40", "40-59", "60-79", "80+")))
+    
+    p <- ggplot(df_plot, aes(x = age_group, fill = age_group)) +
       geom_bar() +
-      scale_fill_brewer(palette = "Set2") +
-      theme_bw() +
+      scale_fill_brewer(palette = "Pastel1") +
+      theme_minimal() +
       labs(title = "Age Distribution", x = "Age Group", y = "Number of Patients") +
       theme(
         legend.position = "none",
@@ -2193,7 +2397,7 @@ output$patient_name_html <- renderUI({
     if (!"hbpm" %in% names(df) || sum(!is.na(df$hbpm)) == 0) {
       p <- ggplot() +
         geom_text(aes(x = 1, y = 1, label = "No HBPM data available"), size = 5) +
-        theme_void() +
+        theme_minimal() +
         labs(title = "HBPM Usage")
       return(ggplotly(p))
     }
@@ -2211,7 +2415,7 @@ output$patient_name_html <- renderUI({
     p <- ggplot(summary_df, aes(x = hbpm, y = count, fill = hbpm)) +
       geom_bar(stat = "identity") +
       theme_minimal() +
-      scale_fill_manual(values = c("Yes" = "#66c2a5", "No" = "#fc8d62")) +
+      scale_fill_brewer(palette = "Pastel1") +
       labs(title = "HBPM Usage", x = "Used HBPM", y = "Number of Patients") +
       theme(legend.position = "none")
     
@@ -2224,7 +2428,7 @@ output$patient_name_html <- renderUI({
     if (nrow(visit_data) == 0 || !"visit_number" %in% names(visit_data)) {
       p <- ggplot() +
         geom_text(aes(x = 1, y = 1, label = "No visit data available"), size = 5) +
-        theme_void() +
+        theme_minimal() +
         labs(title = "Visit Frequency per Patient")
       return(ggplotly(p))
     }
@@ -2241,7 +2445,7 @@ output$patient_name_html <- renderUI({
     
     # Bar plot
     p <- ggplot(visit_summary, aes(x = factor(num_visits), y = patients)) +
-      geom_bar(stat = "identity", fill = "#1f77b4") +
+      geom_bar(stat = "identity", fill = "#d0ecc4") +
       theme_minimal() +
       labs(title = "Distribution of Number of Visits per Patient",
            x = "Number of Visits",
@@ -2252,47 +2456,89 @@ output$patient_name_html <- renderUI({
   })
   
   output$bp_control_score_insight <- renderPlotly({
-    df <- filtered_visits()
-    
-    if (nrow(df) == 0 || !"bp_control_score" %in% names(df)) {
-      p <- ggplot() +
-        geom_text(aes(x = 1, y = 1, label = "No BP control score data"), size = 5) +
-        theme_void() +
-        labs(title = "BP Control Score")
-      return(ggplotly(p))
-    }
-    
-    df <- df[!is.na(df$bp_control_score), ]
-    df$bp_control_score <- factor(df$bp_control_score, levels = c(0, 1, 2, 3))
-    
-    summary_df <- df %>%
-      count(bp_control_score, name = "count") %>%
-      mutate(percentage = round(100 * count / sum(count), 1),
-             label = paste0(count, " (", percentage, "%)"))
-    
-    p <- ggplot(summary_df, aes(x = bp_control_score, y = count, fill = bp_control_score)) +
-      geom_bar(stat = "identity") +
-      geom_text(aes(label = label, y = count + 2), size = 3.5) +
-      scale_fill_brewer(palette = "Set2") +
+  df <- filtered_visits()
+
+  # Safeguard
+  if (nrow(df) == 0 || !"bp_control_score" %in% names(df)) {
+    p <- ggplot() +
+      geom_text(aes(x = 1, y = 1, label = "No BP control score data"), size = 5) +
       theme_minimal() +
-      labs(title = "BP Control Score (0–3)", x = "Score", y = "Number of Visits") +
-      theme(legend.position = "none")
-    
-    ggplotly(p)
-  })
+      labs(title = "BP Control Score")
+    return(ggplotly(p))
+  }
+
+  # Proper filtering
+  df <- df %>% filter(!is.na(bp_control_score), bp_control_score %in% 0:3)
+
+  # Convert to factor with levels
+  df$bp_control_score <- factor(df$bp_control_score, levels = c(0, 1, 2, 3))
+
+  # Summarize cleanly
+  summary_df <- df %>%
+    group_by(bp_control_score) %>%
+    summarise(count = n(), .groups = "drop") %>%
+    mutate(
+      percentage = round(100 * count / sum(count), 1),
+      label = paste0(count, " (", percentage, "%)")
+    )
+
+  # Custom colors
+  custom_colors <- c("0" = "#ffb3ba",  # Red
+                     "1" = "#ffdfba",  # Orange
+                     "2" = "#ffffba",  # Yellow
+                     "3" = "#baffc9")  # Green
+
+  # Clean plot
+  p <- ggplot(summary_df, aes(x = bp_control_score, y = count, fill = bp_control_score, text = label)) +
+    geom_bar(stat = "identity") +
+    geom_text(aes(label = label, y = count + 20), size = 3.5) +
+    scale_fill_manual(values = custom_colors) +
+    theme_minimal() +
+    labs(title = "BP Control Score (0–3)", x = "Score", y = "Number of Visits") +
+    theme(legend.position = "none")
+
+  ggplotly(p, tooltip = "text") %>%
+    layout(
+      margin = list(b = 50, r = 120),
+      annotations = list(
+        x = 0.98,
+        y = -0.15,
+        text = paste0(
+          "<b>Score Definitions:</b><br>",
+          "0 = More than 180<br>",
+          "1 = 160-179<br>",
+          "2 = 141-159<br>",
+          "3 = Less than 140"
+        ),
+        showarrow = FALSE,
+        xref = "paper",
+        yref = "paper",
+        xanchor = "left",
+        yanchor = "bottom",
+        align = "left",
+        font = list(size = 12)
+      )
+    )
+})
+
+  
   
   output$home_bp_score_insight <- renderPlotly({
     df <- filtered_visits()
+    custom_colors <- c("0" = "#ffb3ba",  # Red
+                       "1" = "#ffdfba",  # Orange
+                       "2" = "#ffffba",  # Yellow
+                       "3" = "#baffc9")  # Green
     
     if (nrow(df) == 0 || !"home_bp_score" %in% names(df)) {
       p <- ggplot() +
         geom_text(aes(x = 1, y = 1, label = "No Home BP score data"), size = 5) +
-        theme_void() +
+        theme_minimal() +
         labs(title = "Home BP Score")
       return(ggplotly(p))
     }
     
-    df <- df[!is.na(df$home_bp_score), ]
+    df <- df %>% filter(!is.na(home_bp_score), home_bp_score %in% 0:3)
     df$home_bp_score <- factor(df$home_bp_score, levels = c(0, 1, 2, 3))
     
     summary_df <- df %>%
@@ -2300,29 +2546,55 @@ output$patient_name_html <- renderUI({
       mutate(percentage = round(100 * count / sum(count), 1),
              label = paste0(count, " (", percentage, "%)"))
     
-    p <- ggplot(summary_df, aes(x = home_bp_score, y = count, fill = home_bp_score)) +
+    p <- ggplot(summary_df, aes(x = home_bp_score, y = count, fill = home_bp_score, text = label)) +
       geom_bar(stat = "identity") +
-      geom_text(aes(label = label, y = count + 2), size = 3.5) +
-      scale_fill_brewer(palette = "Set3") +
+      geom_text(aes(label = label, y = count + 10), size = 3.5) +
+      scale_fill_manual(values = custom_colors) +
       theme_minimal() +
       labs(title = "Home BP Score (0–3)", x = "Score", y = "Number of Visits") +
       theme(legend.position = "none")
     
-    ggplotly(p)
+    ggplotly(p, tooltip = "text") %>%
+      layout(
+        margin = list(b = 50, r = 120),
+        annotations = list(
+          x = 0.98,
+          y = -0.15,
+          text = paste0(
+            "<b>Score Definitions:</b><br>",
+            "0 = More than 180<br>",
+            "1 = 160-179<br>",
+            "2 = 141-159<br>",
+            "3 = Less than 140"
+          ),
+          showarrow = FALSE,
+          xref = "paper",
+          yref = "paper",
+          xanchor = "left",
+          yanchor = "bottom",
+          align = "left",
+          font = list(size = 12)
+        )
+      )
   })
+  
   
   output$weight_control_score_insight <- renderPlotly({
     df <- filtered_visits()
+    custom_colors <- c("0" = "#ffb3ba",  # Red
+                       "1" = "#ffdfba",  # Orange
+                       "2" = "#ffffba",  # Yellow
+                       "3" = "#baffc9")  # Green
     
     if (nrow(df) == 0 || !"weight_control_score" %in% names(df)) {
       p <- ggplot() +
         geom_text(aes(x = 1, y = 1, label = "No weight control score data"), size = 5) +
-        theme_void() +
+        theme_minimal() +
         labs(title = "Weight Control Score")
       return(ggplotly(p))
     }
     
-    df <- df[!is.na(df$weight_control_score), ]
+    df <- df %>% filter(!is.na(weight_control_score), weight_control_score %in% 0:3)
     df$weight_control_score <- factor(df$weight_control_score, levels = c(0, 1, 2, 3))
     
     summary_df <- df %>%
@@ -2330,31 +2602,57 @@ output$patient_name_html <- renderUI({
       mutate(percentage = round(100 * count / sum(count), 1),
              label = paste0(count, " (", percentage, "%)"))
     
-    p <- ggplot(summary_df, aes(x = weight_control_score, y = count, fill = weight_control_score)) +
+    p <- ggplot(summary_df, aes(x = weight_control_score, y = count, fill = weight_control_score, text = label)) +
       geom_bar(stat = "identity") +
-      geom_text(aes(label = label, y = count + 2), size = 3.5) +
-      scale_fill_brewer(palette = "Set2") +
+      geom_text(aes(label = label, y = count + 10), size = 3.5) +
+      scale_fill_manual(values = custom_colors) +
       theme_minimal() +
       labs(title = "Weight Control Score (0–3)", x = "Score", y = "Number of Visits") +
       theme(legend.position = "none")
     
-    ggplotly(p)
+    ggplotly(p, tooltip = "text") %>%
+      layout(
+        margin = list(b = 50, r = 140),
+        annotations = list(
+          x = 0.94,
+          y = -0.15,
+          text = paste0(
+            "<b>Score Definitions:</b><br>",
+            "0 = BMI >= 26<br>",
+            "1 = BMI >= 25.1 & < 26<br>",
+            "2 = BMI >= 24.1 & < 25<br>",
+            "3 = BMI >= 18.5 & < 24.1"
+          ),
+          showarrow = FALSE,
+          xref = "paper",
+          yref = "paper",
+          xanchor = "left",
+          yanchor = "bottom",
+          align = "left",
+          font = list(size = 12)
+        )
+      )
   })
+  
   
   
   
   output$self_care_score_insight <- renderPlotly({
     df <- filtered_visits()
+    custom_colors <- c("0" = "#ffb3ba",  # Red
+                       "1" = "#ffdfba",  # Orange
+                       "2" = "#ffffba",  # Yellow
+                       "3" = "#baffc9")  # Green
     
     if (nrow(df) == 0 || !"self_care_score" %in% names(df)) {
       p <- ggplot() +
         geom_text(aes(x = 1, y = 1, label = "No self-care score data"), size = 5) +
-        theme_void() +
+        theme_minimal() +
         labs(title = "Self-Care Score")
       return(ggplotly(p))
     }
     
-    df <- df[!is.na(df$self_care_score), ]
+    df <- df %>% filter(!is.na(self_care_score), self_care_score %in% 0:3)
     df$self_care_score <- factor(df$self_care_score, levels = c(0, 1, 2, 3))
     
     summary_df <- df %>%
@@ -2362,16 +2660,38 @@ output$patient_name_html <- renderUI({
       mutate(percentage = round(100 * count / sum(count), 1),
              label = paste0(count, " (", percentage, "%)"))
     
-    p <- ggplot(summary_df, aes(x = self_care_score, y = count, fill = self_care_score)) +
+    p <- ggplot(summary_df, aes(x = self_care_score, y = count, fill = self_care_score, text = label)) +
       geom_bar(stat = "identity") +
-      geom_text(aes(label = label, y = count + 2), size = 3.5) +
-      scale_fill_brewer(palette = "Set3") +
+      geom_text(aes(label = label, y = count + 10), size = 3.5) +
+      scale_fill_manual(values = custom_colors) +
       theme_minimal() +
       labs(title = "Self-Care Score (0–3)", x = "Score", y = "Number of Visits") +
       theme(legend.position = "none")
     
-    ggplotly(p)
+    ggplotly(p, tooltip = "text") %>%
+      layout(
+        margin = list(b = 50, r = 140),
+        annotations = list(
+          x = 0.92,
+          y = -0.15,
+          text = paste0(
+            "<b>Score Definitions:</b><br>",
+            "0 = Does none of the behaviors<br>",
+            "1 = Does one behavior<br>",
+            "2 = Does two behaviors<br>",
+            "3 = Does all three behaviors"
+          ),
+          showarrow = FALSE,
+          xref = "paper",
+          yref = "paper",
+          xanchor = "left",
+          yanchor = "bottom",
+          align = "left",
+          font = list(size = 12)
+        )
+      )
   })
+  
   
   #------ salty control --------------
   output$salty_control_insight <- renderPlotly({
@@ -2380,7 +2700,7 @@ output$patient_name_html <- renderUI({
     if (nrow(df) == 0 || !"adherence_salty_control" %in% names(df)) {
       p <- ggplot() +
         geom_text(aes(x = 1, y = 1, label = "No salty control data"), size = 5) +
-        theme_void() +
+        theme_minimal() +
         labs(title = "Salt Intake Control")
       return(ggplotly(p))
     }
@@ -2414,7 +2734,7 @@ output$patient_name_html <- renderUI({
     if (nrow(df) == 0 || !"adherence_alway_take_medicine" %in% names(df)) {
       p <- ggplot() +
         geom_text(aes(x = 1, y = 1, label = "No medication adherence data"), size = 5) +
-        theme_void() +
+        theme_minimal() +
         labs(title = "Always Take Medication")
       return(ggplotly(p))
     }
@@ -2432,7 +2752,7 @@ output$patient_name_html <- renderUI({
     p <- ggplot(summary_df, aes(x = adherence_alway_take_medicine, y = count, fill = adherence_alway_take_medicine)) +
       geom_bar(stat = "identity") +
       geom_text(aes(label = label, y = count + 2), size = 3.5) +
-      scale_fill_brewer(palette = "Pastel2") +
+      scale_fill_brewer(palette = "Pastel1") +
       theme_minimal() +
       labs(title = "Always Take Medication", x = "Response", y = "Number of Visits") +
       theme(legend.position = "none")
@@ -2448,7 +2768,7 @@ output$patient_name_html <- renderUI({
     if (nrow(df) == 0 || !"adherence_exercise" %in% names(df)) {
       p <- ggplot() +
         geom_text(aes(x = 1, y = 1, label = "No exercise data"), size = 5) +
-        theme_void() +
+        theme_minimal() +
         labs(title = "Exercise Adherence")
       return(ggplotly(p))
     }
