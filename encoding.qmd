@@ -1,0 +1,39 @@
+---
+title: "Encoding"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+library(readr)
+```
+
+```{r}
+mydata <- read_csv("patient_data.csv")
+
+#🛠️ Method 1: Write CSV with BOM manually (cross-platform safe)
+# Step 1: Write to UTF-8 file (without BOM)
+temp_file <- tempfile(fileext = ".csv")
+write.csv(mydata, temp_file, row.names = FALSE, fileEncoding = "UTF-8")
+
+# Step 2: Prepend BOM and write final file
+lines <- readLines(temp_file, encoding = "UTF-8")
+writeLines(c("\uFEFF", lines), "patient_data.csv", useBytes = TRUE)
+```
+
+```{r}
+#🛠️ Method 2: Use readr and write with BOM manually
+
+mydata <- read_csv("visit_data.csv")
+# Step 1: Write without BOM
+write_csv(mydata, "thai_temp.csv")
+
+# Step 2: Prepend BOM
+lines <- readLines("thai_temp.csv", encoding = "UTF-8")
+writeLines(c("\uFEFF", lines), "visit_data.csv", useBytes = TRUE)
+
+```
+
+
+
