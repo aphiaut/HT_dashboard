@@ -151,7 +151,7 @@ ui <- navbarPage(
                                      "เบิกได้", 
                                      "ประกันสังคม",
                                      "ประกันชีวิต"
-                                     )),
+                         )),
              textInput("daystart", label = "First day", placeholder = "dd-mm-yyyy (พ.ศ.)"),
              hr(),
              actionButton("save", "Save Data"), # Save button
@@ -159,7 +159,7 @@ ui <- navbarPage(
       )
     )
   ),
-#--------------------------- Visit Form UI -------------------
+  #--------------------------- Visit Form UI -------------------
   tabPanel(
     "Visit Form",
     fluidRow(
@@ -172,7 +172,7 @@ ui <- navbarPage(
                uiOutput("patient_name_html")                     # Inline output
              ),
              tags$hr(),
-            
+             
              #textInput("num_visit", "Number of Visits:"), # User-provided Number of visits
              h4("Number of Visits:"),
              fluidRow(
@@ -212,7 +212,7 @@ ui <- navbarPage(
                condition = "input.pateintstatus == 'consult_opd'",
                textInput("consult_opd_details", "Specify OPD Details:", "")
              ),     
-        
+             
       ),
       column(4,
              h3("Patient Symptom Checklist:"),
@@ -314,7 +314,7 @@ ui <- navbarPage(
                textInput("face_swelling_note", "Please provide details about the face swelling:")
              )
              
-            
+             
       ),
       column(4,
              h3("Lab Results:"),
@@ -334,214 +334,214 @@ ui <- navbarPage(
     ),
     hr(),
     fluidRow(
-    column(4,
-           #CC and PI Section
-           radioButtons("cc", "CC:", 
-                        choices = c("Follow-up Visit" = "follow_up", 
-                                    "Early Visit" = "early_visit", 
-                                    "Late Visit" = "late_visit",
-                                    "Other" = "other"), 
-                        inline = TRUE),
-           conditionalPanel(
-             condition = "input.cc == 'early_visit'",
-             textAreaInput("cc_early_visit", "Please Specify Reason:", "", rows = 3)
-           ),
-           conditionalPanel(
-             condition = "input.cc == 'late_visit'",
-             textAreaInput("cc_late_visit", "Please Specify Reason:", "", rows = 3)
-           ),
-           conditionalPanel(
-             condition = "input.cc == 'other'",
-             textAreaInput("cc_other", "Please Specify:", "", rows = 3)
-           ),
-           radioButtons(
-             inputId = "pi",
-             label = "PI:",
-             choices = c(
-               "Normal" = "normal", 
-               "Abnormal" = "abnormal",
-               "Other" = "other"
+      column(4,
+             #CC and PI Section
+             radioButtons("cc", "CC:", 
+                          choices = c("Follow-up Visit" = "follow_up", 
+                                      "Early Visit" = "early_visit", 
+                                      "Late Visit" = "late_visit",
+                                      "Other" = "other"), 
+                          inline = TRUE),
+             conditionalPanel(
+               condition = "input.cc == 'early_visit'",
+               textAreaInput("cc_early_visit", "Please Specify Reason:", "", rows = 3)
              ),
-             inline = TRUE
-           ),
-           conditionalPanel(
-             condition = "input.pi == 'abnormal'",
-             textAreaInput("pi_abnormal", "Please Specify Symptoms:", "", rows = 3)
-           ),
-           conditionalPanel(
-             condition = "input.pi == 'other'",
-             textAreaInput("pi_other", "Please Specify:", "", rows = 3)
-           ),
-           checkboxGroupInput("medication_adherence", "Medication Adherence:", 
-                              choices = c("Always take medicines" = "alway_take_medicine", 
-                                          "Control salty taste" = "salty_control",
-                                          "Exercise" = "excercise"), 
-                              inline = TRUE),
-           textAreaInput("allergic_history", "Drug Allergic History:", "", rows = 3),
-           fluidRow(
-              column(6, h4("Blood Pressure")),
-                   ),
-           fluidRow(
-              column(6, textInput("bp_sys", "Blood Pressure (Sys):", "")),
-              column(6, textInput("bp_dia", "Blood Pressure (Dia):", "")),
-           ),
-           fluidRow(
-              column(6, h6("BP Target: Less than 140/90 mmHg"))
-           ),
-           fluidRow(
-              column(6,textInput("pulse", "Pulse Rate:", ""),
-                     h6("Normal value: 60-100 beats per min")),
-              column(6,textInput("waist", "Waist (cm):", "")),
-                   ),
-           fluidRow(
-              column(6,textInput("height", "Height (cm):", "")),
-              column(6,textInput("weight", "Weight (kg):", "")),
-                   ),
-           fluidRow(
-             column(6,
-              tags$label("Your BMI:"),
-              textOutput("bmi_text"),
-              h6("BMI Target: 18.5-24.0 kg/m2")
-                   ))
-           ),
-    column(4,
-           h4("Physical Examination:"),
-           fluidRow(
-             column(6, 
-                    radioButtons(inputId = "heent", 
-                                    label = "HEENT:", 
-                                    choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
-                                    inline = TRUE),
-                    conditionalPanel(
-                      condition = "input.heent == 'abnormal'",
-                      textAreaInput("heent_abnormal", "Please Specify Symptoms:", "", rows = 3)
-                    )),
-             column(6, 
-                    radioButtons(inputId = "heart", 
-                                    label = "Heart:", 
-                                    choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
-                                    inline = TRUE),
-                    conditionalPanel(
-                      condition = "input.heart == 'abnormal'",
-                      textAreaInput("heart_abnormal", "Please Specify Symptoms:", "", rows = 3)
-                    ))
-                   ),
-           fluidRow(
-             column(6, 
-                    radioButtons(inputId = "lungs", 
-                                    label = "Lungs:", 
-                                    choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
-                                    inline = TRUE),
-                    conditionalPanel(
-                      condition = "input.lungs == 'abnormal'",
-                      textAreaInput("lungs_abnormal", "Please Specify Symptoms:", "", rows = 3)
-                    )),
-             column(6, 
-                    radioButtons(inputId = "abd", 
-                                    label = "Abdomen:", 
-                                    choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
-                                    inline = TRUE),
-                    conditionalPanel(
-                      condition = "input.abd == 'abnormal'",
-                      textAreaInput("abd_abnormal", "Please Specify Symptoms:", "", rows = 3)
-                    ))
-           ),
-           fluidRow(
-             column(6, 
-                    radioButtons(inputId = "ext", 
-                                    label = "Extremities:", 
-                                    choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
-                                    inline = TRUE),
-                    conditionalPanel(
-                      condition = "input.ext == 'abnormal'",
-                      textAreaInput("ext_abnormal", "Please Specify Symptoms:", "", rows = 3)
-                    )),
-             column(6, 
-                    radioButtons(inputId = "ns", 
-                                    label = "N/S:", 
-                                    choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
-                                    inline = TRUE),
-                    conditionalPanel(
-                      condition = "input.ns == 'abnormal'",
-                      textAreaInput("ns_abnormal", "Please Specify Symptoms:", "", rows = 3)
-                    ))
-           ),
-           # Diagnosis
-           h4("Diagnosis:"),
-           selectInput("diagnosis", "HT with",
-                       list("DM", "Gout", "CKD", "Thyroid", "DLD",
-                                   "None", "Other"), 
-                       multiple = TRUE ),
-           conditionalPanel(
-             condition = "input.diagnosis.includes('Other')",  # Check if 'Other' is in the array of selected values
-             textAreaInput("other_diagnosis", "Please Specify Diagnosis:", "", rows = 6)
-           ),
-           # Evaluate patient Activity
-           fluidRow(
-             column(10,
-                    h4("Scores and BP Monitoring:")),
-             column(5,
-                    numericInput("bp_control_score", "BP Control Score:", value = 0, min = 0, max = 3),
-                    numericInput("weight_control_score", "Weight Control Score:", value = 0, min = 0, max = 5)
-                    ),
-             column(7,
-                    numericInput("self_care_score", "Self-Care Behavior Score:", value = 0, min = 0, max = 3),
-                    numericInput("home_bp_score", "BP Measurement at Home Score:", value = 0, min = 0, max = 5)
-                    ),
-             column(6,
-                    radioButtons(inputId = "hbpm_target", 
-                                 label = "HBPM According to Target", 
-                                 choices = c("Yes", "No", "Missed"), 
-                                 inline = TRUE)
+             conditionalPanel(
+               condition = "input.cc == 'late_visit'",
+               textAreaInput("cc_late_visit", "Please Specify Reason:", "", rows = 3)
+             ),
+             conditionalPanel(
+               condition = "input.cc == 'other'",
+               textAreaInput("cc_other", "Please Specify:", "", rows = 3)
+             ),
+             radioButtons(
+               inputId = "pi",
+               label = "PI:",
+               choices = c(
+                 "Normal" = "normal", 
+                 "Abnormal" = "abnormal",
+                 "Other" = "other"
+               ),
+               inline = TRUE
+             ),
+             conditionalPanel(
+               condition = "input.pi == 'abnormal'",
+               textAreaInput("pi_abnormal", "Please Specify Symptoms:", "", rows = 3)
+             ),
+             conditionalPanel(
+               condition = "input.pi == 'other'",
+               textAreaInput("pi_other", "Please Specify:", "", rows = 3)
+             ),
+             checkboxGroupInput("medication_adherence", "Medication Adherence:", 
+                                choices = c("Always take medicines" = "alway_take_medicine", 
+                                            "Control salty taste" = "salty_control",
+                                            "Exercise" = "excercise"), 
+                                inline = TRUE),
+             textAreaInput("allergic_history", "Drug Allergic History:", "", rows = 3),
+             fluidRow(
+               column(6, h4("Blood Pressure")),
+             ),
+             fluidRow(
+               column(6, textInput("bp_sys", "Blood Pressure (Sys):", "")),
+               column(6, textInput("bp_dia", "Blood Pressure (Dia):", "")),
+             ),
+             fluidRow(
+               column(6, h6("BP Target: Less than 140/90 mmHg"))
+             ),
+             fluidRow(
+               column(6,textInput("pulse", "Pulse Rate:", ""),
+                      h6("Normal value: 60-100 beats per min")),
+               column(6,textInput("waist", "Waist (cm):", "")),
+             ),
+             fluidRow(
+               column(6,textInput("height", "Height (cm):", "")),
+               column(6,textInput("weight", "Weight (kg):", "")),
+             ),
+             fluidRow(
+               column(6,
+                      tags$label("Your BMI:"),
+                      textOutput("bmi_text"),
+                      h6("BMI Target: 18.5-24.0 kg/m2")
+               ))
+      ),
+      column(4,
+             h4("Physical Examination:"),
+             fluidRow(
+               column(6, 
+                      radioButtons(inputId = "heent", 
+                                   label = "HEENT:", 
+                                   choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
+                                   inline = TRUE),
+                      conditionalPanel(
+                        condition = "input.heent == 'abnormal'",
+                        textAreaInput("heent_abnormal", "Please Specify Symptoms:", "", rows = 3)
+                      )),
+               column(6, 
+                      radioButtons(inputId = "heart", 
+                                   label = "Heart:", 
+                                   choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
+                                   inline = TRUE),
+                      conditionalPanel(
+                        condition = "input.heart == 'abnormal'",
+                        textAreaInput("heart_abnormal", "Please Specify Symptoms:", "", rows = 3)
+                      ))
+             ),
+             fluidRow(
+               column(6, 
+                      radioButtons(inputId = "lungs", 
+                                   label = "Lungs:", 
+                                   choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
+                                   inline = TRUE),
+                      conditionalPanel(
+                        condition = "input.lungs == 'abnormal'",
+                        textAreaInput("lungs_abnormal", "Please Specify Symptoms:", "", rows = 3)
+                      )),
+               column(6, 
+                      radioButtons(inputId = "abd", 
+                                   label = "Abdomen:", 
+                                   choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
+                                   inline = TRUE),
+                      conditionalPanel(
+                        condition = "input.abd == 'abnormal'",
+                        textAreaInput("abd_abnormal", "Please Specify Symptoms:", "", rows = 3)
+                      ))
+             ),
+             fluidRow(
+               column(6, 
+                      radioButtons(inputId = "ext", 
+                                   label = "Extremities:", 
+                                   choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
+                                   inline = TRUE),
+                      conditionalPanel(
+                        condition = "input.ext == 'abnormal'",
+                        textAreaInput("ext_abnormal", "Please Specify Symptoms:", "", rows = 3)
+                      )),
+               column(6, 
+                      radioButtons(inputId = "ns", 
+                                   label = "N/S:", 
+                                   choices = c("WNL" = "wnl", "Abnormal" = "abnormal"), 
+                                   inline = TRUE),
+                      conditionalPanel(
+                        condition = "input.ns == 'abnormal'",
+                        textAreaInput("ns_abnormal", "Please Specify Symptoms:", "", rows = 3)
+                      ))
+             ),
+             # Diagnosis
+             h4("Diagnosis:"),
+             selectInput("diagnosis", "HT with",
+                         list("DM", "Gout", "CKD", "Thyroid", "DLD",
+                              "None", "Other"), 
+                         multiple = TRUE ),
+             conditionalPanel(
+               condition = "input.diagnosis.includes('Other')",  # Check if 'Other' is in the array of selected values
+               textAreaInput("other_diagnosis", "Please Specify Diagnosis:", "", rows = 6)
+             ),
+             # Evaluate patient Activity
+             fluidRow(
+               column(10,
+                      h4("Scores and BP Monitoring:")),
+               column(5,
+                      numericInput("bp_control_score", "BP Control Score:", value = 0, min = 0, max = 3),
+                      numericInput("weight_control_score", "Weight Control Score:", value = 0, min = 0, max = 5)
+               ),
+               column(7,
+                      numericInput("self_care_score", "Self-Care Behavior Score:", value = 0, min = 0, max = 3),
+                      numericInput("home_bp_score", "BP Measurement at Home Score:", value = 0, min = 0, max = 5)
+               ),
+               column(6,
+                      radioButtons(inputId = "hbpm_target", 
+                                   label = "HBPM According to Target", 
+                                   choices = c("Yes", "No", "Missed"), 
+                                   inline = TRUE)
+               )
              )
-           )
-           ),
-    column(4,
-           h4("Follow-up Schedule"),
-           radioButtons("follow_up", "Follow-up:", 
-                        choices = c("1 week" = "1_week", 
-                                    "2 weeks" = "2_weeks", 
-                                    "4 weeks" = "4_weeks", 
-                                    "8 weeks" = "8_weeks", 
-                                    "12 weeks" = "12_weeks", 
-                                    "24 weeks" = "24_weeks"),
-                        inline = TRUE
-           ),
-           
-           # Date  Input
-           textInput("follow_up_date", label = "Date:", placeholder = "dd-mm-yyyy"),
-           
-           #Lab Tests Section
-           h4("Laboratory Tests:"),
-           checkboxGroupInput(
-             inputId = "lab_tests",
-             label = NULL,
-             choices = c(
-               "UA (Urinalysis)" = "ua_test",
-               "BUN (Blood Urea Nitrogen)" = "bun_test",
-               "Cr (Creatinine)" = "cr_test",
-               "HbA1C" = "hba1c_test",
-               "FBS (Fasting Blood Sugar)" = "fbs_test",
-               "Lipid Profiles" = "lipid_profiles_test",
-               "CXR (Chest X-ray)" = "cxr_test",
-               "ECG (Electrocardiogram)" = "ecg_test"
-               
+      ),
+      column(4,
+             h4("Follow-up Schedule"),
+             radioButtons("follow_up", "Follow-up:", 
+                          choices = c("1 week" = "1_week", 
+                                      "2 weeks" = "2_weeks", 
+                                      "4 weeks" = "4_weeks", 
+                                      "8 weeks" = "8_weeks", 
+                                      "12 weeks" = "12_weeks", 
+                                      "24 weeks" = "24_weeks"),
+                          inline = TRUE
              ),
-             inline = FALSE
-           ),
-           textAreaInput("other_lab_tests", "Please Specify Other Lab Tests:", "", rows = 3),
-           checkboxGroupInput("complication", "Complication:", 
-                              choices = c("Stroke" = "complication_stroke", 
-                                          "Cardio MI" = "complication_cardio_mi",
-                                          "CHF" = "complication_chf",
-                                          "Kidney" = "complication_kidney",
-                                          "Eye" = "complication_eye"),
-                              inline = TRUE),
-           textAreaInput("other_complication", "Please Specify Complication:", "", rows = 3)
-           
-           
-           )
-           
+             
+             # Date  Input
+             textInput("follow_up_date", label = "Date:", placeholder = "dd-mm-yyyy"),
+             
+             #Lab Tests Section
+             h4("Laboratory Tests:"),
+             checkboxGroupInput(
+               inputId = "lab_tests",
+               label = NULL,
+               choices = c(
+                 "UA (Urinalysis)" = "ua_test",
+                 "BUN (Blood Urea Nitrogen)" = "bun_test",
+                 "Cr (Creatinine)" = "cr_test",
+                 "HbA1C" = "hba1c_test",
+                 "FBS (Fasting Blood Sugar)" = "fbs_test",
+                 "Lipid Profiles" = "lipid_profiles_test",
+                 "CXR (Chest X-ray)" = "cxr_test",
+                 "ECG (Electrocardiogram)" = "ecg_test"
+                 
+               ),
+               inline = FALSE
+             ),
+             textAreaInput("other_lab_tests", "Please Specify Other Lab Tests:", "", rows = 3),
+             checkboxGroupInput("complication", "Complication:", 
+                                choices = c("Stroke" = "complication_stroke", 
+                                            "Cardio MI" = "complication_cardio_mi",
+                                            "CHF" = "complication_chf",
+                                            "Kidney" = "complication_kidney",
+                                            "Eye" = "complication_eye"),
+                                inline = TRUE),
+             textAreaInput("other_complication", "Please Specify Complication:", "", rows = 3)
+             
+             
+      )
+      
     ),
     hr(),
     fluidRow(
@@ -549,33 +549,33 @@ ui <- navbarPage(
              h3("Home Medication"),
              column(10, 
                     selectInput("precriptionadjust", "Prescription Adjusted",
-                         choices = c("Off Medication", "Decrease", "Add",
-                                     "Same", "Change : Complication"))),
+                                choices = c("Off Medication", "Decrease", "Add",
+                                            "Same", "Change : Complication"))),
              fluidRow(
                column(12,
-               h4("Diuretics :"),
-               column(6, uiOutput("medication_ui_diuretics")),
-               column(6, actionButton("add_medication_diuretics", "Add Diuretics")),
-               column(4, uiOutput("remove_ui_diuretics"))
-             )),
+                      h4("Diuretics :"),
+                      column(6, uiOutput("medication_ui_diuretics")),
+                      column(6, actionButton("add_medication_diuretics", "Add Diuretics")),
+                      column(4, uiOutput("remove_ui_diuretics"))
+               )),
              fluidRow(
                column(12,
-               h4("ACEIs :"),
-               column(6, uiOutput("medication_ui_aceis")),
-               column(6, actionButton("add_medication_aceis", "Add ACEIs"))
-             )),
+                      h4("ACEIs :"),
+                      column(6, uiOutput("medication_ui_aceis")),
+                      column(6, actionButton("add_medication_aceis", "Add ACEIs"))
+               )),
              fluidRow(
                column(12,
-               h4("ARBs :"),
-               column(6, uiOutput("medication_ui_arbs")),
-               column(6, actionButton("add_medication_arbs", "Add ARBs"))
-             )),
+                      h4("ARBs :"),
+                      column(6, uiOutput("medication_ui_arbs")),
+                      column(6, actionButton("add_medication_arbs", "Add ARBs"))
+               )),
              fluidRow(
                column(12,
-               h4("CCBs :"),
-               column(6, uiOutput("medication_ui_ccbs")),
-               column(6, actionButton("add_medication_ccbs", "Add CCBs"))
-             )
+                      h4("CCBs :"),
+                      column(6, uiOutput("medication_ui_ccbs")),
+                      column(6, actionButton("add_medication_ccbs", "Add CCBs"))
+               )
              )),
       column(6,
              h3(" "),
@@ -612,15 +612,15 @@ ui <- navbarPage(
                )
              )
       )
-          
-             
+      
+      
     ),
     fluidRow(
       actionButton("save_visit", "Save Visit")
     )
   ),
-
-#------------------------Patient Dashboard UI -------------------------------
+  
+  #------------------------Patient Dashboard UI -------------------------------
   tabPanel(
     "Patient Dashboard",
     fluidRow(
@@ -636,251 +636,251 @@ ui <- navbarPage(
                uiOutput("patient_name_dashboard")                     # Inline output
              )
       )
-),
-tags$br(),
-    fluidRow(
-      column(6,
-             div(class = "plot-card",
-               plotlyOutput("bpPlot")
-             )
-        ),
-      column(6,
-             div(class = "plot-card",
-               plotlyOutput("pulsePlot")
-             )
-        )
-      ),
-tags$br(),
-    fluidRow(
-      column(6,
-             div(class = "plot-card",
-             plotlyOutput("bmiPlot")
-             )
-      ),
-      column(6,
-             div(class = "plot-card",
-             plotlyOutput("waistPlot")
-             )
-      )
-    ),
-tags$br(),
-  fluidRow(
-      column(4,
-             div(class = "plot-card",
-               plotlyOutput("saltycontrolPlot")
-             )
-        ),
-      column(4,
-             div(class = "plot-card",
-               plotlyOutput("alwaytakemedicinePlot")
-             )
-        ),
-      column(4,
-             div(class = "plot-card",
-             plotlyOutput("exercisePlot")
-             )
-      )
-      ),
-),
-
-#------------------------Patient Dashboard UI -------------------------------
-
-tabPanel("Clinic Dashboard",
-    fluidRow(
-      shiny::HTML("<br><br><center> <h1>Hypertension Clinic</h1> </center><br>"),
-    ),
-    fluidRow(
-    tabsetPanel(
-      tabPanel("Overview",
-      fluidRow(
-        column(1,),
-        column(10,
-      fluidRow(
-  column(3,
-         div(class = "custom-value-box box-total",
-             h3(textOutput("total_count_text")),
-             p("Total Patients"),
-             icon("users", class = "custom-icon")
-         )
-  ),
-  column(3,
-         div(class = "custom-value-box box-male",
-             h3(textOutput("male_count_text")),
-             p("Male Patients"),
-             icon("mars", class = "custom-icon")
-         )
-  ),
-  column(3,
-         div(class = "custom-value-box box-female",
-             h3(textOutput("female_count_text")),
-             p("Female Patients"),
-             icon("venus", class = "custom-icon")
-         )
-  ),
-  column(3,
-         div(class = "custom-value-box box-other",
-             h3(textOutput("other_count_text")),
-             p("Other Gender"),
-             icon("genderless", class = "custom-icon")
-         )
-  )
-      )
-      ),
-  column(1,)
-)
-,
-      fluidRow(
-      column(6,
-             plotlyOutput("all_gender")
-             ),
-      column(6,
-             plotlyOutput("all_age")
-      )
-    ),
-    
-
-    ),
-    tabPanel("Insight",
-                sidebarPanel(
-
-            h3("Time"),
-
-            
-    dateRangeInput('dateRange',
-                   label = 'Date range input: dd/mm/yyyy',
-                   format = "dd/mm/yyyy",        
-                   start = Sys.Date() - 2, 
-                   end = Sys.Date() + 2),
-    
-    radioButtons("insightMode", "Count Mode",
-                 choices = c("Unique Patients" = "unique", "All Visits" = "visits"),
-                 selected = "unique",
-                 inline = TRUE),
-
-            actionButton("actionDT", "Filter", class = "btn btn-warning")
-          ),
-    
-    fluidRow(
-      column(1,
-             ),
-      column(11,
-             valueBoxOutput("total_count_box_insight", width = 3),
-             valueBoxOutput("male_count_box_insight", width = 3),
-             valueBoxOutput("female_count_box_insight", width = 3),
-             valueBoxOutput("other_count_box_insight", width = 3)
-      )
-    ),
-    fluidRow(
-      column(1,),
-      column(10,
-             fluidRow(
-               column(3,
-                      div(class = "custom-value-box box-total",
-                          h3(textOutput("total_count_box_insight")),
-                          p("Total Patients"),
-                          icon("users", class = "custom-icon")
-                      )
-               ),
-               column(3,
-                      div(class = "custom-value-box box-male",
-                          h3(textOutput("male_count_box_insight")),
-                          p("Male Patients"),
-                          icon("mars", class = "custom-icon")
-                      )
-               ),
-               column(3,
-                      div(class = "custom-value-box box-female",
-                          h3(textOutput("female_count_box_insight")),
-                          p("Female Patients"),
-                          icon("venus", class = "custom-icon")
-                      )
-               ),
-               column(3,
-                      div(class = "custom-value-box box-other",
-                          h3(textOutput("other_count_box_insight")),
-                          p("Other Gender"),
-                          icon("genderless", class = "custom-icon")
-                      )
-               )
-             )
-      ),
-      column(1,)
     ),
     tags$br(),
     fluidRow(
       column(6,
              div(class = "plot-card",
-             plotlyOutput("sex_insight")
+                 plotlyOutput("bpPlot")
              )
-        
       ),
       column(6,
              div(class = "plot-card",
-             plotlyOutput("age_insight")
+                 plotlyOutput("pulsePlot")
              )
       )
     ),
-    
+    tags$br(),
     fluidRow(
       column(6,
              div(class = "plot-card",
-             plotlyOutput("hbpm_insight")
+                 plotlyOutput("bmiPlot")
              )
       ),
       column(6,
              div(class = "plot-card",
-             plotlyOutput("num_visit_insight")
+                 plotlyOutput("waistPlot")
              )
       )
     ),
-    fluidRow(
-      column(6,
-             div(class = "plot-card",
-             plotlyOutput("bp_control_score_insight")
-             )
-      ),
-      column(6,
-             div(class = "plot-card",
-             plotlyOutput("home_bp_score_insight")
-             )
-      )
-    ),
-    
-    fluidRow(
-      column(6,
-             div(class = "plot-card",
-             plotlyOutput("weight_control_score_insight")
-             )
-      ),
-      column(6,
-             div(class = "plot-card",
-             plotlyOutput("self_care_score_insight")
-             )
-      )
-    ),
+    tags$br(),
     fluidRow(
       column(4,
              div(class = "plot-card",
-             plotlyOutput("salty_control_insight")
+                 plotlyOutput("saltycontrolPlot")
              )
       ),
       column(4,
              div(class = "plot-card",
-               plotlyOutput("alway_take_medicine_insight")
+                 plotlyOutput("alwaytakemedicinePlot")
              )
       ),
       column(4,
              div(class = "plot-card",
-             plotlyOutput("exercise_insight")
+                 plotlyOutput("exercisePlot")
              )
       )
     ),
-
-    )
-    )
-)
-
-)
+  ),
+  
+  #------------------------Patient Dashboard UI -------------------------------
+  
+  tabPanel("Clinic Dashboard",
+           fluidRow(
+             shiny::HTML("<br><br><center> <h1>Hypertension Clinic</h1> </center><br>"),
+           ),
+           fluidRow(
+             tabsetPanel(
+               tabPanel("Overview",
+                        fluidRow(
+                          column(1,),
+                          column(10,
+                                 fluidRow(
+                                   column(3,
+                                          div(class = "custom-value-box box-total",
+                                              h3(textOutput("total_count_text")),
+                                              p("Total Patients"),
+                                              icon("users", class = "custom-icon")
+                                          )
+                                   ),
+                                   column(3,
+                                          div(class = "custom-value-box box-male",
+                                              h3(textOutput("male_count_text")),
+                                              p("Male Patients"),
+                                              icon("mars", class = "custom-icon")
+                                          )
+                                   ),
+                                   column(3,
+                                          div(class = "custom-value-box box-female",
+                                              h3(textOutput("female_count_text")),
+                                              p("Female Patients"),
+                                              icon("venus", class = "custom-icon")
+                                          )
+                                   ),
+                                   column(3,
+                                          div(class = "custom-value-box box-other",
+                                              h3(textOutput("other_count_text")),
+                                              p("Other Gender"),
+                                              icon("genderless", class = "custom-icon")
+                                          )
+                                   )
+                                 )
+                          ),
+                          column(1,)
+                        )
+                        ,
+                        fluidRow(
+                          column(6,
+                                 plotlyOutput("all_gender")
+                          ),
+                          column(6,
+                                 plotlyOutput("all_age")
+                          )
+                        ),
+                        
+                        
+               ),
+               tabPanel("Insight",
+                        sidebarPanel(
+                          
+                          h3("Time"),
+                          
+                          
+                          dateRangeInput('dateRange',
+                                         label = 'Date range input: dd/mm/yyyy',
+                                         format = "dd/mm/yyyy",        
+                                         start = Sys.Date() - 2, 
+                                         end = Sys.Date() + 2),
+                          
+                          radioButtons("insightMode", "Count Mode",
+                                       choices = c("Unique Patients" = "unique", "All Visits" = "visits"),
+                                       selected = "unique",
+                                       inline = TRUE),
+                          
+                          actionButton("actionDT", "Filter", class = "btn btn-warning")
+                        ),
+                        
+                        fluidRow(
+                          column(1,
+                          ),
+                          column(11,
+                                 valueBoxOutput("total_count_box_insight", width = 3),
+                                 valueBoxOutput("male_count_box_insight", width = 3),
+                                 valueBoxOutput("female_count_box_insight", width = 3),
+                                 valueBoxOutput("other_count_box_insight", width = 3)
+                          )
+                        ),
+                        fluidRow(
+                          column(1,),
+                          column(10,
+                                 fluidRow(
+                                   column(3,
+                                          div(class = "custom-value-box box-total",
+                                              h3(textOutput("total_count_box_insight")),
+                                              p("Total Patients"),
+                                              icon("users", class = "custom-icon")
+                                          )
+                                   ),
+                                   column(3,
+                                          div(class = "custom-value-box box-male",
+                                              h3(textOutput("male_count_box_insight")),
+                                              p("Male Patients"),
+                                              icon("mars", class = "custom-icon")
+                                          )
+                                   ),
+                                   column(3,
+                                          div(class = "custom-value-box box-female",
+                                              h3(textOutput("female_count_box_insight")),
+                                              p("Female Patients"),
+                                              icon("venus", class = "custom-icon")
+                                          )
+                                   ),
+                                   column(3,
+                                          div(class = "custom-value-box box-other",
+                                              h3(textOutput("other_count_box_insight")),
+                                              p("Other Gender"),
+                                              icon("genderless", class = "custom-icon")
+                                          )
+                                   )
+                                 )
+                          ),
+                          column(1,)
+                        ),
+                        tags$br(),
+                        fluidRow(
+                          column(6,
+                                 div(class = "plot-card",
+                                     plotlyOutput("sex_insight")
+                                 )
+                                 
+                          ),
+                          column(6,
+                                 div(class = "plot-card",
+                                     plotlyOutput("age_insight")
+                                 )
+                          )
+                        ),
+                        
+                        fluidRow(
+                          column(6,
+                                 div(class = "plot-card",
+                                     plotlyOutput("hbpm_insight")
+                                 )
+                          ),
+                          column(6,
+                                 div(class = "plot-card",
+                                     plotlyOutput("num_visit_insight")
+                                 )
+                          )
+                        ),
+                        fluidRow(
+                          column(6,
+                                 div(class = "plot-card",
+                                     plotlyOutput("bp_control_score_insight")
+                                 )
+                          ),
+                          column(6,
+                                 div(class = "plot-card",
+                                     plotlyOutput("home_bp_score_insight")
+                                 )
+                          )
+                        ),
+                        
+                        fluidRow(
+                          column(6,
+                                 div(class = "plot-card",
+                                     plotlyOutput("weight_control_score_insight")
+                                 )
+                          ),
+                          column(6,
+                                 div(class = "plot-card",
+                                     plotlyOutput("self_care_score_insight")
+                                 )
+                          )
+                        ),
+                        fluidRow(
+                          column(4,
+                                 div(class = "plot-card",
+                                     plotlyOutput("salty_control_insight")
+                                 )
+                          ),
+                          column(4,
+                                 div(class = "plot-card",
+                                     plotlyOutput("alway_take_medicine_insight")
+                                 )
+                          ),
+                          column(4,
+                                 div(class = "plot-card",
+                                     plotlyOutput("exercise_insight")
+                                 )
+                          )
+                        ),
+                        
+               )
+             )
+           )
+           
+  )
 )
 
 
@@ -897,7 +897,7 @@ server <- function(input, output, session) {
   visit_data_file <- "data/visit_data.csv"
   
   
-#----------- Patient Info Server --------------
+  #----------- Patient Info Server --------------
   # Auto-incrementing No.
   output$no <- renderText({
     file_path <- patient_data_file
@@ -918,7 +918,7 @@ server <- function(input, output, session) {
   })
   
   
-
+  
   
   # Automatically calculate and display age when Date of Birth is selected
   output$age_text <- renderText({
@@ -1272,28 +1272,28 @@ server <- function(input, output, session) {
   
   # Display using reactive values
   output$patient_name <- renderText({
-  if (patient_info$found) {
-    paste("Patient:", patient_info$name)
-  } else {
-    patient_info$name
-  }
-})
-
+    if (patient_info$found) {
+      paste("Patient:", patient_info$name)
+    } else {
+      patient_info$name
+    }
+  })
   
-# Option 2: Using HTML output for better formatting
-output$patient_name_html <- renderUI({
-  if (patient_info$found) {
-    tags$div(
-      style = "color: green; font-weight: bold;",
-      paste("👤 Patient Found:", patient_info$name)
-    )
-  } else {
-    tags$div(
-      style = "color: red;",
-      paste("", patient_info$name)
-    )
-  }
-})
+  
+  # Option 2: Using HTML output for better formatting
+  output$patient_name_html <- renderUI({
+    if (patient_info$found) {
+      tags$div(
+        style = "color: green; font-weight: bold;",
+        paste("👤 Patient Found:", patient_info$name)
+      )
+    } else {
+      tags$div(
+        style = "color: red;",
+        paste("", patient_info$name)
+      )
+    }
+  })
   # Fixed: Use correct syntax for reactiveVal
   output$visit_position <- renderText({
     visits <- filtered_visits_data()  # Use the correct reactive name
@@ -1856,7 +1856,7 @@ output$patient_name_html <- renderUI({
       complication_eye = ifelse("complication_eye" %in% input$complication, "yes", "no"),
       other_complication = input$other_complication,
       precriptionadjust = input$precriptionadjust,
- 
+      
       # add dynamic medication data
       diuretics = getMedicationList(medication_list_diuretics),
       aceis = getMedicationList(medication_list_aceis),
@@ -2096,7 +2096,7 @@ output$patient_name_html <- renderUI({
             text = ~paste("Date:", format(visit_date, "%d %b %Y"),
                           "<br>Waist:", waist, "cm"),
             hoverinfo = "text",
-            line = list(color = "royalblue")) %>%
+            line = list(color = "darkred")) %>%
       layout(
         title = "Waist Circumference Over Time",
         xaxis = list(title = "Visit Date"),
@@ -2122,12 +2122,12 @@ output$patient_name_html <- renderUI({
             x = ~visit_date,
             y = ~value,
             type = 'scatter',
-            mode = 'markers',
-            marker = list(size = 10),
-            color = ~color,
-            colors = c("darkgreen", "darkred"),
+            mode = 'lines+markers',
+            line = list(color = "black"),  # keeps the line connected
+            marker = list(size = 10,
+                          color = ~color),  # color only markers
             text = ~paste("Date:", format(visit_date, "%d %b %Y"),
-                          "<br>Response:", ifelse(value == 1, "Yes", "No")),
+                          "<br>Response:", ifelse(value == 0.6, "Yes", "No")),
             hoverinfo = "text") %>%
       layout(
         title = "Salty Control Responses Over Time",
@@ -2142,7 +2142,7 @@ output$patient_name_html <- renderUI({
       )
   })
   
-
+  
   output$alwaytakemedicinePlot <- renderPlotly({
     data <- filtered_visits_patient_dashboard()
     req(data)
@@ -2152,7 +2152,8 @@ output$patient_name_html <- renderUI({
       mutate(
         visit_date = parse_date_time(visit_date, orders = c("dmy", "ymd", "mdy")),
         value = ifelse(adherence_alway_take_medicine == "yes", 0.6, 0.4),
-        response = ifelse(adherence_alway_take_medicine == "yes", "Yes", "No")
+        response = ifelse(adherence_alway_take_medicine == "yes", "Yes", "No"),
+        color = ifelse(adherence_alway_take_medicine == "yes", "darkgreen", "darkred")
       ) %>%
       filter(!is.na(visit_date) & !is.na(adherence_alway_take_medicine))
     
@@ -2160,12 +2161,12 @@ output$patient_name_html <- renderUI({
             x = ~visit_date,
             y = ~value,
             type = 'scatter',
-            mode = 'markers',
-            marker = list(size = 10),
-            color = ~response,
-            colors = c("No" = "darkred", "Yes" = "darkgreen"),
+            mode = 'lines+markers',
+            line = list(color = "black"),  # keeps the line connected
+            marker = list(size = 10,
+                          color = ~color),  # color only markers
             text = ~paste("Date:", format(visit_date, "%d %b %Y"),
-                          "<br>Response:", response),
+                          "<br>Response:", ifelse(value == 0.6, "Yes", "No")),
             hoverinfo = "text") %>%
       layout(
         title = "Take Medicine Over Time",
@@ -2199,23 +2200,25 @@ output$patient_name_html <- renderUI({
             x = ~visit_date,
             y = ~value,
             type = 'scatter',
-            mode = 'markers',
-            marker = list(size = 10),
-            color = ~color,
-            colors = c("darkgreen", "darkred"),
+            mode = 'lines+markers',
+            line = list(color = "black"),  # keeps the line connected
+            marker = list(size = 10,
+                          color = ~color),  # color only markers
             text = ~paste("Date:", format(visit_date, "%d %b %Y"),
-                          "<br>Response:", ifelse(value == 1, "Yes", "No")),
+                          "<br>Response:", ifelse(value == 0.6, "Yes", "No")),
             hoverinfo = "text") %>%
       layout(
-        title = "Execise Responses Over Time",
+        title = "Exercise Responses Over Time",
         xaxis = list(title = "Visit Date"),
-        yaxis = list(title = "Response",
-                     tickvals = c(0.4, 0.6), #show point
-                     ticktext = c("No", "Yes"),
-                     range = c(0.3, 0.7), #Zoom the plot
-                     zeroline = FALSE),
+        yaxis = list(
+          title = "Response",
+          tickvals = c(0.4, 0.6),
+          ticktext = c("No", "Yes"),
+          range = c(0.3, 0.7),
+          zeroline = FALSE
+        ),
         hovermode = "closest",
-        showlegend = FALSE  
+        showlegend = FALSE
       )
   })
   
@@ -2271,7 +2274,7 @@ output$patient_name_html <- renderUI({
   })
   
   
-
+  
   #----------------------------Insight Clinic--------------------------------
   
   # Reactive to load and filter visit_data based on input date range
@@ -2499,71 +2502,71 @@ output$patient_name_html <- renderUI({
   })
   
   output$bp_control_score_insight <- renderPlotly({
-  df <- filtered_visits()
-
-  # Safeguard
-  if (nrow(df) == 0 || !"bp_control_score" %in% names(df)) {
-    p <- ggplot() +
-      geom_text(aes(x = 1, y = 1, label = "No BP control score data"), size = 5) +
-      theme_minimal() +
-      labs(title = "BP Control Score")
-    return(ggplotly(p))
-  }
-
-  # Proper filtering
-  df <- df %>% filter(!is.na(bp_control_score), bp_control_score %in% 0:3)
-
-  # Convert to factor with levels
-  df$bp_control_score <- factor(df$bp_control_score, levels = c(0, 1, 2, 3))
-
-  # Summarize cleanly
-  summary_df <- df %>%
-    group_by(bp_control_score) %>%
-    summarise(count = n(), .groups = "drop") %>%
-    mutate(
-      percentage = round(100 * count / sum(count), 1),
-      label = paste0(count, " (", percentage, "%)")
-    )
-
-  # Custom colors
-  custom_colors <- c("0" = "#ffb3ba",  # Red
-                     "1" = "#ffdfba",  # Orange
-                     "2" = "#ffffba",  # Yellow
-                     "3" = "#baffc9")  # Green
-
-  # Clean plot
-  p <- ggplot(summary_df, aes(x = bp_control_score, y = count, fill = bp_control_score, text = label)) +
-    geom_bar(stat = "identity") +
-    geom_text(aes(label = label, y = count + 20), size = 3.5) +
-    scale_fill_manual(values = custom_colors) +
-    theme_minimal() +
-    labs(title = "BP Control Score (0–3)", x = "Score", y = "Number of Visits") +
-    theme(legend.position = "none")
-
-  ggplotly(p, tooltip = "text") %>%
-    layout(
-      margin = list(b = 50, r = 120),
-      annotations = list(
-        x = 0.98,
-        y = -0.15,
-        text = paste0(
-          "<b>Score Definitions:</b><br>",
-          "0 = More than 180<br>",
-          "1 = 160-179<br>",
-          "2 = 141-159<br>",
-          "3 = Less than 140"
-        ),
-        showarrow = FALSE,
-        xref = "paper",
-        yref = "paper",
-        xanchor = "left",
-        yanchor = "bottom",
-        align = "left",
-        font = list(size = 12)
+    df <- filtered_visits()
+    
+    # Safeguard
+    if (nrow(df) == 0 || !"bp_control_score" %in% names(df)) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No BP control score data"), size = 5) +
+        theme_minimal() +
+        labs(title = "BP Control Score")
+      return(ggplotly(p))
+    }
+    
+    # Proper filtering
+    df <- df %>% filter(!is.na(bp_control_score), bp_control_score %in% 0:3)
+    
+    # Convert to factor with levels
+    df$bp_control_score <- factor(df$bp_control_score, levels = c(0, 1, 2, 3))
+    
+    # Summarize cleanly
+    summary_df <- df %>%
+      group_by(bp_control_score) %>%
+      summarise(count = n(), .groups = "drop") %>%
+      mutate(
+        percentage = round(100 * count / sum(count), 1),
+        label = paste0(count, " (", percentage, "%)")
       )
-    )
-})
-
+    
+    # Custom colors
+    custom_colors <- c("0" = "#ffb3ba",  # Red
+                       "1" = "#ffdfba",  # Orange
+                       "2" = "#ffffba",  # Yellow
+                       "3" = "#baffc9")  # Green
+    
+    # Clean plot
+    p <- ggplot(summary_df, aes(x = bp_control_score, y = count, fill = bp_control_score, text = label)) +
+      geom_bar(stat = "identity") +
+      geom_text(aes(label = label, y = count + 20), size = 3.5) +
+      scale_fill_manual(values = custom_colors) +
+      theme_minimal() +
+      labs(title = "BP Control Score (0–3)", x = "Score", y = "Number of Visits") +
+      theme(legend.position = "none")
+    
+    ggplotly(p, tooltip = "text") %>%
+      layout(
+        margin = list(b = 50, r = 120),
+        annotations = list(
+          x = 0.98,
+          y = -0.15,
+          text = paste0(
+            "<b>Score Definitions:</b><br>",
+            "0 = More than 180<br>",
+            "1 = 160-179<br>",
+            "2 = 141-159<br>",
+            "3 = Less than 140"
+          ),
+          showarrow = FALSE,
+          xref = "paper",
+          yref = "paper",
+          xanchor = "left",
+          yanchor = "bottom",
+          align = "left",
+          font = list(size = 12)
+        )
+      )
+  })
+  
   
   
   output$home_bp_score_insight <- renderPlotly({
