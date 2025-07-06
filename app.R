@@ -1392,12 +1392,38 @@ server <- function(input, output, session) {
   
   getMedicationList <- function(category_list) {
     meds <- lapply(names(category_list$data), function(id) {
-      med <- input[[id]]
-      qty <- input[[category_list$data[[id]]]]
-      if (!is.null(med) && !is.null(qty)) paste0(med, " (", qty, ")") else NULL
+      selected_med <- input[[id]]
+      qty_input_id <- category_list$data[[id]]
+      other_med_input_id <- paste0(id, "_other")
+      other_qty_input_id <- paste0(qty_input_id, "_other")
+      
+      # If 'Other' is selected, use the other input IDs
+      if (selected_med == "Other") {
+        custom_med <- input[[other_med_input_id]]
+        custom_qty <- input[[other_qty_input_id]]
+        
+        if (!is.null(custom_med) && custom_med != "" && !is.null(custom_qty) && custom_qty != "") {
+          return(paste0(custom_med, " (", custom_qty, ")"))
+        } else {
+          return(NULL)
+        }
+      }
+      
+      # Otherwise, use regular med and quantity
+      qty <- input[[qty_input_id]]
+      if (!is.null(selected_med) && selected_med != "" && !is.null(qty) && qty != "") {
+        return(paste0(selected_med, " (", qty, ")"))
+      }
+      
+      return(NULL)
     })
+    
     paste(unlist(meds), collapse = "; ")
   }
+  
+  
+  
+  
   
   # Reactive lists for dynamic medications
   medication_list_diuretics <- reactiveValues(data = list())
@@ -1438,7 +1464,7 @@ server <- function(input, output, session) {
   addMedication(medication_list_beta_blockers, "add_medication_beta_blockers", "beta_blockers")
   addMedication(medication_list_oad, "add_medication_oad", "oad")
   addMedication(medication_list_statin, "add_medication_statin", "statin")
-  addMedication(medication_list_anti_platelet, "add_medication_anti_platelet", "Anti-platelet")
+  addMedication(medication_list_anti_platelet, "add_medication_anti_platelet", "anti_platelet")
   addMedication(medication_list_other, "add_medication_other", "other")
   addMedication(medication_list_spc, "add_medication_spc", "spc")
   
@@ -1446,32 +1472,55 @@ server <- function(input, output, session) {
   renderMedicationUI <- function(category_list, category_name) {
     renderUI({
       medication_ui <- lapply(names(category_list$data), function(id) {
+        # Define standard choices + "Other"
+        choices <- switch(category_name,
+                          "Diuretics" = c("HCTZ (25)", "HCTZ (50)", "Other"),
+                          "ACEIs" = c("Enalapril (5)", "Enalapril (20)", "Other"),
+                          "ARBs" = c("Losartan (50)", "Losartan (100)", "Other"),
+                          "CCBs" = c("Amlodipine (5)", "Amlodipine (10)", "Madiplot (20)", "Diltiazem (30)", "Diltiazem (60)", "Other"),
+                          "Beta Blockers" = c("Atenolol (25)", "Atenolol (50)", "Atenolol (100)",
+                                              "Carvedilol (6.25)", "Carvedilol (12.5)", "Carvedilol (25)",
+                                              "Metoprolol (100)", "Propranolol (10)", "Propranolol (40)", "Other"),
+                          "OAD" = c("Metformin (500)", "Metformin (850)", "Metformin (1000)",
+                                    "Glipizide (5)", "Other"),
+                          "Statin" = c("Atorvastatin (20)", "Atorvastatin (40)",
+                                       "Simvastatin (10)", "Simvastatin (20)", "Simvastatin (40)",
+                                       "Ezetimibe (10)", "Other"),
+                          "Anti-platelet" = c("ASA (81)", "Other"),
+                          "Other" = c("Azilsartan (40)", "Hydralazine (25)", "Doxazosin (2)", "Methyldopa (250)", "Other")
+        )
+        
+        # Create IDs
+        med_input_id <- id
+        qty_input_id <- category_list$data[[id]]
+        other_input_id <- paste0(id, "_other")
+        other_qty_id <- paste0(qty_input_id, "_other")
+        
         fluidRow(
-          column(6, selectInput(
-            inputId = id,
-            label = paste("Select", category_name, ":"),
-            choices = switch(category_name,
-                             "Diuretics" = c("HCTZ (25)", "HCTZ (50)"),
-                             "ACEIs" = c("Enalapril (5)", "Enalapril (20)"),
-                             "ARBs" = c("Losartan (50)", "Losartan (100)"),
-                             "CCBs" = c("Amlodipine (5)", "Amlodipine (10)", "Madiplot (20)", "Diltiazem (30)", "Diltiazem (60)"),
-                             "Beta Blockers" = c("Atenolol (25)", "Atenolol (50)", "Atenolol (100)",
-                                                 "Carvedilol (6.25)", "Carvedilol (12.5)", "Carvedilol (25)",
-                                                 "Metoprolol (100)", "Propranolol (10)", "Propranolol (40)"),
-                             "OAD" = c("Metformin (500)", "Metformin (850)", "Metformin (1000)",
-                                       "Glipizide (5)"),
-                             "Statin" = c("Atorvastatin (20)", "Atorvastatin (40)",
-                                          "Simvastatin (10)", "Simvastatin (20)", "Simvastatin (40)",
-                                          "Ezetimibe (10)"),
-                             "Anti-platelet" = c("ASA (81)"),
-                             "Other" = c("Azilsartan (40)", "Hydralazine (25)", "Doxazosin (2)", "Methyldopa (250)")
-            )
-          )),
-          column(4, selectInput(
-            inputId = category_list$data[[id]],
-            label = "Quantity:",
-            choices = c("1*1", "1*2", "1*3")
-          )),
+          column(6,
+                 conditionalPanel(
+                   condition = paste0("input.", med_input_id, " != 'Other'"),
+                   selectInput(inputId = med_input_id,
+                               label = paste("Select", category_name, ":"),
+                               choices = choices)
+                 ),
+                 conditionalPanel(
+                   condition = paste0("input.", med_input_id, " == 'Other'"),
+                   textInput(inputId = other_input_id,
+                             label = paste("Other", category_name, ":"),
+                             placeholder = "Enter medication name")
+                 )
+          ),
+          column(4,
+                 conditionalPanel(
+                   condition = paste0("input.", med_input_id, " != 'Other'"),
+                   textInput(inputId = qty_input_id, label = "Quantity:")
+                 ),
+                 conditionalPanel(
+                   condition = paste0("input.", med_input_id, " == 'Other'"),
+                   textInput(inputId = other_qty_id, label = "Quantity:")
+                 )
+          ),
           column(2, actionButton(
             inputId = paste0("remove_", id),
             label = "Remove"
@@ -1481,6 +1530,8 @@ server <- function(input, output, session) {
       do.call(tagList, medication_ui)
     })
   }
+  
+  
   
   renderSPCMedicationUI <- function(category_list, category_name) {
     renderUI({
