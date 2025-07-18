@@ -23,144 +23,6 @@ ui <- navbarPage(
   tags$head(
     includeCSS("styles.css")
   ),
-  tabPanel(
-    "Patient Info",
-    fluidRow(
-      # Left column (width = 4 out of 12)
-      column(4,
-             h3("Patient Registration"),
-             textOutput("no"),  # Display patient number
-             textInput("hn_register", "Patient Code (HN):", ""),  # User-provided HN
-             actionButton("check_hn_register", "Check HN"),        # Button to check HN
-             verbatimTextOutput("hn_status"),  # Display HN status
-             h3("Personal Infomation"),
-             selectInput("titles", "Titles",
-                         choices = c("Mr", "Miss", "Mrs", "Ms", "Dr", "Other")),
-             conditionalPanel(
-               condition = "input.titles == 'Other'",
-               textInput("other_titles", "Please Specify Titles:", "")
-             ),
-             textInput("name", "Name", ""),
-             textInput("dob", label = "Date of Birth", placeholder = "dd-mm-yyyy (พ.ศ.)"),
-             tags$label("Your Age:"),
-             textOutput("age_text"),
-             textInput("phone", "Phone", ""),
-             textInput("phone2", "Phone 2 (optional)", ""),
-             selectInput("gender", "Gender",
-                         choices = c("Male", "Female", "Other"))
-      ),
-      
-      # Middle column (width = 4 out of 12)
-      column(4,
-             textAreaInput("address", "Address:", "", rows = 10, 
-                           placeholder = "Enter your full address here"),
-             selectInput("province", "Province",
-                         choices = unique(thailand$ADM1_TH),
-                         selected = NULL),
-             selectInput("amphoe", "Amphoe",
-                         choices = NULL),
-             # selectInput("status", "Status",
-             #             choices = c("Single", 
-             #                         "Marriage", 
-             #                         "Divorced",
-             #                         "Separated",
-             #                         "Widowed",
-             #                         "Other")),
-             # conditionalPanel(
-             #   condition = "input.status == 'Other'",
-             #   textInput("other_status", "Please Specify Status:", "")
-             # ),
-             # selectInput("ethnicity", "Ethnicity",
-             #             choices = c("Thai", "American", "British", "Indian", "Chinese", "Other")),
-             # # Conditional input for "Other" Ethnicity
-             # conditionalPanel(
-             #   condition = "input.ethnicity == 'Other'",
-             #   textInput("other_ethnicity", "Please Specify Ethnicity:", "")
-             # ),
-             # selectInput("nationality", "Nationality",
-             #             choices = c("Thai", "American", "British", "Indian", "Chinese", "Other")),
-             # # Conditional input for "Other" Nationality
-             # conditionalPanel(
-             #   condition = "input.nationality == 'Other'",
-             #   textInput("other_nationality", "Please Specify Nationality:", "")
-             # ),
-             # Education selection
-             selectInput("education", "Education Level",
-                         choices = c("ประถม",
-                                     "ม.ต้น", 
-                                     "ม.ปลาย",
-                                     "ปวช.",
-                                     "ปวส.",
-                                     "ปริญญาตรี",
-                                     "ปริญญาโท", 
-                                     "ปริญญาเอก",
-                                     "Other")),
-             # Conditional input for "Other" Education
-             conditionalPanel(
-               condition = "input.education == 'Other'",
-               textInput("other_education", "Please Specify Education Level:", "")
-             ),
-             #Occupation selection
-             selectInput("occupation", "Occupation",
-                         choices = c("รับราชการ",
-                                     "เกษตรกรรม", 
-                                     "ค้าขาย",
-                                     "ประกอบอาชีพส่วนตัว",
-                                     "ไม่ประกอบอาชีพ",
-                                     "แม่บ้าน",
-                                     "ว่างงาน",
-                                     "รับจ้าง",
-                                     "รับราชการบำนาญ",
-                                     "นักศึกษา",
-                                     "พนักงานมหาวิทยาลัย",
-                                     "รัฐวิสหกิจ",
-                                     "Other")),
-             # Conditional input for "Other" Occupation
-             conditionalPanel(
-               condition = "input.occupation == 'Other'",
-               textInput("other_occupation", "Please Specify Occupation:", "")
-             )
-             
-      ),
-      column(4,
-             selectInput("comobid", "Comobid",
-                         choices = c("DM", "HT", "Gout",
-                                     "CKD", "Thyroid", "DLD",
-                                     "DM HT", "DM DLD", "DM HT DLD",
-                                     "HT Gout", "None", "Other")),
-             conditionalPanel(
-               condition = "input.comobid == 'Other'",
-               textInput("other_comobid", "Please Specify Comobid:", "")
-             ),
-             textInput("ekg", label = "Latest EKG", placeholder = "dd-mm-yyyy (พ.ศ.)"),
-             textInput("echo", label = "Latest Echo", placeholder = "dd-mm-yyyy (พ.ศ.)"),
-             textInput("eye", label = "Latest eye examination", placeholder = "dd-mm-yyyy (พ.ศ.)"),
-             textAreaInput("drugallergy", "Drug allergy", "", rows = 3, 
-                           placeholder = "Enter your drug allergy here"),
-             selectInput("caregiver", "Caregiver",
-                         choices = c("Self", "Child", "Parent", "Spouse (Husband/Wife)",
-                                     "Other Family Member", "Other")),
-             conditionalPanel(
-               condition = "input.caregiver == 'Other'",
-               textInput("other_caregiver", "Please Specify Caregiver:", "")
-             ),
-             selectInput("hbpm", "Home Blood Pressure Mornitor",
-                         choices = c("Have", "Don't Have")),
-             selectInput("medfinancial", "Medical Financial",
-                         choices = c("จ่ายตรง",
-                                     "จ่ายเอง", 
-                                     "บัตรทอง",
-                                     "เบิกได้", 
-                                     "ประกันสังคม",
-                                     "ประกันชีวิต"
-                         )),
-             textInput("daystart", label = "First day", placeholder = "dd-mm-yyyy (พ.ศ.)"),
-             hr(),
-             actionButton("save", "Save Data"), # Save button
-             verbatimTextOutput("save_status")  # Save status
-      )
-    )
-  ),
   #--------------------------- Visit Form UI -------------------
   tabPanel(
     "Visit Form",
@@ -227,7 +89,7 @@ ui <- navbarPage(
                inline = TRUE
              ),
              conditionalPanel(
-               condition = "input.nervous_system == 'yes'",
+               condition = "input.chest_tightness == 'yes'",
                textInput("chest_tightness_note", "Please provide details about the chest tightness:")
              ),
              
@@ -381,7 +243,8 @@ ui <- navbarPage(
                                 inline = TRUE),
              textAreaInput("allergic_history", "Drug Allergic History:", "", rows = 3),
              fluidRow(
-               column(6, h4("Blood Pressure")),
+               column(6, 
+                      h4("Blood Pressure")),
              ),
              fluidRow(
                column(6, textInput("bp_sys", "Blood Pressure (Sys):", "")),
@@ -542,9 +405,7 @@ ui <- navbarPage(
              textAreaInput("other_complication", "Please Specify Complication:", "", rows = 3)
              
              
-      )
-      
-    ),
+      )),
     hr(),
     fluidRow(
       column(6,
@@ -556,61 +417,60 @@ ui <- navbarPage(
              fluidRow(
                column(12,
                       h4("Diuretics :"),
-                      column(6, uiOutput("medication_ui_diuretics")),
-                      column(6, actionButton("add_medication_diuretics", "Add Diuretics")),
-                      column(4, uiOutput("remove_ui_diuretics"))
+                      column(6, div(id = "diuretics_container")),
+                      column(6, actionButton("add_medication_diuretics", "➕ Add Diuretic")),
                )),
              fluidRow(
                column(12,
                       h4("ACEIs :"),
-                      column(6, uiOutput("medication_ui_aceis")),
-                      column(6, actionButton("add_medication_aceis", "Add ACEIs"))
+                      column(6, div(id = "aceis_container")),
+                      column(6, actionButton("add_medication_aceis", "➕ Add ACEIs"))
                )),
              fluidRow(
                column(12,
                       h4("ARBs :"),
-                      column(6, uiOutput("medication_ui_arbs")),
-                      column(6, actionButton("add_medication_arbs", "Add ARBs"))
+                      column(6, div(id = "arbs_container")),
+                      column(6, actionButton("add_medication_arbs", "➕ Add ARBs"))
                )),
              fluidRow(
                column(12,
                       h4("CCBs :"),
-                      column(6, uiOutput("medication_ui_ccbs")),
-                      column(6, actionButton("add_medication_ccbs", "Add CCBs"))
+                      column(6, div(id = "ccbs_container")),
+                      column(6, actionButton("add_medication_ccbs", "➕ Add CCBs"))
                )
              )),
       column(6,
              h3(" "),
              fluidRow(
                h4("Beta blockers :"),
-               column(6, uiOutput("medication_ui_beta_blockers")),
-               column(6, actionButton("add_medication_beta_blockers", "Add Beta blockers"))
+               column(6, div(id = "beta_blockers_container")),
+               column(6, actionButton("add_medication_beta_blockers", "➕ Add Beta blockers"))
              ),
              fluidRow(
                h4("DM :"),
-               column(6, uiOutput("medication_ui_oad")),
-               column(6, actionButton("add_medication_oad", "Add DM"))
+               column(6, div(id = "oad_container")),
+               column(6, actionButton("add_medication_oad", "➕ Add DM"))
              ),
              fluidRow(
                h4("Statin :"),
-               column(6, uiOutput("medication_ui_statin")),
-               column(6, actionButton("add_medication_statin", "Add Statin"))
+               column(6, div(id = "statin_container")),
+               column(6, actionButton("add_medication_statin", "➕ Add Statin"))
              ),
              fluidRow(
                h4("Anti-platelet :"),
-               column(6, uiOutput("medication_ui_anti_platelet")),
-               column(6, actionButton("add_medication_anti_platelet", "Add Anti-platelet"))
+               column(6, div(id = "anti_platelet_container")),
+               column(6, actionButton("add_medication_anti_platelet", "➕ Add Anti-platelet"))
              ),
              fluidRow(
                h4("Other :"),
-               column(6, uiOutput("medication_ui_other")),
-               column(6, actionButton("add_medication_other", "Add Other"))
+               column(6, div(id = "other_container")),
+               column(6, actionButton("add_medication_other", "➕ Add Other"))
              ),
              fluidRow(
                column(12,
                       h4("Single-pill Combination:"),
-                      column(6, uiOutput("medication_ui_spc")),
-                      column(6, actionButton("add_medication_spc", "Add Single-pill Combination"))
+                      column(6, div(id = "single-pill")),
+                      column(6, actionButton("add_medication_spc", "➕ Add Single-pill Combination"))
                )
              )
       )
@@ -618,9 +478,155 @@ ui <- navbarPage(
       
     ),
     fluidRow(
-      actionButton("save_visit", "Save Visit")
+      column(width = 4, offset = 3, align = "center",
+             actionButton("save_visit", "Save Visit")
+      )
     )
   ),
+  
+  
+  
+  #------------- Patient Info ---------
+  
+  tabPanel(
+    "Patient Info",
+    fluidRow(
+      # Left column (width = 4 out of 12)
+      column(4,
+             h3("Patient Registration"),
+             textOutput("no"),  # Display patient number
+             textInput("hn_register", "Patient Code (HN):", ""),  # User-provided HN
+             actionButton("check_hn_register", "Check HN"),        # Button to check HN
+             verbatimTextOutput("hn_status"),  # Display HN status
+             h3("Personal Infomation"),
+             selectInput("titles", "Titles",
+                         choices = c("Mr", "Miss", "Mrs", "Ms", "Dr", "Other")),
+             conditionalPanel(
+               condition = "input.titles == 'Other'",
+               textInput("other_titles", "Please Specify Titles:", "")
+             ),
+             textInput("name", "Name", ""),
+             textInput("dob", label = "Date of Birth", placeholder = "dd-mm-yyyy (พ.ศ.)"),
+             tags$label("Your Age:"),
+             textOutput("age_text"),
+             textInput("phone", "Phone", ""),
+             textInput("phone2", "Phone 2 (optional)", ""),
+             selectInput("gender", "Gender",
+                         choices = c("Male", "Female", "Other"))
+      ),
+      
+      # Middle column (width = 4 out of 12)
+      column(4,
+             textAreaInput("address", "Address:", "", rows = 10, 
+                           placeholder = "Enter your full address here"),
+             selectInput("province", "Province",
+                         choices = unique(thailand$ADM1_TH),
+                         selected = NULL),
+             selectInput("amphoe", "Amphoe",
+                         choices = NULL),
+             # selectInput("status", "Status",
+             #             choices = c("Single", 
+             #                         "Marriage", 
+             #                         "Divorced",
+             #                         "Separated",
+             #                         "Widowed",
+             #                         "Other")),
+             # conditionalPanel(
+             #   condition = "input.status == 'Other'",
+             #   textInput("other_status", "Please Specify Status:", "")
+             # ),
+             # selectInput("ethnicity", "Ethnicity",
+             #             choices = c("Thai", "American", "British", "Indian", "Chinese", "Other")),
+             # # Conditional input for "Other" Ethnicity
+             # conditionalPanel(
+             #   condition = "input.ethnicity == 'Other'",
+             #   textInput("other_ethnicity", "Please Specify Ethnicity:", "")
+             # ),
+             # selectInput("nationality", "Nationality",
+             #             choices = c("Thai", "American", "British", "Indian", "Chinese", "Other")),
+             # # Conditional input for "Other" Nationality
+             # conditionalPanel(
+             #   condition = "input.nationality == 'Other'",
+             #   textInput("other_nationality", "Please Specify Nationality:", "")
+             # ),
+             # Education selection
+             selectInput("education", "Education Level",
+                         choices = c("ประถม",
+                                     "ม.ต้น", 
+                                     "ม.ปลาย",
+                                     "ปวช.",
+                                     "ปวส.",
+                                     "ปริญญาตรี",
+                                     "ปริญญาโท", 
+                                     "ปริญญาเอก",
+                                     "Other")),
+             # Conditional input for "Other" Education
+             conditionalPanel(
+               condition = "input.education == 'Other'",
+               textInput("other_education", "Please Specify Education Level:", "")
+             ),
+             #Occupation selection
+             selectInput("occupation", "Occupation",
+                         choices = c("รับราชการ",
+                                     "เกษตรกรรม", 
+                                     "ค้าขาย",
+                                     "ประกอบอาชีพส่วนตัว",
+                                     "ไม่ประกอบอาชีพ",
+                                     "แม่บ้าน",
+                                     "ว่างงาน",
+                                     "รับจ้าง",
+                                     "รับราชการบำนาญ",
+                                     "นักศึกษา",
+                                     "พนักงานมหาวิทยาลัย",
+                                     "รัฐวิสหกิจ",
+                                     "Other")),
+             # Conditional input for "Other" Occupation
+             conditionalPanel(
+               condition = "input.occupation == 'Other'",
+               textInput("other_occupation", "Please Specify Occupation:", "")
+             )
+             
+      ),
+      column(4,
+             selectInput("comobid", "Comobid",
+                         choices = c("DM", "HT", "Gout",
+                                     "CKD", "Thyroid", "DLD",
+                                     "DM HT", "DM DLD", "DM HT DLD",
+                                     "HT Gout", "None", "Other")),
+             conditionalPanel(
+               condition = "input.comobid == 'Other'",
+               textInput("other_comobid", "Please Specify Comobid:", "")
+             ),
+             textInput("ekg", label = "Latest EKG", placeholder = "dd-mm-yyyy (พ.ศ.)"),
+             textInput("echo", label = "Latest Echo", placeholder = "dd-mm-yyyy (พ.ศ.)"),
+             textInput("eye", label = "Latest eye examination", placeholder = "dd-mm-yyyy (พ.ศ.)"),
+             textAreaInput("drugallergy", "Drug allergy", "", rows = 3, 
+                           placeholder = "Enter your drug allergy here"),
+             selectInput("caregiver", "Caregiver",
+                         choices = c("Self", "Child", "Parent", "Spouse (Husband/Wife)",
+                                     "Other Family Member", "Other")),
+             conditionalPanel(
+               condition = "input.caregiver == 'Other'",
+               textInput("other_caregiver", "Please Specify Caregiver:", "")
+             ),
+             selectInput("hbpm", "Home Blood Pressure Mornitor",
+                         choices = c("Have", "Don't Have")),
+             selectInput("medfinancial", "Medical Financial",
+                         choices = c("จ่ายตรง",
+                                     "จ่ายเอง", 
+                                     "บัตรทอง",
+                                     "เบิกได้", 
+                                     "ประกันสังคม",
+                                     "ประกันชีวิต"
+                         )),
+             textInput("daystart", label = "First day", placeholder = "dd-mm-yyyy (พ.ศ.)"),
+             hr(),
+             actionButton("save", "Save Data"), # Save button
+             verbatimTextOutput("save_status")  # Save status
+      )
+    )
+  ),
+
   
   #------------------------Patient Dashboard UI -------------------------------
   tabPanel(
@@ -898,6 +904,11 @@ server <- function(input, output, session) {
   patient_data_file <- "data/patient_data.csv"
   visit_data_file <- "data/visit_data.csv"
   
+  # Helper function to convert BE to Gregorian (if needed)
+  convert_be_to_gregorian <- function(date_input) {
+    if (is.null(date_input) || is.na(date_input)) return(NA)
+    return(date_input)  # Modify this function based on your BE conversion logic
+  }
   
   #----------- Patient Info Server --------------
   # Auto-incrementing No.
@@ -1237,19 +1248,274 @@ server <- function(input, output, session) {
   })
   #-------------------  Visit Form Server  ----------------------------------
   
-  current_visit_row <- reactiveVal(NULL)
-  current_visit_index <- reactiveVal(NULL)
   
-  # function for update
+  safe_string <- function(x) {
+    if (is.null(x) || length(x) == 0 || is.na(x) || (is.character(x) && all(x == ""))) "" else as.character(x)[1]
+  }
+  safe_vec <- function(x) {
+    if (is.null(x) || length(x) == 0 || all(x == "")) "" else paste(x, collapse = "; ")
+  }
+  safe_num <- function(x) {
+    if (is.null(x) || length(x) == 0 || is.na(x)) NA else as.numeric(x)[1]
+  }
+  `%||%` <- function(a, b) if (is.null(a)) b else a
+  
+  getSPCMedications <- function() {
+    meds <- c()
+    for (nm in names(input)) {
+      if (startsWith(nm, "spc_med_")) {
+        uid <- gsub("spc_med_", "", nm)
+        med <- input[[nm]]
+        qty <- input[[paste0("spc_qty_", uid)]]
+        if (!is.null(med) && med != "" && !is.null(qty) && qty != "") {
+          meds <- c(meds, paste0(med, " (", qty, ")"))
+        }
+      }
+    }
+    paste(meds, collapse = "; ")
+  }
+  
+  
+  
+  # Reactive values for managing visits
+  patient_visits <- reactiveVal(data.frame())
+  current_visit_index <- reactiveVal(1)
+  current_visit_row <- reactiveVal(NULL)
+  
+  
+  
+  
+  medication_choices <- list(
+    "Diuretics" = c("HCTZ (25)", "HCTZ (50)", "Other"),
+    "ACEIs" = c("Enalapril (5)", "Enalapril (20)", "Other"),
+    "ARBs" = c("Losartan (50)", "Losartan (100)", "Other"),
+    "CCBs" = c("Amlodipine (5)", "Amlodipine (10)", "Madiplot (20)", "Diltiazem (30)", "Diltiazem (60)", "Other"),
+    "Beta Blockers" = c("Atenolol (25)", "Atenolol (50)", "Atenolol (100)",
+                        "Carvedilol (6.25)", "Carvedilol (12.5)", "Carvedilol (25)",
+                        "Metoprolol (100)", "Propranolol (10)", "Propranolol (40)", "Other"),
+    "OAD" = c("Metformin (500)", "Metformin (850)", "Metformin (1000)",
+              "Glipizide (5)", "Other"),
+    "Statin" = c("Atorvastatin (20)", "Atorvastatin (40)",
+                 "Simvastatin (10)", "Simvastatin (20)", "Simvastatin (40)",
+                 "Ezetimibe (10)", "Other"),
+    "Anti-platelet" = c("ASA (81)", "Other"),
+    "Other" = c("Azilsartan (40)", "Hydralazine (25)", "Doxazosin (2)", "Methyldopa (250)", "Other")
+  )
+  med_groups <- data.frame(
+    name         = c("Diuretics", "ACEIs", "ARBs", "CCBs", "Beta Blockers", "OAD", "Statin", "Anti-platelet", "Other"),
+    add_btn      = c("add_medication_diuretics", "add_medication_aceis", "add_medication_arbs", "add_medication_ccbs", "add_medication_beta_blockers", "add_medication_oad", "add_medication_statin", "add_medication_anti_platelet", "add_medication_other"),
+    container_id = c("diuretics_container", "aceis_container", "arbs_container", "ccbs_container", "beta_blockers_container", "oad_container", "statin_container", "anti_platelet_container", "other_container"),
+    prefix       = c("diuretics_", "aceis_", "arbs_", "ccbs_", "beta_blockers_", "oad_", "statin_", "anti_platelet_", "other_"),
+    stringsAsFactors = FALSE
+  )
+  
+  
+  for (i in seq_len(nrow(med_groups))) {
+    local({
+      group_name    <- med_groups$name[i]
+      add_btn       <- med_groups$add_btn[i]
+      container_id  <- med_groups$container_id[i]
+      prefix        <- med_groups$prefix[i]
+      
+      observeEvent(input[[add_btn]], {
+        uid <- paste0(as.integer(Sys.time()), sample(1000:9999, 1))
+        select_id <- paste0(prefix, uid)
+        other_id  <- paste0(prefix, "other_", uid)
+        qty_id    <- paste0("qty_", prefix, uid)
+        remove_id <- paste0("remove_", prefix, uid)
+        
+        insertUI(
+          selector = paste0("#", container_id),
+          where = "beforeEnd",
+          ui = tags$div(
+            id = paste0("row_", uid),
+            fluidRow(
+              column(4,
+                     conditionalPanel(
+                       condition = paste0("input.", select_id, " != 'Other' || input.", select_id, " == null"),
+                       selectInput(select_id, label = NULL,
+                                   choices = medication_choices[[group_name]], width = "100%")
+                     ),
+                     conditionalPanel(
+                       condition = paste0("input.", select_id, " == 'Other'"),
+                       textInput(other_id, label = NULL, placeholder = "Enter medication name")
+                     )
+              ),
+              column(4,
+                     textInput(qty_id, label = NULL, placeholder = "Quantity")
+              ),
+              column(2,
+                     actionButton(remove_id, "❌", class = "btn btn-danger")
+              )
+            )
+          )
+        )
+        
+        observeEvent(input[[remove_id]], {
+          removeUI(selector = paste0("#row_", uid), immediate = TRUE)
+        }, once = TRUE)
+      })
+    })
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  #-----extract the actual drug name (handling "Other" input)-----
+  getMedicationListInsertUI <- function(prefix) {
+    meds <- c()
+    
+    for (nm in names(input)) {
+      # Find only matching inputs for this prefix, ignore qty/other/remove
+      if (startsWith(nm, prefix) && !grepl("qty_|other_|remove_", nm)) {
+        uid <- gsub(prefix, "", nm)
+        select_id <- nm
+        other_id  <- paste0(prefix, "other_", uid)
+        qty_id    <- paste0("qty_", prefix, uid)
+        
+        drug <- input[[select_id]]
+        qty  <- input[[qty_id]]
+        
+        # If 'Other', get the typed drug name
+        if (drug == "Other") {
+          typed_other <- input[[other_id]]
+          if (!is.null(typed_other) && typed_other != "") {
+            drug <- typed_other
+          }
+        }
+        
+        # Add only if both values are valid
+        if (!is.null(drug) && drug != "" && !is.null(qty) && qty != "") {
+          meds <- c(meds, paste0(drug, " (", qty, ")"))
+        }
+      }
+    }
+    
+    paste(meds, collapse = "; ")
+  }
+  
+  observeEvent(input$add_medication_spc, {
+    uid <- paste0(as.integer(Sys.time()), sample(1000:9999, 1))
+    med_id <- paste0("spc_med_", uid)
+    qty_id <- paste0("spc_qty_", uid)
+    remove_id <- paste0("remove_spc_", uid)
+    
+    insertUI(
+      selector = "#single-pill",
+      where = "beforeEnd",
+      ui = tags$div(
+        id = paste0("row_spc_", uid),
+        fluidRow(
+          column(6, textInput(med_id, label = NULL, placeholder = "Enter pill name")),
+          column(4, textInput(qty_id, label = NULL, placeholder = "Quantity")),
+          column(2, actionButton(remove_id, "❌", class = "btn btn-danger"))
+        )
+      )
+    )
+    
+    observeEvent(input[[remove_id]], {
+      removeUI(selector = paste0("#row_spc_", uid), immediate = TRUE)
+    }, once = TRUE)
+  })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  # Function to clear all form fields
+  clear_form <- function() {
+    updateDateInput(session, "visit_date", value = Sys.Date())
+    updateSelectInput(session, "doctor_name", selected = NULL)
+    updateTextAreaInput(session, "patient_note", value = "")
+    updateSelectInput(session, "pateintstatus", selected = "continuing_treatment")
+    updateTextInput(session, "refer_hospital_details", value = "")
+    updateTextInput(session, "consult_opd_details", value = "")
+    
+    # Clear symptom checklist
+    updateRadioButtons(session, "chest_tightness", selected = character(0))
+    updateRadioButtons(session, "nervous_system", selected = character(0))
+    updateRadioButtons(session, "urinal_abnormal", selected = character(0))
+    updateRadioButtons(session, "headache", selected = character(0))
+    updateRadioButtons(session, "dizziness", selected = character(0))
+    updateRadioButtons(session, "dypsnea", selected = character(0))
+    updateRadioButtons(session, "leg_swelling", selected = character(0))
+    updateRadioButtons(session, "face_swelling", selected = character(0))
+    
+    # Clear lab results
+    updateTextInput(session, "cr", value = "")
+    updateTextInput(session, "na", value = "")
+    updateTextInput(session, "fbs", value = "")
+    updateTextInput(session, "hba1c", value = "")
+    updateTextInput(session, "cho", value = "")
+    updateTextInput(session, "ldl", value = "")
+    updateTextInput(session, "tg", value = "")
+    updateTextInput(session, "hdl", value = "")
+    updateTextInput(session, "ast", value = "")
+    updateTextInput(session, "alt", value = "")
+    
+    # Clear vital signs
+    updateTextInput(session, "bp_sys", value = "")
+    updateTextInput(session, "bp_dia", value = "")
+    updateTextInput(session, "pulse", value = "")
+    updateTextInput(session, "waist", value = "")
+    updateTextInput(session, "height", value = "")
+    updateTextInput(session, "weight", value = "")
+    
+    # Clear prescription adjustment
+    updateSelectInput(session, "precriptionadjust", selected = "Same")
+    
+    # Clear medications
+    removeUI(selector = "#diuretics_container > div", multiple = TRUE)
+    removeUI(selector = "#aceis_container > div", multiple = TRUE)
+    removeUI(selector = "#arbs_container > div", multiple = TRUE)
+    removeUI(selector = "#ccbs_container > div", multiple = TRUE)
+    removeUI(selector = "#beta_blockers_container > div", multiple = TRUE)
+    removeUI(selector = "#oad_container > div", multiple = TRUE)
+    removeUI(selector = "#statin_container > div", multiple = TRUE)
+    removeUI(selector = "#anti_platelet_container > div", multiple = TRUE)
+    removeUI(selector = "#other_container > div", multiple = TRUE)
+    removeUI(selector = "#single-pill > div", multiple = TRUE)
+  }
+  
+  # Function to clear medication lists
+  clear_medication_list <- function(med_list) {
+    isolate({
+      for (key in names(med_list$data)) {
+        med_list$data[[key]] <- NULL
+      }
+    })
+  }
+  
+  # Function to populate form with visit data
   populate_visit_form <- function(visit) {
-    updateDateInput(session, "visit_date", value = as.Date(visit$visit_date, format = "%d/%m/%Y"))
+    if (is.null(visit) || nrow(visit) == 0) return()
+    
+    # Basic visit info
+    visit_date <- as.Date(visit$visit_date, format = "%d/%m/%Y")
+    if (!is.na(visit_date)) {
+      updateDateInput(session, "visit_date", value = visit_date)
+    }
+    
     updateSelectInput(session, "doctor_name", selected = visit$doctor_name)
     updateTextAreaInput(session, "patient_note", value = visit$patient_note)
     updateSelectInput(session, "pateintstatus", selected = visit$patient_status)
     updateTextInput(session, "refer_hospital_details", value = visit$refer_hospital_details)
     updateTextInput(session, "consult_opd_details", value = visit$consult_opd_details)
     
-    # Patient Symptoms
+    # Populate symptom checklist
     updateRadioButtons(session, "chest_tightness", selected = visit$chest_tightness)
     updateTextInput(session, "chest_tightness_note", value = visit$chest_tightness_note)
     updateRadioButtons(session, "nervous_system", selected = visit$nervous_system)
@@ -1267,8 +1533,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "face_swelling", selected = visit$face_swelling)
     updateTextInput(session, "face_swelling_note", value = visit$face_swelling_note)
     
-    
-    # Lab Results
+    # Populate lab results
     updateTextInput(session, "cr", value = visit$cr)
     updateTextInput(session, "na", value = visit$na)
     updateTextInput(session, "fbs", value = visit$fbs)
@@ -1300,7 +1565,7 @@ server <- function(input, output, session) {
     
     updateTextInput(session, "allergic_history", value = visit$allergic_history)
     
-    # Vitals
+    # Populate vital signs
     updateTextInput(session, "bp_sys", value = visit$bp_sys)
     updateTextInput(session, "bp_dia", value = visit$bp_dia)
     updateTextInput(session, "pulse", value = visit$pulse)
@@ -1357,136 +1622,131 @@ server <- function(input, output, session) {
     )
     updateTextInput(session, "other_complication", value = visit$other_complication)
     
-    # Prescription Adjust
+    # Populate prescription adjustment
     updateSelectInput(session, "precriptionadjust", selected = visit$precriptionadjust)
     
-    # Dynamic Medications
-    parseMedicationList(visit$diuretics, medication_list_diuretics, "diuretics")
-    parseMedicationList(visit$aceis, medication_list_aceis, "aceis")
-    parseMedicationList(visit$arbs, medication_list_arbs, "arbs")
-    parseMedicationList(visit$ccbs, medication_list_ccbs, "ccbs")
-    parseMedicationList(visit$beta_blockers, medication_list_beta_blockers, "beta_blockers")
-    parseMedicationList(visit$oad, medication_list_oad, "oad")
-    parseMedicationList(visit$statin, medication_list_statin, "statin")
-    parseMedicationList(visit$anti_platelet, medication_list_anti_platelet, "anti_platelet")
-    parseMedicationList(visit$other_medications, medication_list_other, "other")
-    parseMedicationList(visit$single_pill_combination, medication_list_spc, "spc")
-  }
-  
-  parseMedicationList <- function(med_string, category_list, category_name) {
-    # Reset the medication UI list
-    isolate({
-      for (key in names(category_list$data)) {
-        category_list$data[[key]] <- NULL
-      }
-    })
+    # --- Clear all dynamic UI first ---
+    removeUI(selector = "#diuretics_container > div", multiple = TRUE)
+    removeUI(selector = "#aceis_container > div", multiple = TRUE)
+    removeUI(selector = "#arbs_container > div", multiple = TRUE)
+    removeUI(selector = "#ccbs_container > div", multiple = TRUE)
+    removeUI(selector = "#beta_blockers_container > div", multiple = TRUE)
+    removeUI(selector = "#oad_container > div", multiple = TRUE)
+    removeUI(selector = "#statin_container > div", multiple = TRUE)
+    removeUI(selector = "#anti_platelet_container > div", multiple = TRUE)
+    removeUI(selector = "#other_container > div", multiple = TRUE)
+    removeUI(selector = "#single-pill > div", multiple = TRUE)
     
-    # 🔒 Safe conversion
-    med_string <- as.character(med_string)
+    # --- Restore ---
     
-    # 🔁 If blank or NA, don't parse — just stop here
-    if (length(med_string) == 0 || is.na(med_string) || med_string == "") {
-      return()
-    }
-    
-    # Split meds by ";"
-    meds <- trimws(unlist(strsplit(med_string, ";")))
-    
-    for (i in seq_along(meds)) {
-      # Match format like "DrugName (Quantity)"
-      parts <- stringr::str_match(meds[i], "^(.*?)\\s*\\((.*?)\\)$")
-      if (!is.na(parts[1, 2]) && !is.na(parts[1, 3])) {
-        med <- trimws(parts[1, 2])
-        qty <- trimws(parts[1, 3])
-        
-        med_id <- paste0(category_name, "_", i)
-        qty_id <- paste0("quantity_", category_name, "_", i)
-        
-        isolate({
-          category_list$data[[med_id]] <- qty_id
-        })
-        
-        # 🕐 Delay to wait for renderUI to appear
-        later::later(function() {
-          try(updateSelectInput(session, med_id, selected = med), silent = TRUE)
-          try(updateTextInput(session, qty_id, value = qty), silent = TRUE)
-        }, delay = 0.2)
-      }
-    }
+    restoreMedicationUI(visit$diuretics, "diuretics_", "diuretics_container", medication_choices$Diuretics)
+    restoreMedicationUI(visit$aceis, "aceis_", "aceis_container", medication_choices$ACEIs)
+    restoreMedicationUI(visit$arbs, "arbs_", "arbs_container", medication_choices$ARBs)
+    restoreMedicationUI(visit$ccbs, "ccbs_", "ccbs_container", medication_choices$CCBs)
+    restoreMedicationUI(visit$beta_blockers, "beta_blockers_", "beta_blockers_container", medication_choices$`Beta Blockers`)
+    restoreMedicationUI(visit$oad, "oad_", "oad_container", medication_choices$OAD)
+    restoreMedicationUI(visit$statin, "statin_", "statin_container", medication_choices$Statin)
+    restoreMedicationUI(visit$anti_platelet, "anti_platelet_", "anti_platelet_container", medication_choices$`Anti-platelet`)
+    restoreMedicationUI(visit$other_medications, "other_", "other_container", medication_choices$Other)
+    restoreMedicationUI(visit$single_pill_combination, "spc_", "single-pill", NULL)
   }
   
   
   
-  
-  
-  
-
-  # 1. Retrieve Patient Information by HN
+  #1. Patient information reactive values
   patient_info <- reactiveValues(name = "", hn = "", found = FALSE)
   
+  # Check HN and load patient data
   observeEvent(input$check_hn_visit, {
     hn_to_search <- toupper(trimws(input$hn_visit))
     
-    ## 1. Load patient name
-    file_path <- patient_data_file
-    
-    if (!file.exists(file_path)) {
-      patient_info$name <- "No data file exists"
-      patient_info$found <- FALSE
-    } else {
-      all_data <- read.csv(file_path, stringsAsFactors = FALSE)
-      
-      if (!all(c("hn", "name") %in% colnames(all_data))) {
-        patient_info$name <- "Invalid file format"
-        patient_info$found <- FALSE
-      } else {
-        all_data$hn <- toupper(trimws(all_data$hn))
-        matching_rows <- which(all_data$hn == hn_to_search)
-        
-        if (length(matching_rows) > 0) {
-          patient_info$name <- all_data$name[matching_rows[1]]
-          patient_info$hn <- hn_to_search
-          patient_info$found <- TRUE
-        } else {
-          patient_info$name <- "Patient not found"
-          patient_info$found <- FALSE
-        }
-      }
+    if (hn_to_search == "") {
+      showNotification("Please enter a Patient Code (HN).", type = "warning")
+      return()
     }
     
-    ## 🔍 2. Load and show visit data ← THIS IS WHAT YOU WANT
-    if (file.exists(visit_data_file)) {
-      visit_data <- read.csv(visit_data_file, stringsAsFactors = FALSE)
+    # Load patient data
+    if (!file.exists(patient_data_file)) {
+      patient_info$name <- "No patient data file exists"
+      patient_info$found <- FALSE
+      return()
+    }
+    
+    patient_data <- read.csv(patient_data_file, stringsAsFactors = FALSE)
+    
+    if (!all(c("hn", "name") %in% colnames(patient_data))) {
+      patient_info$name <- "Invalid patient data file format"
+      patient_info$found <- FALSE
+      return()
+    }
+    
+    patient_data$hn <- toupper(trimws(patient_data$hn))
+    matching_rows <- which(patient_data$hn == hn_to_search)
+    
+    if (length(matching_rows) > 0) {
+      patient_info$name <- patient_data$name[matching_rows[1]]
+      patient_info$hn <- hn_to_search
+      patient_info$found <- TRUE
       
-      # 🔥 ADD THIS LINE HERE
-      visit_data$visit_date <- as.Date(visit_data$visit_date, format = "%d/%m/%Y")
-      
-      visits <- visit_data %>% filter(hn == hn_to_search)
-      
-      if (nrow(visits) > 0) {
-        current_visit_index(1)
-        selected_visit <- visits[1, ]
-        
-        # 🔥 Match real row for editing
-        selected_date <- as.Date(selected_visit$visit_date, format = "%d/%m/%Y")
-        real_row <- which(
-          visit_data$hn == selected_visit$hn &
-            visit_data$visit_date == selected_date
-        )[1]
-        current_visit_row(real_row)
-        
-        # Show data
-        populate_visit_form(selected_visit)
-        display_visit_data(selected_visit)
-      } else {
-        showNotification("No visit records found for this HN.", type = "warning")
-      }
+      # Load visit data for this patient
+      load_patient_visits(hn_to_search)
     } else {
-      showNotification("Visit data file does not exist.", type = "error")
+      patient_info$name <- "Patient not found"
+      patient_info$found <- FALSE
+      patient_visits(data.frame())
     }
   })
   
-  # Option 2: Using HTML output for better formatting
+  #2.  Load patient visits
+  load_patient_visits <- function(hn) {
+    if (!file.exists(visit_data_file)) {
+      patient_visits(data.frame())
+      current_visit_index(1)
+      clear_form()
+      return()
+    }
+    
+    all_visits <- read.csv(visit_data_file, stringsAsFactors = FALSE)
+    all_visits$hn <- toupper(trimws(all_visits$hn))
+    
+    # Filter visits for this patient
+    visits <- all_visits[all_visits$hn == hn, ]
+    
+    # Remove empty visits
+    visits <- visits[!is.na(visits$visit_date) & visits$visit_date != "", ]
+    
+    # Sort by visit date (earliest to latest)
+    if (nrow(visits) > 0) {
+      visits$visit_date_parsed <- as.Date(visits$visit_date, format = "%d/%m/%Y")
+      visits <- visits[order(visits$visit_date_parsed, decreasing = FALSE), ]
+      visits$visit_date_parsed <- NULL
+      
+      # Show the most recent (last) visit
+      patient_visits(visits)
+      current_visit_index(nrow(visits))              # set index to last
+      populate_visit_form(visits[nrow(visits), ])    # show last row
+      
+      # Find the actual row number in the full dataset for editing
+      visit_to_find <- visits[nrow(visits), ]
+      visit_date_to_find <- as.Date(visit_to_find$visit_date, format = "%d/%m/%Y")
+      all_visits$visit_date_parsed <- as.Date(all_visits$visit_date, format = "%d/%m/%Y")
+      row_index <- which(
+        all_visits$hn == visit_to_find$hn &
+          all_visits$visit_date_parsed == visit_date_to_find
+      )[1]
+      if (!is.na(row_index)) {
+        current_visit_row(row_index)
+      }
+    } else {
+      patient_visits(data.frame())
+      current_visit_index(1)
+      current_visit_row(NULL)
+      clear_form()
+    }
+  }
+  
+  
+  # Display patient name
   output$patient_name_html <- renderUI({
     if (patient_info$found) {
       tags$div(
@@ -1500,16 +1760,14 @@ server <- function(input, output, session) {
       )
     }
   })
-  # Fixed: Use correct syntax for reactiveVal
-  output$visit_position <- renderText({
-    visits <- filtered_visits_data()  # Use the correct reactive name
-    index <- current_visit_index()
-    total <- nrow(visits)
-    
-    if (total > 0) {
-      paste("Visit", index, "of", total)
+  
+  # Display visit count
+  output$num_visit <- renderText({
+    visits <- patient_visits()
+    if (nrow(visits) > 0) {
+      as.character(nrow(visits))
     } else {
-      "No visit records"
+      "0"
     }
   })
   
@@ -1594,602 +1852,407 @@ server <- function(input, output, session) {
   
   
   
-  # 4. medicine
   
-  getMedicationList <- function(category_list) {
-    meds <- lapply(names(category_list$data), function(id) {
-      selected_med <- input[[id]]
-      qty_input_id <- category_list$data[[id]]
-      other_med_input_id <- paste0(id, "_other")
-      other_qty_input_id <- paste0(qty_input_id, "_other")
-      
-      # If 'Other' is selected, use the other input IDs
-      if (selected_med == "Other") {
-        custom_med <- input[[other_med_input_id]]
-        custom_qty <- input[[other_qty_input_id]]
-        
-        if (!is.null(custom_med) && custom_med != "" && !is.null(custom_qty) && custom_qty != "") {
-          return(paste0(custom_med, " (", custom_qty, ")"))
-        } else {
-          return(NULL)
-        }
-      }
-      
-      # Otherwise, use regular med and quantity
-      qty <- input[[qty_input_id]]
-      if (!is.null(selected_med) && selected_med != "" && !is.null(qty) && qty != "") {
-        return(paste0(selected_med, " (", qty, ")"))
-      }
-      
-      return(NULL)
-    })
+  # Display visit position
+  output$visit_position <- renderText({
+    visits <- patient_visits()
+    index <- current_visit_index()
+    total <- nrow(visits)
     
-    paste(unlist(meds), collapse = "; ")
-  }
+    if (total > 0) {
+      paste("Visit", index, "of", total)
+    } else {
+      "No visits"
+    }
+  })
   
-  
-  
-  
-  
-  # Reactive lists for dynamic medications
-  medication_list_diuretics <- reactiveValues(data = list())
-  medication_list_aceis <- reactiveValues(data = list())
-  medication_list_arbs <- reactiveValues(data = list())
-  medication_list_ccbs <- reactiveValues(data = list())
-  medication_list_beta_blockers <- reactiveValues(data = list())
-  medication_list_oad <- reactiveValues(data = list())
-  medication_list_statin <- reactiveValues(data = list())
-  medication_list_anti_platelet <- reactiveValues(data = list())
-  medication_list_other <- reactiveValues(data = list())
-  medication_list_spc <- reactiveValues(data = list())
-  
-  # Add medications dynamically for each category
-  addMedication <- function(category_list, button_id, category_name) {
-    # Track the number of items added (to ensure unique IDs)
-    counter <- reactiveVal(0)
-    
-    observeEvent(input[[button_id]], {
-      # Increment the counter for a new unique ID
-      current_count <- counter() + 1
-      counter(current_count)
-      
-      # Create new unique IDs for the medication and quantity
-      new_id <- paste0(category_name, "_", current_count)
-      new_qty_id <- paste0("quantity_", category_name, "_", current_count)
-      
-      # Add the new IDs to the reactive list
-      category_list$data[[new_id]] <- new_qty_id
-    })
-  }
-  
-  # Apply Add functionality for each category
-  addMedication(medication_list_diuretics, "add_medication_diuretics", "diuretics")
-  addMedication(medication_list_aceis, "add_medication_aceis", "aceis")
-  addMedication(medication_list_arbs, "add_medication_arbs", "arbs")
-  addMedication(medication_list_ccbs, "add_medication_ccbs", "ccbs")
-  addMedication(medication_list_beta_blockers, "add_medication_beta_blockers", "beta_blockers")
-  addMedication(medication_list_oad, "add_medication_oad", "oad")
-  addMedication(medication_list_statin, "add_medication_statin", "statin")
-  addMedication(medication_list_anti_platelet, "add_medication_anti_platelet", "anti_platelet")
-  addMedication(medication_list_other, "add_medication_other", "other")
-  addMedication(medication_list_spc, "add_medication_spc", "spc")
-  
-  # Render UI for each medication category
-  renderMedicationUI <- function(category_list, category_name) {
-    renderUI({
-      
-      req(category_list$data)  # ✅ make reactive so it re-renders when list changes
-      medication_ui <- lapply(names(category_list$data), function(id) {
-        # Define standard choices + "Other"
-        choices <- switch(category_name,
-                          "Diuretics" = c("HCTZ (25)", "HCTZ (50)", "Other"),
-                          "ACEIs" = c("Enalapril (5)", "Enalapril (20)", "Other"),
-                          "ARBs" = c("Losartan (50)", "Losartan (100)", "Other"),
-                          "CCBs" = c("Amlodipine (5)", "Amlodipine (10)", "Madiplot (20)", "Diltiazem (30)", "Diltiazem (60)", "Other"),
-                          "Beta Blockers" = c("Atenolol (25)", "Atenolol (50)", "Atenolol (100)",
-                                              "Carvedilol (6.25)", "Carvedilol (12.5)", "Carvedilol (25)",
-                                              "Metoprolol (100)", "Propranolol (10)", "Propranolol (40)", "Other"),
-                          "OAD" = c("Metformin (500)", "Metformin (850)", "Metformin (1000)",
-                                    "Glipizide (5)", "Other"),
-                          "Statin" = c("Atorvastatin (20)", "Atorvastatin (40)",
-                                       "Simvastatin (10)", "Simvastatin (20)", "Simvastatin (40)",
-                                       "Ezetimibe (10)", "Other"),
-                          "Anti-platelet" = c("ASA (81)", "Other"),
-                          "Other" = c("Azilsartan (40)", "Hydralazine (25)", "Doxazosin (2)", "Methyldopa (250)", "Other")
-        )
-        
-        # Create IDs
-        med_input_id <- id
-        qty_input_id <- category_list$data[[id]]
-        other_input_id <- paste0(id, "_other")
-        other_qty_id <- paste0(qty_input_id, "_other")
-        
-        fluidRow(
-          column(6,
-                 conditionalPanel(
-                   condition = paste0("input.", med_input_id, " != 'Other'"),
-                   selectInput(inputId = med_input_id,
-                               label = paste("Select", category_name, ":"),
-                               choices = choices)
-                 ),
-                 conditionalPanel(
-                   condition = paste0("input.", med_input_id, " == 'Other'"),
-                   textInput(inputId = other_input_id,
-                             label = paste("Other", category_name, ":"),
-                             placeholder = "Enter medication name")
-                 )
-          ),
-          column(4,
-                 conditionalPanel(
-                   condition = paste0("input.", med_input_id, " != 'Other'"),
-                   textInput(inputId = qty_input_id, label = "Quantity:")
-                 ),
-                 conditionalPanel(
-                   condition = paste0("input.", med_input_id, " == 'Other'"),
-                   textInput(inputId = other_qty_id, label = "Quantity:")
-                 )
-          ),
-          column(2, actionButton(
-            inputId = paste0("remove_", id),
-            label = "Remove"
-          ))
-        )
-      })
-      do.call(tagList, medication_ui)
-    })
-  }
-  
-  
-  
-  renderSPCMedicationUI <- function(category_list, category_name) {
-    renderUI({
-      medication_ui <- lapply(names(category_list$data), function(id) {
-        fluidRow(
-          column(6, textInput(
-            inputId = id,
-            label = paste("Pill name:")
-          )),
-          column(4, textInput(
-            inputId = category_list$data[[id]],
-            label = "Quantity:"
-          )),
-          column(2, actionButton(
-            inputId = paste0("remove_", id),
-            label = "Remove"
-          ))
-        )
-      })
-      do.call(tagList, medication_ui)
-    })
-  }
-  
-  # Handle Remove functionality dynamically
-  observeRemoveButtons <- function(category_list) {
-    observe({
-      req(names(category_list$data))  # Ensure there are medications to remove
-      lapply(names(category_list$data), function(id) {
-        observeEvent(input[[paste0("remove_", id)]], {
-          # Remove the corresponding medication entry from the reactiveValues list
-          category_list$data[[id]] <- NULL
-        })
-      })
-    })
-  }
-  
-  # Call Remove observer for each category
-  observeRemoveButtons(medication_list_diuretics)
-  observeRemoveButtons(medication_list_aceis)
-  observeRemoveButtons(medication_list_arbs)
-  observeRemoveButtons(medication_list_ccbs)
-  observeRemoveButtons(medication_list_beta_blockers)
-  observeRemoveButtons(medication_list_oad)
-  observeRemoveButtons(medication_list_statin)
-  observeRemoveButtons(medication_list_anti_platelet)
-  observeRemoveButtons(medication_list_other)
-  observeRemoveButtons(medication_list_spc)
-  
-  # Render the UI for each category
-  output$medication_ui_diuretics <- renderMedicationUI(medication_list_diuretics, "Diuretics")
-  output$medication_ui_aceis <- renderMedicationUI(medication_list_aceis, "ACEIs")
-  output$medication_ui_arbs <- renderMedicationUI(medication_list_arbs, "ARBs")
-  output$medication_ui_ccbs <- renderMedicationUI(medication_list_ccbs, "CCBs")
-  output$medication_ui_beta_blockers <- renderMedicationUI(medication_list_beta_blockers, "Beta Blockers")
-  output$medication_ui_oad <- renderMedicationUI(medication_list_oad, "OAD")
-  output$medication_ui_statin <- renderMedicationUI(medication_list_statin, "Statin")
-  output$medication_ui_anti_platelet <- renderMedicationUI(medication_list_anti_platelet, "Anti-platelet")
-  output$medication_ui_other <- renderMedicationUI(medication_list_other, "Other")
-  output$medication_ui_spc <- renderSPCMedicationUI(medication_list_spc, "Single-pill combination")
-  
-  
-  
-  
+  # Display visit summary
   display_visit_data <- function(visit) {
+    if (is.null(visit) || nrow(visit) == 0) {
+      output$visit_summary <- renderText("No visit data available")
+      return()
+    }
+    
+    safe <- function(x) {
+      if (is.null(x) || is.na(x)) "N/A" else as.character(x)
+    }
+    
     output$visit_summary <- renderText({
       paste0(
-        "▶️ Visit Date: ", visit$visit_date, "\n",
-        "👨️ Doctor: ", visit$doctor_name, "\n",
-        "📝 Patient Note: ", visit$patient_note, "\n",
-        "📌 Status: ", visit$patient_status, "\n\n",
-        
-        "💊 Medications:\n",
-        "- Diuretics: ", visit$diuretics, "\n",
-        "- ACEIs: ", visit$aceis, "\n",
-        "- ARBs: ", visit$arbs, "\n",
-        "- CCBs: ", visit$ccbs, "\n",
-        "- Beta Blockers: ", visit$beta_blockers, "\n",
-        "- Anti Platelet: ", visit$anti_platelet, "\n",
-        "- OAD: ", visit$oad, "\n",
-        "- Statin: ", visit$statin, "\n",
-        "- Single-pill Combination: ", visit$single_pill_combination, "\n",
-        "- Other Medications: ", visit$other_medications, "\n\n",
-        
-        
-        "🩺 Clinical Info:\n",
-        "- BP: ", visit$bp_sys, "/", visit$bp_dia, " mmHg\n",
-        "- Pulse: ", visit$pulse, " bpm\n",
-        "- Waist: ", visit$waist, " cm\n",
-        "- Height: ", visit$height, " cm\n",
-        "- Weight: ", visit$weight, " kg\n",
-        
-        "📊 Scores:\n",
-        "- BP Control Score: ", visit$bp_control_score, "\n",
-        "- Weight Control Score: ", visit$weight_control_score, "\n",
-        "- Self-Care Behavior Score: ", visit$self_care_score, "\n",
-        "- Home BP Score: ", visit$home_bp_score, "\n\n",
-        
-        "🧪 Lab Results:\n",
-        "- Cr: ", visit$cr, "\n",
-        "- Na: ", visit$na, "\n",
-        "- FBS: ", visit$fbs, "\n",
-        "- HbA1C: ", visit$hba1c, "\n",
-        "- CHO: ", visit$cho, "\n",
-        "- LDL: ", visit$ldl, "\n",
-        "- TG: ", visit$tg, "\n",
-        "- HDL: ", visit$hdl, "\n",
-        "- AST: ", visit$ast, "\n",
-        "- ALT: ", visit$alt, "\n"
+        "▶️ Visit Date: ", safe(visit$visit_date), "\n",
+        "👨‍⚕️ Doctor: ", safe(visit$doctor_name), "\n",
+        "📝 Patient Note: ", substr(safe(visit$patient_note), 1, 100), 
+        if (nchar(safe(visit$patient_note)) > 100) "..." else "", "\n",
+        "📌 Status: ", safe(visit$patient_status), "\n",
+        "🩺 BP: ", safe(visit$bp_sys), "/", safe(visit$bp_dia), " mmHg\n",
+        "💊 Medications loaded in form"
       )
     })
   }
   
   
-  # FIXED: Use consistent naming for reactive values
-  filtered_visits_data <- reactiveVal(data.frame())
-  current_visit_index <- reactiveVal(1)
-  
-  # Load and initialize patient/visit data
-  observeEvent(input$check_hn_visit, {
-    if (!file.exists(patient_data_file) || !file.exists(visit_data_file)) {
-      showNotification("Required data files are missing.", type = "error")
-      return()
-    }
-    
-    # Load patient data
-    patient_data <- read.csv(patient_data_file, stringsAsFactors = FALSE)
-    patient_data$hn <- toupper(patient_data$hn)
-    hn_to_search <- toupper(input$hn_visit)
-    
-  
-    
-    # Fetch patient name
-    patient_name <- patient_data$name[patient_data$hn == hn_to_search]
-    if (length(patient_name) == 0) {
-      output$patient_name <- renderText("Patient not found.")
-      output$num_visit <- renderText("1")  # Default to 1 if no visits exist
-      filtered_visits_data(data.frame())
-      return()
-    } else {
-      output$patient_name <- renderText(patient_name[1])
-    }
-    
-    # Load visit data
-    all_visits <- read.csv(visit_data_file, stringsAsFactors = FALSE)
-    all_visits$hn <- toupper(all_visits$hn)
-    # Filter out visits with no meaningful data
-    all_visits <- all_visits %>%
-      filter(!(is.na(visit_date) & is.na(patient_note) & is.na(patient_status)))
-    
-    # Filter visits for this patient
-    visits <- all_visits[all_visits$hn == hn_to_search, ]
-    
-    # Remove rows with missing or blank visit_date
-    visits <- visits[!is.na(visits$visit_date) & visits$visit_date != "", ]
-    
-    # Optional: sort by date descending
-    visits <- visits[order(as.Date(visits$visit_date, format = "%d-%m-%Y"), decreasing = TRUE), ]
-    
-    # Store filtered visits using the consistent reactive name
-    filtered_visits_data(visits)
-    current_visit_index(1)
-    
-    # Fix the num_visit display using correct reactive value
-    output$num_visit <- renderText({
-      paste0(nrow(filtered_visits_data()))
-    })
-    
-    if (nrow(visits) > 0) {
-      current_visit_index(1)  # start with most recent visit
-      output$num_visit <- renderText(nrow(visits))
-      display_visit_data(visits[1, ])  # show first (most recent)
-    } else {
-      current_visit_index(1)
-      output$num_visit <- renderText("1")
-      output$visit_data <- renderText("No visit records found. Start filling visit details.")
-    }
-  })
-  
-  
-  
-  # Navigate to the previous visit
+  # Navigation: Previous visit
   observeEvent(input$prev_visit, {
-    visits <- filtered_visits_data()
+    visits <- patient_visits()
     index <- current_visit_index()
     
     if (index > 1) {
       new_index <- index - 1
       current_visit_index(new_index)
       selected_visit <- visits[new_index, ]
-      display_visit_data(selected_visit)
       populate_visit_form(selected_visit)
+      display_visit_data(selected_visit)
       
-      # 🔁 Fix: convert both sides to Date
-      all_data <- read.csv(visit_data_file, stringsAsFactors = FALSE)
-      all_data$visit_date <- as.Date(all_data$visit_date, format = "%d/%m/%Y")
-      selected_date <- as.Date(selected_visit$visit_date, format = "%d/%m/%Y")
+      # Update current row for editing
+      all_visits <- read.csv(visit_data_file, stringsAsFactors = FALSE)
+      all_visits$hn <- toupper(trimws(all_visits$hn))
+      all_visits$visit_date_parsed <- as.Date(all_visits$visit_date, format = "%d/%m/%Y")
       
-      real_row <- which(
-        all_data$hn == selected_visit$hn &
-          all_data$visit_date == selected_date
+      visit_date_to_find <- as.Date(selected_visit$visit_date, format = "%d/%m/%Y")
+      row_index <- which(
+        all_visits$hn == selected_visit$hn &
+          all_visits$visit_date_parsed == visit_date_to_find
       )[1]
-      current_visit_row(real_row)
+      
+      if (!is.na(row_index)) {
+        current_visit_row(row_index)
+      }
     } else {
       showNotification("This is the first visit.", type = "warning")
     }
   })
   
-  # Navigate to the next visit
+  # Navigation: Next visit
   observeEvent(input$next_visit, {
-    visits <- filtered_visits_data()
+    visits <- patient_visits()
     index <- current_visit_index()
     
     if (index < nrow(visits)) {
       new_index <- index + 1
       current_visit_index(new_index)
       selected_visit <- visits[new_index, ]
-      display_visit_data(selected_visit)
+      
+      # Fill form
       populate_visit_form(selected_visit)
+      display_visit_data(selected_visit)
       
-      # 🔁 Fix: convert both sides to Date
-      all_data <- read.csv(visit_data_file, stringsAsFactors = FALSE)
-      all_data$visit_date <- as.Date(all_data$visit_date, format = "%d/%m/%Y")
-      selected_date <- as.Date(selected_visit$visit_date, format = "%d/%m/%Y")
-      
-      real_row <- which(
-        all_data$hn == selected_visit$hn &
-          all_data$visit_date == selected_date
-      )[1]
-      current_visit_row(real_row)
+      # Update current_visit_row to track CSV row number
+      if (file.exists(visit_data_file)) {
+        all_visits <- read.csv(visit_data_file, stringsAsFactors = FALSE)
+        all_visits$hn <- toupper(trimws(all_visits$hn))
+        all_visits$visit_date_parsed <- as.Date(all_visits$visit_date, format = "%d/%m/%Y")
+        
+        visit_date_to_find <- as.Date(selected_visit$visit_date, format = "%d/%m/%Y")
+        
+        row_index <- which(
+          all_visits$hn == selected_visit$hn &
+            all_visits$visit_date_parsed == visit_date_to_find
+        )[1]
+        
+        if (!is.na(row_index)) {
+          current_visit_row(row_index)
+        }
+      }
     } else {
       showNotification("This is the last visit.", type = "warning")
     }
   })
   
   
-  # Save the current visit data
+  observeEvent(input$add_visit, {
+    # Clear the form and set current_visit_row(NULL)
+    clear_form()
+    current_visit_row(NULL)
+    updateDateInput(session, "visit_date", value = Sys.Date())
+    showNotification("Fill the form and press 'Save Visit' to create a new visit.", type = "message")
+  })
+  
+  
+  
+  #---- Save Visit Button Logic: Replace row
   observeEvent(input$save_visit, {
-    if (is.null(input$hn_visit) || input$hn_visit == "" || is.null(input$visit_date) || input$visit_date == "") {
-      showNotification("Please provide both Patient Code (HN) and Date before saving.", type = "error")
-      return()
-    }
-    
-    # Load patient data
-    patient_data <- read.csv(patient_data_file, stringsAsFactors = FALSE)
-    patient_data$hn <- toupper(patient_data$hn)
-    hn_to_search <- toupper(input$hn_visit)
-    
-    # Fetch patient name
-    patient_name <- patient_data$name[patient_data$hn == hn_to_search]
-    if (length(patient_name) == 0) {
-      showNotification("Patient name not found. Ensure the HN exists in the patient data file.", type = "error")
-      return()
-    }
-    
-    
-    if (file.exists(visit_data_file)) {
-      existing_visits <- read.csv(visit_data_file, stringsAsFactors = FALSE)
+    print("Save button pressed!")
+    tryCatch({
+      if (!isTruthy(input$hn_visit) || !isTruthy(input$visit_date)) {
+        showNotification("Please provide both Patient Code (HN) and Date before saving.", type = "error")
+        return()
+      }
+      
+      
+      # Load patient data
+      if (!file.exists(patient_data_file)) {
+        showNotification("Patient data file not found.", type = "error")
+        return()
+      }
+      patient_data <- read.csv(patient_data_file, stringsAsFactors = FALSE)
+      patient_data$hn <- toupper(patient_data$hn)
+      hn_to_search <- toupper(input$hn_visit)
+      
+      # Fetch patient name
+      patient_name <- patient_data$name[patient_data$hn == hn_to_search]
+      if (length(patient_name) == 0) {
+        showNotification("Patient name not found. Ensure the HN exists in the patient data file.", type = "error")
+        return()
+      }
+      
+      # Read or initialize visit data
+      if (file.exists(visit_data_file)) {
+        existing_visits <- read.csv(visit_data_file, stringsAsFactors = FALSE)
+        existing_visits$hn <- toupper(existing_visits$hn)
+      } else {
+        existing_visits <- data.frame()
+      }
       
       is_editing <- !is.null(current_visit_row())
       
       if (is_editing) {
-        existing_visits$hn <- toupper(existing_visits$hn)
         old_row <- existing_visits[current_visit_row(), ]
         visit_number <- old_row$visit_number
       } else {
         if ("hn" %in% colnames(existing_visits)) {
-          existing_visits$hn <- toupper(existing_visits$hn)
           visit_number <- existing_visits %>%
             filter(hn == hn_to_search) %>%
             nrow() + 1
         } else {
           visit_number <- 1
         }
-      }}
-      
-    
-    
-    formatted_visit_date <- format(as.Date(input$visit_date), "%d/%m/%Y")
-    formatted_follow_up_date <- format(as.Date(input$follow_up_date), "%d/%m/%Y")
-    
-    
-    # Create a new row with visit data
-    new_data <- data.frame(
-      visit_number = visit_number,
-      hn = hn_to_search,
-      name = patient_name[1],
-      visit_date = formatted_visit_date,
-      doctor_name = input$doctor_name,
-      patient_note = input$patient_note,
-      patient_status = input$pateintstatus,
-      refer_hospital_details = ifelse(input$pateintstatus == "refer_hospital", input$refer_hospital_details, ""),
-      consult_opd_details = ifelse(input$pateintstatus == "consult_opd", input$consult_opd_details, ""),
-      
-      #Patient Symptom Checklist:
-      chest_tightness = input$chest_tightness,
-      chest_tightness_note = ifelse(input$chest_tightness == "yes", input$chest_tightness_note, ""),
-      nervous_system = input$nervous_system,
-      nervous_system_note = ifelse(input$nervous_system == "yes", input$nervous_system_note, ""),
-      urinal_abnormal = input$urinal_abnormal,
-      urinal_abnormal_note = ifelse(input$urinal_abnormal == "yes", input$urinal_abnormal_note, ""),
-      headache = input$headache,
-      headache_note = ifelse(input$headache %in% c("sometimes", "often"), input$headache_note, ""),
-      dizziness = input$dizziness,
-      dizziness_note = ifelse(input$dizziness %in% c("sometimes", "often"), input$dizziness_note, ""),
-      dypsnea = input$dypsnea,
-      dypsnea_note = ifelse(input$dypsnea %in% c("sometimes", "often"), input$dypsnea_note, ""),
-      leg_swelling = input$leg_swelling,
-      leg_swelling_note = ifelse(input$leg_swelling %in% c("sometimes", "often"), input$leg_swelling_note, ""),
-      face_swelling = input$face_swelling,
-      face_swelling_note = ifelse(input$face_swelling %in% c("sometimes", "often"), input$face_swelling_note, ""),
-      
-      #Lab Results:
-      cr = input$cr,
-      na = input$na,
-      fbs = input$fbs,
-      hba1c = input$hba1c,
-      cho = input$cho,
-      ldl = input$ldl,
-      tg = input$tg,
-      hdl = input$hdl,
-      ast = input$ast,
-      alt = input$alt,
-      
-      #CC
-      cc = input$cc,
-      cc_early_visit = ifelse(input$cc == "early_visit", input$cc_early_visit, ""),
-      cc_late_visit = ifelse(input$cc == "late_visit", input$cc_late_visit, ""),
-      cc_other = ifelse(input$cc == "other", input$cc_other, ""),
-      #PI
-      pi = input$pi,
-      pi_abnormal = ifelse(input$pi == "abnormal", input$pi_abnormal, ""),
-      pi_other = ifelse(input$pi == "other", input$pi_other, ""),
-      #Medical adherence
-      adherence_alway_take_medicine = ifelse("alway_take_medicine" %in% input$medication_adherence, "yes", "no"),
-      adherence_salty_control = ifelse("salty_control" %in% input$medication_adherence, "yes", "no"),
-      adherence_exercise = ifelse("excercise" %in% input$medication_adherence, "yes", "no"),
-      allergic_history = input$allergic_history,
-      
-      #Blood Pressure/BMI
-      bp_sys = input$bp_sys,
-      bp_dia = input$bp_dia,
-      pulse = input$pulse,
-      waist = input$waist,
-      height = input$height,
-      weight = input$weight,
-      
-      # Physical Examination:
-      heent = input$heent,
-      heent_abnormal = ifelse(input$heent == "abnormal", input$heent_abnormal, ""),
-      heart = input$heart,
-      heart_abnormal = ifelse(input$heart == "abnormal", input$heart_abnormal, ""),
-      lungs = input$lungs,
-      lungs_abnormal = ifelse(input$lungs == "abnormal", input$lungs_abnormal, ""),
-      abd = input$abd,
-      abd_abnormal = ifelse(input$abd == "abnormal", input$abd_abnormal, ""),
-      ext = input$ext,
-      ext_abnormal = ifelse(input$ext == "abnormal", input$ext_abnormal, ""),
-      ns = input$ns,
-      ns_abnormal = ifelse(input$ns == "abnormal", input$ns_abnormal, ""),
-      
-      #diaganosis
-      diagnosis = paste(input$diagnosis, collapse = "; "),
-      other_diagnosis = ifelse("Other" %in% input$diagnosis, input$other_diagnosis, ""),
-      
-      #Score
-      bp_control_score = input$bp_control_score,
-      weight_control_score = input$weight_control_score,
-      self_care_score = input$self_care_score,
-      home_bp_score = input$home_bp_score,
-      hbpm_target = input$hbpm_target,
-      
-      #Follow-up
-      follow_up = input$follow_up,
-      follow_up_date = formatted_follow_up_date,
-      
-      #Lab test next time
-      lab_tests = paste(input$lab_tests, collapse = "; "),
-      other_lab_tests = input$other_lab_tests,
-      complication_stroke = ifelse("complication_stroke" %in% input$complication, "yes", "no"),
-      complication_cardio_mi = ifelse("complication_cardio_mi" %in% input$complication, "yes", "no"),
-      complication_chf = ifelse("complication_chf" %in% input$complication, "yes", "no"),
-      complication_kidney = ifelse("complication_kidney" %in% input$complication, "yes", "no"),
-      complication_eye = ifelse("complication_eye" %in% input$complication, "yes", "no"),
-      other_complication = input$other_complication,
-      precriptionadjust = input$precriptionadjust,
-      
-      # add dynamic medication data
-      diuretics = getMedicationList(medication_list_diuretics),
-      aceis = getMedicationList(medication_list_aceis),
-      arbs = getMedicationList(medication_list_arbs),
-      ccbs = getMedicationList(medication_list_ccbs),
-      beta_blockers = getMedicationList(medication_list_beta_blockers),
-      oad = getMedicationList(medication_list_oad),
-      statin = getMedicationList(medication_list_statin),
-      anti_platelet = getMedicationList(medication_list_anti_platelet),
-      other_medications = getMedicationList(medication_list_other),
-      single_pill_combination = getMedicationList(medication_list_spc),
-      
-      stringsAsFactors = FALSE
-    )
-    
-    # Prevent saving if visit_date and patient_note are both missing
-    if (all(is.na(new_data$visit_date)) && all(is.na(new_data$patient_note))) {
-      showNotification("Nothing to save. Visit data is empty or invalid.", type = "warning")
-      return()
-    }
-    
-    # Append or update the visit data
-    if (file.exists(visit_data_file)) {
-      existing_data <- read.csv(visit_data_file, stringsAsFactors = FALSE)
-      
-      # Make sure both have the same column names in the same order
-      common_names <- intersect(names(existing_data), names(new_data))
-      existing_data <- existing_data[common_names]
-      new_data <- new_data[common_names]
-      
-      # Match column types to avoid rbind/bind_rows errors
-      for (col in names(new_data)) {
-        if (class(existing_data[[col]]) != class(new_data[[col]])) {
-          existing_data[[col]] <- as.character(existing_data[[col]])
-          new_data[[col]] <- as.character(new_data[[col]])
-        }
       }
       
-      # === 🛠 UPDATE if editing ===
-      if (!is.null(current_visit_row()) && current_visit_row() <= nrow(existing_data)) {
-        existing_data[current_visit_row(), ] <- new_data
-        current_visit_row(NULL)  # Reset edit mode
-        updated_data <- existing_data
-        showNotification("Visit updated successfully.", type = "message")
+      formatted_visit_date <- format(as.Date(input$visit_date), "%d/%m/%Y")
+      formatted_follow_up_date <- format(as.Date(input$follow_up_date), "%d/%m/%Y")
+      
+      # --- Get dynamic medications with your new code ---
+      diuretics   <- getMedicationListInsertUI("diuretics_")
+      aceis       <- getMedicationListInsertUI("aceis_")
+      arbs        <- getMedicationListInsertUI("arbs_")
+      ccbs        <- getMedicationListInsertUI("ccbs_")
+      beta_blockers <- getMedicationListInsertUI("beta_blockers_")
+      oad        <- getMedicationListInsertUI("oad_")
+      statin        <- getMedicationListInsertUI("statin_")
+      anti_platelet <- getMedicationListInsertUI("anti_platelet_")
+      other_medications <- getMedicationListInsertUI("other_")
+      single_pill_combination <- getSPCMedications()
+      
+      # --- Build the new row ---
+      new_data <- data.frame(
+        visit_number = safe_num(visit_number),
+        hn = safe_string(hn_to_search),
+        name = safe_string(patient_name[1]),
+        visit_date = safe_string(formatted_visit_date),
+        doctor_name = safe_string(input$doctor_name),
+        patient_note = safe_string(input$patient_note),
+        patient_status = safe_string(input$pateintstatus),
+        refer_hospital_details = if (safe_string(input$pateintstatus) == "refer_hospital") safe_string(input$refer_hospital_details) else "",
+        consult_opd_details    = if (safe_string(input$pateintstatus) == "consult_opd") safe_string(input$consult_opd_details) else "",
+        
+        # Symptom Checklist
+        chest_tightness      = safe_string(input$chest_tightness),
+        chest_tightness_note = if (safe_string(input$chest_tightness) == "yes") safe_string(input$chest_tightness_note) else "",
+        nervous_system       = safe_string(input$nervous_system),
+        nervous_system_note  = if (safe_string(input$nervous_system) == "yes") safe_string(input$nervous_system_note) else "",
+        urinal_abnormal      = safe_string(input$urinal_abnormal),
+        urinal_abnormal_note = if (safe_string(input$urinal_abnormal) == "yes") safe_string(input$urinal_abnormal_note) else "",
+        headache      = safe_string(input$headache),
+        headache_note = if (safe_string(input$headache) %in% c("sometimes", "often")) safe_string(input$headache_note) else "",
+        dizziness      = safe_string(input$dizziness),
+        dizziness_note = if (safe_string(input$dizziness) %in% c("sometimes", "often")) safe_string(input$dizziness_note) else "",
+        dypsnea      = safe_string(input$dypsnea),
+        dypsnea_note = if (safe_string(input$dypsnea) %in% c("sometimes", "often")) safe_string(input$dypsnea_note) else "",
+        leg_swelling      = safe_string(input$leg_swelling),
+        leg_swelling_note = if (safe_string(input$leg_swelling) %in% c("sometimes", "often")) safe_string(input$leg_swelling_note) else "",
+        face_swelling      = safe_string(input$face_swelling),
+        face_swelling_note = if (safe_string(input$face_swelling) %in% c("sometimes", "often")) safe_string(input$face_swelling_note) else "",
+        
+        # Lab Results
+        cr   = safe_string(input$cr),
+        na   = safe_string(input$na),
+        fbs  = safe_string(input$fbs),
+        hba1c= safe_string(input$hba1c),
+        cho  = safe_string(input$cho),
+        ldl  = safe_string(input$ldl),
+        tg   = safe_string(input$tg),
+        hdl  = safe_string(input$hdl),
+        ast  = safe_string(input$ast),
+        alt  = safe_string(input$alt),
+        
+        # CC & PI
+        cc = safe_string(input$cc),
+        cc_early_visit = if (safe_string(input$cc) == "early_visit") safe_string(input$cc_early_visit) else "",
+        cc_late_visit  = if (safe_string(input$cc) == "late_visit")  safe_string(input$cc_late_visit) else "",
+        cc_other       = if (safe_string(input$cc) == "other")       safe_string(input$cc_other) else "",
+        pi = safe_string(input$pi),
+        pi_abnormal = if (safe_string(input$pi) == "abnormal") safe_string(input$pi_abnormal) else "",
+        pi_other    = if (safe_string(input$pi) == "other")    safe_string(input$pi_other) else "",
+        
+        # Medication Adherence (checkbox group)
+        adherence_alway_take_medicine = if ("alway_take_medicine" %in% (input$medication_adherence %||% character(0))) "yes" else "no",
+        adherence_salty_control = if ("salty_control" %in% (input$medication_adherence %||% character(0))) "yes" else "no",
+        adherence_exercise = if ("excercise" %in% (input$medication_adherence %||% character(0))) "yes" else "no",
+        allergic_history = safe_string(input$allergic_history),
+        
+        # Vitals
+        bp_sys  = safe_string(input$bp_sys),
+        bp_dia  = safe_string(input$bp_dia),
+        pulse   = safe_string(input$pulse),
+        waist   = safe_string(input$waist),
+        height  = safe_string(input$height),
+        weight  = safe_string(input$weight),
+        
+        # Physical Exam
+        heent = safe_string(input$heent),
+        heent_abnormal = if (safe_string(input$heent) == "abnormal") safe_string(input$heent_abnormal) else "",
+        heart = safe_string(input$heart),
+        heart_abnormal = if (safe_string(input$heart) == "abnormal") safe_string(input$heart_abnormal) else "",
+        lungs = safe_string(input$lungs),
+        lungs_abnormal = if (safe_string(input$lungs) == "abnormal") safe_string(input$lungs_abnormal) else "",
+        abd = safe_string(input$abd),
+        abd_abnormal = if (safe_string(input$abd) == "abnormal") safe_string(input$abd_abnormal) else "",
+        ext = safe_string(input$ext),
+        ext_abnormal = if (safe_string(input$ext) == "abnormal") safe_string(input$ext_abnormal) else "",
+        ns = safe_string(input$ns),
+        ns_abnormal = if (safe_string(input$ns) == "abnormal") safe_string(input$ns_abnormal) else "",
+        
+        # Diagnosis & Scores
+        diagnosis      = safe_vec(input$diagnosis),
+        other_diagnosis= if ("Other" %in% (input$diagnosis %||% character(0))) safe_string(input$other_diagnosis) else "",
+        bp_control_score = safe_num(input$bp_control_score),
+        weight_control_score = safe_num(input$weight_control_score),
+        self_care_score = safe_num(input$self_care_score),
+        home_bp_score = safe_num(input$home_bp_score),
+        hbpm_target = safe_string(input$hbpm_target),
+        follow_up   = safe_string(input$follow_up),
+        follow_up_date = safe_string(formatted_follow_up_date),
+        lab_tests   = safe_vec(input$lab_tests),
+        other_lab_tests = safe_string(input$other_lab_tests),
+        
+        # Complications (checkbox group)
+        complication_stroke = if ("complication_stroke" %in% (input$complication %||% character(0))) "yes" else "no",
+        complication_cardio_mi = if ("complication_cardio_mi" %in% (input$complication %||% character(0))) "yes" else "no",
+        complication_chf = if ("complication_chf" %in% (input$complication %||% character(0))) "yes" else "no",
+        complication_kidney = if ("complication_kidney" %in% (input$complication %||% character(0))) "yes" else "no",
+        complication_eye = if ("complication_eye" %in% (input$complication %||% character(0))) "yes" else "no",
+        other_complication = safe_string(input$other_complication),
+        precriptionadjust  = safe_string(input$precriptionadjust),
+        
+        # Dynamic Medications
+        diuretics = safe_string(diuretics),
+        aceis = safe_string(aceis),
+        arbs = safe_string(arbs),
+        ccbs = safe_string(ccbs),
+        beta_blockers = safe_string(beta_blockers),
+        oad = safe_string(oad),
+        statin = safe_string(statin),
+        anti_platelet = safe_string(anti_platelet),
+        other_medications = safe_string(other_medications),
+        single_pill_combination = safe_string(single_pill_combination),
+        
+        stringsAsFactors = FALSE
+      )
+      
+      
+      
+      
+      # For update vs. add
+      if (is_editing) {
+        # Update path
+        common_cols <- intersect(names(existing_visits), names(new_data))
+        existing_visits[current_visit_row(), common_cols] <- new_data[common_cols]
+        to_save <- existing_visits
+        showNotification("✅ Visit updated!", type = "message")
       } else {
-        # === ➕ APPEND if new ===
-        updated_data <- rbind(existing_data, new_data)
-        showNotification("New visit added successfully.", type = "message")
+        # Add path
+        needed_names <- names(new_data)
+        if (nrow(existing_visits) == 0) {
+          to_save <- new_data
+        } else {
+          # Align columns
+          for (col in setdiff(needed_names, names(existing_visits))) {
+            existing_visits[[col]] <- ""
+          }
+          for (col in setdiff(names(existing_visits), needed_names)) {
+            new_data[[col]] <- ""
+          }
+          # Ensure order matches
+          existing_visits <- existing_visits[, needed_names, drop = FALSE]
+          new_data <- new_data[, needed_names, drop = FALSE]
+          to_save <- rbind(existing_visits, new_data)
+        }
+        showNotification("✅ New visit saved!", type = "message")
       }
       
-    } else {
-      updated_data <- new_data
-      showNotification("Visit file created and saved.", type = "message")
-    }
-    
-    
-    # Remove rows where ALL values are NA or empty strings
-    updated_data <- updated_data %>%
-      dplyr::filter(!if_all(everything(), ~ is.na(.) | . == ""))
-    
-    # Save cleaned data
-    write.csv(updated_data, visit_data_file, row.names = FALSE)
-    showNotification("Visit data saved successfully.", type = "message")
+      print("Will try to write this to file:")
+      print(head(to_save))
+      print(paste("File path is:", visit_data_file))
+      write.csv(to_save, visit_data_file, row.names = FALSE)
+      print("File write finished!")
+      
+      load_patient_visits(input$hn_visit)
+    }, error = function(e) {
+      showNotification(paste("Save Error:", e$message), type = "error")
+      print(e)
+    })
   })
+  
+  
+  
+  
+  
+  #------- restore--------
+  restoreMedicationUI <- function(med_string, prefix, container_id, choices = NULL) {
+    # Defensive check: don't proceed if med_string is not usable
+    if (is.null(med_string) || is.na(med_string) || med_string == "" || !is.character(med_string) || length(med_string) == 0) return()
+    med_string <- as.character(med_string)[1]
+    # Defensive: If all blank after trim, stop
+    if (trimws(med_string) == "") return()
+    
+    meds <- unlist(strsplit(med_string, ";"))
+    for (m in meds) {
+      m <- trimws(m)
+      # Should match "name (qty)"
+      parts <- stringr::str_match(m, "^(.*?)\\s*\\((.*?)\\)$")
+      if (nrow(parts) > 0 && !is.na(parts[1,2])) {
+        drug <- parts[1,2]
+        qty  <- parts[1,3]
+        uid  <- paste0(as.integer(Sys.time()), sample(1000:9999, 1))
+        select_id <- paste0(prefix, uid)
+        other_id  <- paste0(prefix, "other_", uid)
+        qty_id    <- paste0("qty_", prefix, uid)
+        remove_id <- paste0("remove_", prefix, uid)
+        
+        insertUI(
+          selector = paste0("#", container_id),
+          where = "beforeEnd",
+          ui = tags$div(
+            id = paste0("row_", uid),
+            fluidRow(
+              column(4,
+                     if (is.null(choices) || !(drug %in% choices)) {
+                       # Only Other: text input
+                       textInput(other_id, label = NULL, value = drug, placeholder = "Enter medication name")
+                     } else {
+                       # Predefined drug: selectInput
+                       selectInput(select_id, label = NULL, choices = choices, selected = drug, width = "100%")
+                     }
+              ),
+              column(4,
+                     textInput(qty_id, label = NULL, value = qty, placeholder = "Quantity")
+              ),
+              column(2,
+                     actionButton(remove_id, "❌", class = "btn btn-danger")
+              )
+            )
+          )
+        )
+        
+        # Remove event
+        observeEvent(input[[remove_id]], {
+          removeUI(selector = paste0("#row_", uid), immediate = TRUE)
+        }, once = TRUE)
+      }
+    }
+  }
+  
+  
   
   #------------------------Patient Dashboard Server -------------------------------
   
