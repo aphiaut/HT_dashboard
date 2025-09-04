@@ -883,6 +883,23 @@ ui <- navbarPage(
                                  )
                           )
                         ),
+                        fluidRow(
+                          column(4,
+                                 div(class = "plot-card",
+                                     plotlyOutput("salty_control_trend")
+                                 )
+                          ),
+                          column(4,
+                                 div(class = "plot-card",
+                                     plotlyOutput("alway_take_medicine_trend")
+                                 )
+                          ),
+                          column(4,
+                                 div(class = "plot-card",
+                                     plotlyOutput("exercise_trend")
+                                 )
+                          )
+                        ),
                         
                )
              )
@@ -3117,6 +3134,81 @@ server <- function(input, output, session) {
     ggplotly(p)
   })
   
+  #------ salty control monthly trend --------------
+  output$salty_control_trend <- renderPlotly({
+    df <- filtered_visits()
+    
+    if (nrow(df) == 0 || !all(c("adherence_salty_control", "visit_date") %in% names(df))) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No salty control data"), size = 5) +
+        theme_minimal() +
+        labs(title = "Salt Intake Control – Monthly Trend")
+      return(ggplotly(p))
+    }
+    
+    df <- df %>%
+      mutate(
+        # visit_date already Date from filtered_visits()
+        adherence_salty_control = trimws(tolower(adherence_salty_control))
+      ) %>%
+      filter(!is.na(visit_date), adherence_salty_control %in% c("yes", "no")) %>%
+      mutate(
+        year = lubridate::year(visit_date),
+        month = lubridate::month(visit_date, label = TRUE, abbr = TRUE)
+      )
+    
+    monthly <- df %>%
+      group_by(year, month) %>%
+      summarise(
+        yes = sum(adherence_salty_control == "yes"),
+        no  = sum(adherence_salty_control == "no"),
+        total = n(),
+        pct_yes = round(100 * yes / total, 1),
+        pct_no  = round(100 * no / total, 1),
+        .groups = "drop"
+      ) %>%
+      arrange(year, month)
+    
+    if (nrow(monthly) == 0) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No monthly data to plot"), size = 5) +
+        theme_minimal() +
+        labs(title = "Salt Intake Control – Monthly Trend")
+      return(ggplotly(p))
+    }
+    
+    # build a proper year-month date
+    monthly <- monthly %>%
+      mutate(year_month = as.Date(paste(year, month, "1"), format = "%Y %b %d"))
+    
+    # reshape for Yes/No lines
+    monthly_long <- monthly %>%
+      select(year_month, pct_yes, pct_no) %>%
+      pivot_longer(cols = c(pct_yes, pct_no),
+                   names_to = "adherence",
+                   values_to = "percentage") %>%
+      mutate(adherence = ifelse(adherence == "pct_yes", "Yes", "No"))
+    
+    p <- ggplot(monthly_long, aes(x = year_month, y = percentage, color = adherence, group = adherence)) +
+      geom_line(size = 1) +
+      geom_point(size = 2) +
+      geom_text(aes(label = paste0(percentage, "%")), vjust = -0.6, size = 3) +
+      scale_x_date(date_labels = "%b %Y", date_breaks = "1 month", expand = c(0.01, 0.01)) +
+      coord_cartesian(ylim = c(0, 100)) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      labs(
+        title = "Salt Intake Control – Monthly Trend",
+        x = "Month",
+        y = "Percentage (%)",
+        color = "Adherence"
+      )
+    
+    ggplotly(p, tooltip = c("x", "y", "adherence"))
+  })
+  
+  
+  
   #-------- take medicine--------
   output$alway_take_medicine_insight <- renderPlotly({
     df <- filtered_visits()
@@ -3149,6 +3241,79 @@ server <- function(input, output, session) {
     
     ggplotly(p)
   })
+  
+  #------ always take medicine monthly trend --------------
+  output$alway_take_medicine_trend <- renderPlotly({
+    df <- filtered_visits()
+    
+    if (nrow(df) == 0 || !all(c("adherence_alway_take_medicine", "visit_date") %in% names(df))) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No medication adherence data"), size = 5) +
+        theme_minimal() +
+        labs(title = "Always Take Medication – Monthly Trend")
+      return(ggplotly(p))
+    }
+    
+    df <- df %>%
+      mutate(
+        adherence_alway_take_medicine = trimws(tolower(adherence_alway_take_medicine))
+      ) %>%
+      filter(!is.na(visit_date), adherence_alway_take_medicine %in% c("yes", "no")) %>%
+      mutate(
+        year = lubridate::year(visit_date),
+        month = lubridate::month(visit_date, label = TRUE, abbr = TRUE)
+      )
+    
+    monthly <- df %>%
+      group_by(year, month) %>%
+      summarise(
+        yes = sum(adherence_alway_take_medicine == "yes"),
+        no  = sum(adherence_alway_take_medicine == "no"),
+        total = n(),
+        pct_yes = round(100 * yes / total, 1),
+        pct_no  = round(100 * no / total, 1),
+        .groups = "drop"
+      ) %>%
+      arrange(year, month) 
+    
+    if (nrow(monthly) == 0) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No monthly data to plot"), size = 5) +
+        theme_minimal() +
+        labs(title = "Always Take Medication – Monthly Trend")
+      return(ggplotly(p))
+    }
+    
+    # build a proper year-month date
+    monthly <- monthly %>%
+      mutate(year_month = as.Date(paste(year, month, "1"), format = "%Y %b %d"))
+    
+    # reshape for Yes/No lines
+    monthly_long <- monthly %>%
+      select(year_month, pct_yes, pct_no) %>%
+      pivot_longer(cols = c(pct_yes, pct_no),
+                   names_to = "adherence",
+                   values_to = "percentage") %>%
+      mutate(adherence = ifelse(adherence == "pct_yes", "Yes", "No"))
+    
+    p <- ggplot(monthly_long, aes(x = year_month, y = percentage, color = adherence, group = adherence)) +
+      geom_line(size = 1) +
+      geom_point(size = 2) +
+      geom_text(aes(label = paste0(percentage, "%")), vjust = -0.6, size = 3) +
+      scale_x_date(date_labels = "%b %Y", date_breaks = "1 month", expand = c(0.01, 0.01)) +
+      coord_cartesian(ylim = c(0, 100)) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      labs(title = "Always Take Medication – Monthly Trend", 
+           x = "Month", 
+           y = "Percentage (%)", 
+           color = "Adherence")
+    
+    ggplotly(p, tooltip = c("x", "y", "adherence"))
+  })
+  
+
+  
   
   
   #-------- exercise----------
@@ -3184,6 +3349,72 @@ server <- function(input, output, session) {
     ggplotly(p)
   })
   
+  #------ exercise monthly trend --------------
+  output$exercise_trend <- renderPlotly({
+    df <- filtered_visits()
+    
+    if (nrow(df) == 0 || !all(c("adherence_exercise", "visit_date") %in% names(df))) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No exercise data"), size = 5) +
+        theme_minimal() +
+        labs(title = "Exercise Adherence – Monthly Trend")
+      return(ggplotly(p))
+    }
+    
+    df <- df %>%
+      mutate(
+        adherence_exercise = trimws(tolower(adherence_exercise))
+      ) %>%
+      filter(!is.na(visit_date), adherence_exercise %in% c("yes", "no")) %>%
+      mutate(
+        year = lubridate::year(visit_date),
+        month = lubridate::month(visit_date, label = TRUE, abbr = TRUE)
+      )
+    
+    monthly <- df %>%
+      group_by(year, month) %>%
+      summarise(
+        yes = sum(adherence_exercise == "yes"),
+        no  = sum(adherence_exercise == "no"),
+        total = n(),
+        pct_yes = round(100 * yes / total, 1),
+        pct_no  = round(100 * no / total, 1),
+        .groups = "drop"
+      ) %>%
+      arrange(year, month) 
+    
+    if (nrow(monthly) == 0) {
+      p <- ggplot() +
+        geom_text(aes(x = 1, y = 1, label = "No monthly data to plot"), size = 5) +
+        theme_minimal() +
+        labs(title = "Exercise – Monthly Trend")
+      return(ggplotly(p))
+    }
+    
+    # build a proper year-month date
+    monthly <- monthly %>%
+      mutate(year_month = as.Date(paste(year, month, "1"), format = "%Y %b %d"))
+    
+    # reshape for Yes/No lines
+    monthly_long <- monthly %>%
+      select(year_month, pct_yes, pct_no) %>%
+      pivot_longer(cols = c(pct_yes, pct_no),
+                   names_to = "adherence",
+                   values_to = "percentage") %>%
+      mutate(adherence = ifelse(adherence == "pct_yes", "Yes", "No"))
+    
+    p <- ggplot(monthly_long, aes(x = year_month, y = percentage, color = adherence, group = adherence)) +
+      geom_line(size = 1) +
+      geom_point(size = 2) +
+      geom_text(aes(label = paste0(percentage, "%")), vjust = -0.6, size = 3) +
+      scale_x_date(date_labels = "%b %Y", date_breaks = "1 month", expand = c(0.01, 0.01)) +
+      coord_cartesian(ylim = c(0, 100)) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+      labs(title = "Exercise Adherence – Monthly Trend", x = "Month", y = "Percentage (%)", color = "Adherence")
+    
+    ggplotly(p, tooltip = c("x", "y", "adherence"))
+  })
   
   
   

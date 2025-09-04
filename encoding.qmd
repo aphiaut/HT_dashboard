@@ -10,7 +10,7 @@ library(readr)
 ```
 
 ```{r}
-mydata <- read_csv("patient_data.csv")
+mydata <- read_csv("data/patient_data.csv")
 
 #🛠️ Method 1: Write CSV with BOM manually (cross-platform safe)
 # Step 1: Write to UTF-8 file (without BOM)
@@ -25,7 +25,7 @@ writeLines(c("\uFEFF", lines), "patient_data.csv", useBytes = TRUE)
 ```{r}
 #🛠️ Method 2: Use readr and write with BOM manually
 
-mydata <- read_csv("visit_data.csv")
+mydata <- read_csv("data/visit_data.csv")
 # Step 1: Write without BOM
 write_csv(mydata, "thai_temp.csv")
 
@@ -34,6 +34,3 @@ lines <- readLines("thai_temp.csv", encoding = "UTF-8")
 writeLines(c("\uFEFF", lines), "visit_data.csv", useBytes = TRUE)
 
 ```
-
-
-
