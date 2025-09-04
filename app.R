@@ -3187,7 +3187,8 @@ server <- function(input, output, session) {
       pivot_longer(cols = c(pct_yes, pct_no),
                    names_to = "adherence",
                    values_to = "percentage") %>%
-      mutate(adherence = ifelse(adherence == "pct_yes", "Yes", "No"))
+      mutate(adherence = ifelse(adherence == "pct_yes", "Yes", "No"),
+             adherence = factor(adherence, levels = c("Yes", "No")))
     
     p <- ggplot(monthly_long, aes(x = year_month, y = percentage, color = adherence, group = adherence)) +
       geom_line(size = 1) +
@@ -3195,6 +3196,7 @@ server <- function(input, output, session) {
       geom_text(aes(label = paste0(percentage, "%")), vjust = -0.6, size = 3) +
       scale_x_date(date_labels = "%b %Y", date_breaks = "1 month", expand = c(0.01, 0.01)) +
       coord_cartesian(ylim = c(0, 100)) +
+      scale_color_brewer(palette = "Pastel1")
       theme_minimal() +
       theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
       labs(
@@ -3294,7 +3296,8 @@ server <- function(input, output, session) {
       pivot_longer(cols = c(pct_yes, pct_no),
                    names_to = "adherence",
                    values_to = "percentage") %>%
-      mutate(adherence = ifelse(adherence == "pct_yes", "Yes", "No"))
+      mutate(adherence = ifelse(adherence == "pct_yes", "Yes", "No"),
+             adherence = factor(adherence, levels = c("Yes", "No")))
     
     p <- ggplot(monthly_long, aes(x = year_month, y = percentage, color = adherence, group = adherence)) +
       geom_line(size = 1) +
@@ -3302,6 +3305,7 @@ server <- function(input, output, session) {
       geom_text(aes(label = paste0(percentage, "%")), vjust = -0.6, size = 3) +
       scale_x_date(date_labels = "%b %Y", date_breaks = "1 month", expand = c(0.01, 0.01)) +
       coord_cartesian(ylim = c(0, 100)) +
+      scale_color_brewer(palette = "Pastel1")
       theme_minimal() +
       theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
       labs(title = "Always Take Medication – Monthly Trend", 
@@ -3401,7 +3405,8 @@ server <- function(input, output, session) {
       pivot_longer(cols = c(pct_yes, pct_no),
                    names_to = "adherence",
                    values_to = "percentage") %>%
-      mutate(adherence = ifelse(adherence == "pct_yes", "Yes", "No"))
+      mutate(adherence = ifelse(adherence == "pct_yes", "Yes", "No"),
+             adherence = factor(adherence, levels = c("Yes", "No")))
     
     p <- ggplot(monthly_long, aes(x = year_month, y = percentage, color = adherence, group = adherence)) +
       geom_line(size = 1) +
@@ -3409,6 +3414,7 @@ server <- function(input, output, session) {
       geom_text(aes(label = paste0(percentage, "%")), vjust = -0.6, size = 3) +
       scale_x_date(date_labels = "%b %Y", date_breaks = "1 month", expand = c(0.01, 0.01)) +
       coord_cartesian(ylim = c(0, 100)) +
+      scale_color_brewer(palette = "Pastel1")
       theme_minimal() +
       theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
       labs(title = "Exercise Adherence – Monthly Trend", x = "Month", y = "Percentage (%)", color = "Adherence")
