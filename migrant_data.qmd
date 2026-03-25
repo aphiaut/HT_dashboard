@@ -1,0 +1,60 @@
+---
+title: "migrant data"
+format: html
+editor: visual
+---
+
+## Visit
+
+```{r}
+library(tidyverse)
+
+old_visits <- read.csv("data/visit_data.csv", stringsAsFactors = FALSE)
+
+new_visits <- old_visits %>%
+  mutate(
+    hn = toupper(trimws(hn)),
+    visit_date = trimws(visit_date),
+    
+    # convert dd/mm/yyyy → Date
+    visit_date_parsed = as.Date(visit_date, format = "%d/%m/%Y")
+  ) %>%
+  
+  # sort by patient + date
+  arrange(hn, visit_date_parsed) %>%
+  
+  # assign visit number per patient
+  group_by(hn) %>%
+  mutate(
+    visit_number = row_number(),
+    
+    # create visit_id
+    visit_id = paste0(
+      "V",
+      format(visit_date_parsed, "%Y%m%d"),
+      "_",
+      hn,
+      "_",
+      visit_number
+    )
+  ) %>%
+  ungroup() %>%
+  
+  # remove helper column
+  select(-visit_date_parsed)
+
+new_visits$visit_id
+
+new_visits <- new_visits %>%
+  select(visit_id, everything())
+
+
+new_visits_tidy <- new_visits %>%
+  select(1:which(names(new_visits) == "precriptionadjust"))
+
+
+
+# save file
+write.csv(new_visits_tidy, "visits.csv", row.names = FALSE)
+```
+
