@@ -43,7 +43,7 @@ new_visits <- old_visits %>%
   # remove helper column
   select(-visit_date_parsed)
 
-new_visits$visit_id
+#new_visits$visit_id
 
 new_visits <- new_visits %>%
   select(visit_id, everything())
@@ -55,6 +55,6 @@ new_visits_tidy <- new_visits %>%
 
 
 # save file
-write.csv(new_visits_tidy, "visits.csv", row.names = FALSE)
+write.csv(new_visits_tidy, "data/visits.csv", row.names = FALSE)
 ```
 
