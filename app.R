@@ -359,7 +359,12 @@ ui <- navbarPage(
                                    choices = c("Yes", "No", "Missed"), 
                                    inline = TRUE)
                )
-             )
+             ),
+             fluidRow( 
+               column(10,
+                    selectInput("precriptionadjust", "Prescription Adjusted",
+                                choices = c("Off Medication", "Decrease", "Add",
+                                            "Same", "Change : Complication"))))
       ),
       column(4,
              h4("Follow-up Schedule"),
@@ -415,11 +420,7 @@ ui <- navbarPage(
     hr(),
     fluidRow(
       column(6,
-             h3("Home Medication"),
-             column(10, 
-                    selectInput("precriptionadjust", "Prescription Adjusted",
-                                choices = c("Off Medication", "Decrease", "Add",
-                                            "Same", "Change : Complication"))),
+             h3("Prescription"),
              fluidRow(
                column(12,
                       h4("Diuretics :"),
@@ -468,10 +469,9 @@ ui <- navbarPage(
                         style = "color:black;"
                       ))
                )
-             )),
-      column(6,
-             h3(" "),
+             ),
              fluidRow(
+               column(12,
                h4("Beta blockers :"),
                column(6, div(id = "beta_blockers_container")),
                column(6, actionButton("add_medication_beta_blockers", "➕ Add Beta blockers")),
@@ -480,8 +480,11 @@ ui <- navbarPage(
                  tagList(icon("trash", style = "color:black;"), "Clear"),
                  class = "btn btn-danger btn-sm",
                  style = "color:black;"
-               ))
+               )))
              ),
+             ),
+      column(6,
+             h3(" "),
              fluidRow(
                h4("DM :"),
                column(6, div(id = "oad_container")),
